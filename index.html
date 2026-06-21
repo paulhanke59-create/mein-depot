@@ -54,7 +54,7 @@
   .wkn { font-size:11px; color:#6b7280; margin-top:2px; }
   .muted { color:#94a3b8; font-size:13px; }
   .bold { font-weight:600; color:#e8eaf0; }
-  .price-input { width:110px; padding:7px 10px; font-size:13px; }
+  .price-input { width:130px; padding:8px 12px; font-size:14px; }
   .price-date { font-size:10px; color:#6b7280; margin-top:4px; }
   .badge { border-radius:6px; padding:2px 8px; font-weight:700; font-size:13px; display:inline-block; border:1px solid; }
   .badge.pos { color:#22c55e; background:rgba(34,197,94,0.12); border-color:#22c55e33; }
@@ -63,6 +63,17 @@
   .empty { padding:48px 24px; text-align:center; color:#6b7280; }
   .empty .emoji { font-size:40px; margin-bottom:12px; }
   .action-cell { display:flex; gap:6px; justify-content:center; }
+  .row-clickable { cursor:pointer; }
+  .row-clickable:hover { background:#1e2332; }
+  .row-clickable.expanded { background:#1e2332; }
+  .chevron { display:inline-block; color:#6b7280; font-size:11px; margin-right:6px; transition:transform .15s; }
+  .chevron.open { transform:rotate(90deg); }
+  .expand-row td { padding:0; border-bottom:1px solid #1e2332; }
+  .expand-content { padding:18px 20px; background:#15192580; display:flex; align-items:flex-start; gap:28px; flex-wrap:wrap; }
+  .expand-field label { display:block; font-size:11px; color:#6b7280; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.8px; }
+  .expand-result { display:flex; flex-direction:column; gap:4px; min-width:140px; }
+  .expand-result .r-label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; }
+  .expand-hint { color:#4b5563; font-size:13px; padding-top:8px; }
   .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:100; }
   .modal { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:16px; padding:28px 32px; min-width:360px; max-width:90vw; }
   .modal h3 { margin:0 0 6px; color:#f0f2f8; font-size:18px; font-weight:800; }
@@ -142,6 +153,7 @@ let sold = [];
 let currentPrices = {};
 let activeTab = "bestand";
 let sellModalPos = null;
+let expandedId = null;
 
 // ---------- Persistence ----------
 function loadData() {
@@ -240,6 +252,11 @@ function removePosition(id) {
   render();
 }
 
+function toggleExpand(id) {
+  expandedId = (expandedId === id) ? null : id;
+  renderBestandTable();
+}
+
 function updateCurrentPrice(id, val) {
   if (val === "" || val === undefined) {
     delete currentPrices[id];
@@ -248,7 +265,35 @@ function updateCurrentPrice(id, val) {
   }
   saveData();
   renderCards();
-  renderBestandTable();
+  refreshExpandResult(id);
+}
+
+function refreshExpandResult(id) {
+  const pos = positions.find(p => p.id === id);
+  if (!pos) return;
+  const g = getGewinn(pos);
+  const resultHost = document.getElementById("expand-result-" + id);
+  const dateHost = document.getElementById("price-date-" + id);
+  if (!resultHost) return;
+
+  resultHost.innerHTML = g ? `
+    <div class="expand-result">
+      <span class="r-label">Gewinn €</span>
+      ${badgeHtml(g.diff, formatCurrency(g.diff))}
+    </div>
+    <div class="expand-result">
+      <span class="r-label">Gewinn %</span>
+      ${badgeHtml(g.pct, formatPercent(g.pct))}
+    </div>
+    <div class="expand-result">
+      <span class="r-label">Akt. Wert</span>
+      <span class="muted" style="font-size:14px;">${formatCurrency(g.kurs * pos.stuecke)}</span>
+    </div>
+  ` : `<div class="expand-hint">Kurs eingeben, um den Gewinn zu berechnen</div>`;
+
+  if (dateHost) {
+    dateHost.innerHTML = g && g.updatedAt ? `Stand: ${formatDate(g.updatedAt)}` : "";
+  }
 }
 
 // ---------- Sell ----------
@@ -349,26 +394,19 @@ function renderBestandTable() {
   }
 
   const rows = positions.map(pos => {
+    const isOpen = expandedId === pos.id;
     const g = getGewinn(pos);
     const cpEntry = currentPrices[pos.id];
     const cpVal = cpEntry ? cpEntry.kurs : "";
-    const cpDateLabel = g && g.updatedAt ? `<div class="price-date">Stand: ${formatDate(g.updatedAt)}</div>` : "";
-    return `
-      <tr>
-        <td><div class="name">${escapeHtml(pos.name)}</div><div class="wkn">${escapeHtml(pos.wkn)}</div></td>
+
+    const mainRow = `
+      <tr class="row-clickable ${isOpen ? "expanded" : ""}" onclick="toggleExpand(${pos.id})">
+        <td><span class="chevron ${isOpen ? "open" : ""}">▶</span><span class="name" style="display:inline">${escapeHtml(pos.name)}</span><div class="wkn" style="margin-left:17px;">${escapeHtml(pos.wkn)}</div></td>
         <td class="muted">${formatDate(pos.datum)}</td>
         <td class="bold">${pos.stuecke}</td>
         <td class="muted">${formatCurrency(pos.preis)}</td>
         <td class="muted">${formatCurrency(pos.preis * pos.stuecke)}</td>
-        <td>
-          <input type="text" class="price-input" value="${escapeHtml(cpVal)}" placeholder="Kurs eingeben"
-            onchange="updateCurrentPrice(${pos.id}, this.value)" />
-          ${cpDateLabel}
-        </td>
-        <td class="muted">${g ? formatCurrency(g.kurs * pos.stuecke) : "—"}</td>
-        <td>${g ? badgeHtml(g.diff, formatCurrency(g.diff)) : '<span class="dim">—</span>'}</td>
-        <td>${g ? badgeHtml(g.pct, formatPercent(g.pct)) : '<span class="dim">—</span>'}</td>
-        <td>
+        <td onclick="event.stopPropagation()">
           <div class="action-cell">
             <button class="btn-sell" onclick="openSell(${pos.id})">Verkauf</button>
             <button class="btn-del" onclick="removePosition(${pos.id})">✕</button>
@@ -376,14 +414,52 @@ function renderBestandTable() {
         </td>
       </tr>
     `;
+
+    let expandRow = "";
+    if (isOpen) {
+      const resultBlockHtml = g ? `
+        <div class="expand-result">
+          <span class="r-label">Gewinn €</span>
+          ${badgeHtml(g.diff, formatCurrency(g.diff))}
+        </div>
+        <div class="expand-result">
+          <span class="r-label">Gewinn %</span>
+          ${badgeHtml(g.pct, formatPercent(g.pct))}
+        </div>
+        <div class="expand-result">
+          <span class="r-label">Akt. Wert</span>
+          <span class="muted" style="font-size:14px;">${formatCurrency(g.kurs * pos.stuecke)}</span>
+        </div>
+      ` : `<div class="expand-hint">Kurs eingeben, um den Gewinn zu berechnen</div>`;
+
+      const dateLabelHtml = g && g.updatedAt ? `Stand: ${formatDate(g.updatedAt)}` : "";
+
+      expandRow = `
+        <tr class="expand-row">
+          <td colspan="6">
+            <div class="expand-content">
+              <div class="expand-field">
+                <label>Aktueller Kurs (€)</label>
+                <input type="text" class="price-input" id="price-input-${pos.id}" value="${escapeHtml(cpVal)}"
+                  placeholder="z.B. 180,00" onclick="event.stopPropagation()"
+                  oninput="updateCurrentPrice(${pos.id}, this.value)" />
+                <div class="price-date" id="price-date-${pos.id}">${dateLabelHtml}</div>
+              </div>
+              <div id="expand-result-${pos.id}" style="display:flex; gap:28px; flex-wrap:wrap;">${resultBlockHtml}</div>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    return mainRow + expandRow;
   }).join("");
 
   panel.innerHTML = `
     <table>
       <thead>
         <tr>
-          <th>Name / WKN</th><th>Kaufdatum</th><th>Stücke</th><th>Kaufkurs</th><th>Invest.</th>
-          <th>Akt. Kurs</th><th>Akt. Wert</th><th>Gewinn €</th><th>Gewinn %</th><th class="center"></th>
+          <th>Name / WKN</th><th>Kaufdatum</th><th>Stücke</th><th>Kaufkurs</th><th>Invest.</th><th class="center"></th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>

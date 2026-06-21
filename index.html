@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mein Depot</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0f1117; color: #e8eaf0;
+    font-family: 'Inter','Segoe UI',sans-serif; padding-bottom: 60px;
+  }
+  input[type=text], input[type=date] {
+    background:#0f1117; border:1px solid #2a2f3e; border-radius:8px;
+    padding:9px 12px; color:#e8eaf0; font-size:14px; outline:none; color-scheme: dark;
+  }
+  input.error { border-color:#ef4444; }
+  .header { background: linear-gradient(135deg,#1a1f2e 0%,#141824 100%); border-bottom:1px solid #2a2f3e; padding:28px 32px 20px; }
+  .header-inner { max-width:1100px; margin:0 auto; }
+  .title-row { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+  .title-row span.icon { font-size:26px; }
+  h1 { margin:0; font-size:24px; font-weight:800; letter-spacing:-0.5px; color:#f0f2f8; }
+  .subtitle { margin:0; color:#6b7280; font-size:13px; }
+  .container { max-width:1100px; margin:0 auto; padding:24px 32px 0; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+  .card { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:12px; padding:18px 20px; }
+  .card-label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .card-value { font-size:22px; font-weight:800; }
+  .card-sub { font-size:13px; margin-top:2px; }
+  .panel { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:14px; padding:20px 24px; margin-bottom:28px; }
+  .panel h2 { margin:0 0 16px; font-size:14px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; }
+  .form-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1.2fr 1.2fr auto; gap:12px; align-items:end; }
+  .field label { display:block; font-size:11px; color:#6b7280; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.8px; }
+  .field input { width:100%; }
+  .field .err { color:#ef4444; font-size:11px; margin-top:3px; }
+  .btn-primary {
+    background: linear-gradient(135deg,#3b82f6,#2563eb); border:none; border-radius:8px;
+    padding:10px 20px; color:#fff; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap;
+  }
+  .btn-sell { background:#1e2d20; border:1px solid #22c55e44; border-radius:6px; padding:5px 10px; color:#22c55e; font-size:12px; cursor:pointer; font-weight:600; }
+  .btn-del { background:#2d1e1e; border:1px solid #ef444444; border-radius:6px; padding:5px 10px; color:#ef4444; font-size:12px; cursor:pointer; font-weight:600; }
+  .tabs { display:flex; gap:4px; margin-bottom:20px; background:#1a1f2e; border:1px solid #2a2f3e; border-radius:10px; padding:4px; width:fit-content; }
+  .tab-btn { background:transparent; border:none; border-radius:7px; padding:8px 20px; color:#6b7280; font-weight:600; font-size:14px; cursor:pointer; }
+  .tab-btn.active { background:#3b82f6; color:#fff; }
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:#131720; border-bottom:1px solid #2a2f3e; }
+  th { padding:12px 16px; text-align:left; font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; }
+  th.center { text-align:center; }
+  td { padding:14px 16px; }
+  tbody tr { border-bottom:1px solid #1e2332; }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:#1e2332; }
+  .name { font-weight:700; font-size:15px; color:#f0f2f8; }
+  .wkn { font-size:11px; color:#6b7280; margin-top:2px; }
+  .muted { color:#94a3b8; font-size:13px; }
+  .bold { font-weight:600; color:#e8eaf0; }
+  .price-input { width:110px; padding:7px 10px; font-size:13px; }
+  .badge { border-radius:6px; padding:2px 8px; font-weight:700; font-size:13px; display:inline-block; border:1px solid; }
+  .badge.pos { color:#22c55e; background:rgba(34,197,94,0.12); border-color:#22c55e33; }
+  .badge.neg { color:#ef4444; background:rgba(239,68,68,0.12); border-color:#ef444433; }
+  .dim { color:#4b5563; }
+  .empty { padding:48px 24px; text-align:center; color:#6b7280; }
+  .empty .emoji { font-size:40px; margin-bottom:12px; }
+  .action-cell { display:flex; gap:6px; justify-content:center; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:16px; padding:28px 32px; min-width:360px; max-width:90vw; }
+  .modal h3 { margin:0 0 6px; color:#f0f2f8; font-size:18px; font-weight:800; }
+  .modal p.sub { margin:0 0 20px; color:#6b7280; font-size:13px; }
+  .modal-fields { display:flex; flex-direction:column; gap:14px; }
+  .modal-actions { display:flex; gap:10px; margin-top:22px; justify-content:flex-end; }
+  .btn-cancel { background:transparent; border:1px solid #2a2f3e; border-radius:8px; padding:9px 18px; color:#94a3b8; cursor:pointer; font-size:14px; }
+  .btn-confirm { background: linear-gradient(135deg,#22c55e,#16a34a); border:none; border-radius:8px; padding:9px 20px; color:#fff; font-weight:700; font-size:14px; cursor:pointer; }
+  @media (max-width: 900px) {
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .container, .header-inner { padding-left:16px; padding-right:16px; }
+    .header { padding-left:16px; padding-right:16px; }
+    table { font-size:13px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="title-row"><span class="icon">📈</span><h1>Mein Depot</h1></div>
+    <p class="subtitle">Aktien verwalten · Kurse aktualisieren · Gewinne im Blick</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="cards" id="cards"></div>
+
+  <div class="panel">
+    <h2>+ Position hinzufügen</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="f-name" placeholder="Apple Inc." />
+        <div class="err" id="e-name"></div>
+      </div>
+      <div class="field">
+        <label>WKN</label>
+        <input type="text" id="f-wkn" placeholder="865985" />
+        <div class="err" id="e-wkn"></div>
+      </div>
+      <div class="field">
+        <label>Stücke</label>
+        <input type="text" id="f-stuecke" placeholder="10" />
+        <div class="err" id="e-stuecke"></div>
+      </div>
+      <div class="field">
+        <label>Kaufpreis (€)</label>
+        <input type="text" id="f-preis" placeholder="150,00" />
+        <div class="err" id="e-preis"></div>
+      </div>
+      <div class="field">
+        <label>Kaufdatum</label>
+        <input type="date" id="f-datum" />
+        <div class="err" id="e-datum"></div>
+      </div>
+      <button class="btn-primary" onclick="addPosition()">Hinzufügen</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-bestand" onclick="setTab('bestand')">Bestand (0)</button>
+    <button class="tab-btn" id="tab-verkauft" onclick="setTab('verkauft')">Verkauft (0)</button>
+  </div>
+
+  <div id="bestand-panel" class="panel" style="padding:0; overflow:hidden;"></div>
+  <div id="verkauft-panel" class="panel" style="padding:0; overflow:hidden; display:none;"></div>
+</div>
+
+<div id="sell-modal-root"></div>
+
+<script>
+const STORAGE_KEY = "depot-data-v1";
+
+let positions = [];
+let sold = [];
+let currentPrices = {};
+let activeTab = "bestand";
+let sellModalPos = null;
+
+// ---------- Persistence ----------
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      positions = d.positions || [];
+      sold = d.sold || [];
+      currentPrices = d.currentPrices || {};
+    }
+  } catch (e) { console.error("Fehler beim Laden:", e); }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ positions, sold, currentPrices }));
+  } catch (e) { console.error("Fehler beim Speichern:", e); }
+}
+
+// ---------- Helpers ----------
+function formatCurrency(val) {
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(val);
+}
+function formatPercent(val) {
+  return (val >= 0 ? "+" : "") + val.toFixed(2).replace(".", ",") + " %";
+}
+function formatDate(d) {
+  return d ? new Date(d).toLocaleDateString("de-DE") : "—";
+}
+function toNum(str) {
+  return Number(String(str).replace(",", "."));
+}
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function getGewinn(pos) {
+  const cp = currentPrices[pos.id];
+  if (cp === undefined || cp === "" || isNaN(toNum(cp))) return null;
+  const kurs = toNum(cp);
+  const diff = (kurs - pos.preis) * pos.stuecke;
+  const pct = ((kurs - pos.preis) / pos.preis) * 100;
+  return { diff, pct, kurs };
+}
+
+// ---------- Add Position ----------
+function validateForm() {
+  const name = document.getElementById("f-name").value.trim();
+  const wkn = document.getElementById("f-wkn").value.trim();
+  const stuecke = document.getElementById("f-stuecke").value.trim();
+  const preis = document.getElementById("f-preis").value.trim();
+  const datum = document.getElementById("f-datum").value;
+
+  const errors = {};
+  if (!name) errors.name = "Pflichtfeld";
+  if (!wkn) errors.wkn = "Pflichtfeld";
+  if (!stuecke || isNaN(toNum(stuecke)) || toNum(stuecke) <= 0) errors.stuecke = "Positive Zahl";
+  if (!preis || isNaN(toNum(preis)) || toNum(preis) <= 0) errors.preis = "Positiver Betrag";
+  if (!datum) errors.datum = "Pflichtfeld";
+
+  ["name","wkn","stuecke","preis","datum"].forEach(k => {
+    document.getElementById("f-" + k).classList.toggle("error", !!errors[k]);
+    document.getElementById("e-" + k).textContent = errors[k] || "";
+  });
+
+  return { errors, values: { name, wkn, stuecke, preis, datum } };
+}
+
+function addPosition() {
+  const { errors, values } = validateForm();
+  if (Object.keys(errors).length) return;
+
+  positions.push({
+    id: Date.now(),
+    name: values.name,
+    wkn: values.wkn.toUpperCase(),
+    stuecke: toNum(values.stuecke),
+    preis: toNum(values.preis),
+    datum: values.datum,
+  });
+
+  ["name","wkn","stuecke","preis"].forEach(k => document.getElementById("f-" + k).value = "");
+  document.getElementById("f-datum").value = "";
+
+  saveData();
+  render();
+}
+
+function removePosition(id) {
+  positions = positions.filter(p => p.id !== id);
+  delete currentPrices[id];
+  saveData();
+  render();
+}
+
+function updateCurrentPrice(id, val) {
+  currentPrices[id] = val;
+  saveData();
+  renderCards();
+  renderBestandTable();
+}
+
+// ---------- Sell ----------
+function openSell(id) {
+  sellModalPos = positions.find(p => p.id === id);
+  renderSellModal();
+}
+function closeSell() {
+  sellModalPos = null;
+  renderSellModal();
+}
+function confirmSell() {
+  const stuecke = document.getElementById("s-stuecke").value.trim();
+  const preis = document.getElementById("s-preis").value.trim();
+  const datum = document.getElementById("s-datum").value;
+
+  const errors = {};
+  const s = toNum(stuecke);
+  const p = toNum(preis);
+  if (!stuecke || isNaN(s) || s <= 0 || s > sellModalPos.stuecke) errors.stuecke = `Max. ${sellModalPos.stuecke}`;
+  if (!preis || isNaN(p) || p <= 0) errors.preis = "Positiver Betrag";
+  if (!datum) errors.datum = "Pflichtfeld";
+
+  ["stuecke","preis","datum"].forEach(k => {
+    document.getElementById("s-" + k).classList.toggle("error", !!errors[k]);
+    document.getElementById("se-" + k).textContent = errors[k] || "";
+  });
+  if (Object.keys(errors).length) return;
+
+  sold.push({
+    ...sellModalPos,
+    stueckeVerkauft: s,
+    verkaufspreis: p,
+    verkaufDatum: datum,
+    gewinnJe: (p - sellModalPos.preis) * s,
+    gewinnPct: ((p - sellModalPos.preis) / sellModalPos.preis) * 100,
+  });
+
+  if (s >= sellModalPos.stuecke) {
+    positions = positions.filter(pp => pp.id !== sellModalPos.id);
+  } else {
+    positions = positions.map(pp => pp.id === sellModalPos.id ? { ...pp, stuecke: pp.stuecke - s } : pp);
+  }
+
+  saveData();
+  sellModalPos = null;
+  render();
+}
+
+// ---------- Tabs ----------
+function setTab(tab) {
+  activeTab = tab;
+  document.getElementById("tab-bestand").classList.toggle("active", tab === "bestand");
+  document.getElementById("tab-verkauft").classList.toggle("active", tab === "verkauft");
+  document.getElementById("bestand-panel").style.display = tab === "bestand" ? "block" : "none";
+  document.getElementById("verkauft-panel").style.display = tab === "verkauft" ? "block" : "none";
+}
+
+// ---------- Render ----------
+function badgeHtml(val, text) {
+  const cls = val >= 0 ? "pos" : "neg";
+  return `<span class="badge ${cls}">${text}</span>`;
+}
+
+function renderCards() {
+  const totalInvest = positions.reduce((s, p) => s + p.preis * p.stuecke, 0);
+  const totalCurrent = positions.reduce((s, p) => {
+    const g = getGewinn(p);
+    return s + (g ? g.kurs * p.stuecke : p.preis * p.stuecke);
+  }, 0);
+  const totalGewinn = totalCurrent - totalInvest;
+  const totalPct = totalInvest > 0 ? (totalGewinn / totalInvest) * 100 : 0;
+  const realizedGain = sold.reduce((s, e) => s + e.gewinnJe, 0);
+
+  const cards = [
+    { label: "Investiert", value: formatCurrency(totalInvest), sub: null, color: "#94a3b8" },
+    { label: "Akt. Wert", value: formatCurrency(totalCurrent), sub: null, color: "#94a3b8" },
+    { label: "Unrealisiert", value: formatCurrency(totalGewinn), sub: formatPercent(totalPct), color: totalGewinn >= 0 ? "#22c55e" : "#ef4444" },
+    { label: "Realisiert", value: formatCurrency(realizedGain), sub: null, color: realizedGain >= 0 ? "#22c55e" : "#ef4444" },
+  ];
+
+  document.getElementById("cards").innerHTML = cards.map(c => `
+    <div class="card">
+      <div class="card-label">${c.label}</div>
+      <div class="card-value" style="color:${c.color}">${c.value}</div>
+      ${c.sub ? `<div class="card-sub" style="color:${c.color}">${c.sub}</div>` : ""}
+    </div>
+  `).join("");
+}
+
+function renderBestandTable() {
+  document.getElementById("tab-bestand").textContent = `Bestand (${positions.length})`;
+  const panel = document.getElementById("bestand-panel");
+
+  if (positions.length === 0) {
+    panel.innerHTML = `<div class="empty"><div class="emoji">📂</div><div>Noch keine Positionen — füge deine erste Aktie hinzu.</div></div>`;
+    return;
+  }
+
+  const rows = positions.map(pos => {
+    const g = getGewinn(pos);
+    const cpVal = currentPrices[pos.id] ?? "";
+    return `
+      <tr>
+        <td><div class="name">${escapeHtml(pos.name)}</div><div class="wkn">${escapeHtml(pos.wkn)}</div></td>
+        <td class="muted">${formatDate(pos.datum)}</td>
+        <td class="bold">${pos.stuecke}</td>
+        <td class="muted">${formatCurrency(pos.preis)}</td>
+        <td class="muted">${formatCurrency(pos.preis * pos.stuecke)}</td>
+        <td>
+          <input type="text" class="price-input" value="${escapeHtml(cpVal)}" placeholder="Kurs eingeben"
+            onchange="updateCurrentPrice(${pos.id}, this.value)" />
+        </td>
+        <td class="muted">${g ? formatCurrency(g.kurs * pos.stuecke) : "—"}</td>
+        <td>${g ? badgeHtml(g.diff, formatCurrency(g.diff)) : '<span class="dim">—</span>'}</td>
+        <td>${g ? badgeHtml(g.pct, formatPercent(g.pct)) : '<span class="dim">—</span>'}</td>
+        <td>
+          <div class="action-cell">
+            <button class="btn-sell" onclick="openSell(${pos.id})">Verkauf</button>
+            <button class="btn-del" onclick="removePosition(${pos.id})">✕</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  panel.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Name / WKN</th><th>Kaufdatum</th><th>Stücke</th><th>Kaufkurs</th><th>Invest.</th>
+          <th>Akt. Kurs</th><th>Akt. Wert</th><th>Gewinn €</th><th>Gewinn %</th><th class="center"></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renderVerkauftTable() {
+  document.getElementById("tab-verkauft").textContent = `Verkauft (${sold.length})`;
+  const panel = document.getElementById("verkauft-panel");
+
+  if (sold.length === 0) {
+    panel.innerHTML = `<div class="empty"><div class="emoji">🏦</div><div>Noch keine Verkäufe erfasst.</div></div>`;
+    return;
+  }
+
+  const rows = sold.map(e => `
+    <tr>
+      <td><div class="name">${escapeHtml(e.name)}</div><div class="wkn">${escapeHtml(e.wkn)}</div></td>
+      <td class="muted">${formatDate(e.datum)}</td>
+      <td class="muted">${formatDate(e.verkaufDatum)}</td>
+      <td class="bold">${e.stueckeVerkauft}</td>
+      <td class="muted">${formatCurrency(e.preis)}</td>
+      <td class="muted">${formatCurrency(e.verkaufspreis)}</td>
+      <td>${badgeHtml(e.gewinnJe, formatCurrency(e.gewinnJe))}</td>
+      <td>${badgeHtml(e.gewinnPct, formatPercent(e.gewinnPct))}</td>
+    </tr>
+  `).join("");
+
+  panel.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Name / WKN</th><th>Kaufdatum</th><th>Verkaufdatum</th><th>Stücke</th>
+          <th>Kaufkurs</th><th>Verkaufskurs</th><th>Gewinn €</th><th>Gewinn %</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renderSellModal() {
+  const root = document.getElementById("sell-modal-root");
+  if (!sellModalPos) { root.innerHTML = ""; return; }
+
+  const today = new Date().toISOString().slice(0, 10);
+  root.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this) closeSell()">
+      <div class="modal">
+        <h3>Verkauf erfassen</h3>
+        <p class="sub">${escapeHtml(sellModalPos.name)} · ${escapeHtml(sellModalPos.wkn)} · max. ${sellModalPos.stuecke} Stücke</p>
+        <div class="modal-fields">
+          <div class="field">
+            <label>Verkaufte Stücke (max. ${sellModalPos.stuecke})</label>
+            <input type="text" id="s-stuecke" placeholder="${sellModalPos.stuecke}" />
+            <div class="err" id="se-stuecke"></div>
+          </div>
+          <div class="field">
+            <label>Verkaufskurs (€)</label>
+            <input type="text" id="s-preis" placeholder="180,00" />
+            <div class="err" id="se-preis"></div>
+          </div>
+          <div class="field">
+            <label>Verkaufdatum</label>
+            <input type="date" id="s-datum" value="${today}" />
+            <div class="err" id="se-datum"></div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeSell()">Abbrechen</button>
+          <button class="btn-confirm" onclick="confirmSell()">Verkauf buchen</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function render() {
+  renderCards();
+  renderBestandTable();
+  renderVerkauftTable();
+  setTab(activeTab);
+}
+
+// ---------- Init ----------
+loadData();
+render();
+</script>
+</body>
+</html>

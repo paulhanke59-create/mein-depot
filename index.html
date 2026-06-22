@@ -24,7 +24,9 @@
   .summary td.r { text-align:right; }
   .summary tr:last-child td { border-bottom:none; }
   .summary .total-row td { border-top:2px solid #2a2f3e; font-weight:700; font-size:14px; background:#131720; }
-  .summary .no-data { padding:20px; text-align:center; color:#4b5563; font-size:13px; }
+  .summary tr.clickable { cursor:pointer; }
+  .summary tr.clickable:hover td { background:#1e2332; }
+  .summary tr.clickable.sel td { background:#1a2235; }
   .add-panel { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:14px; padding:20px 24px; margin-bottom:28px; }
   .add-panel h2 { margin:0 0 16px; font-size:14px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; }
   .form-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1.3fr 1.3fr auto; gap:12px; align-items:end; }
@@ -206,7 +208,6 @@ function addPosition() {
 function setTxType(id, type) {
   document.getElementById("tx-kauf-"+id).classList.toggle("tx-active", type==="kauf");
   document.getElementById("tx-vk-"+id).classList.toggle("tx-active", type==="vk");
-  document.getElementById("tx-btn-"+id).textContent = type==="kauf" ? "Zukauf buchen" : "Verkauf buchen";
   document.getElementById("tx-btn-"+id).dataset.type = type;
   const pos = positions.find(p=>p.id===id);
   document.getElementById("tx-stuecke-"+id).placeholder = type==="kauf" ? "5" : String(pos.stuecke);
@@ -274,7 +275,25 @@ function refreshGewinnDisplay(id) {
   if(del) del.textContent = g && g.updatedAt ? "Stand: "+fdate(g.updatedAt) : "";
 }
 
-// ---------- toggle expand ----------
+// ---------- summary → bestand verknüpfen ----------
+function openFromSummary(id) {
+  // Tab auf Bestand schalten
+  setTab("bestand");
+  // aufklappen (oder zuklappen wenn schon offen)
+  expandedId = (expandedId === id) ? null : id;
+  renderBestand();
+  renderCards(); // summary highlight aktualisieren
+  // zur Bestandsliste scrollen
+  if (expandedId === id) {
+    setTimeout(() => {
+      const panel = document.getElementById("bestand-panel");
+      if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => { const el = document.getElementById("ki-"+id); if(el) el.focus(); }, 300);
+    }, 50);
+  }
+}
+
+// ---------- toggle expand (aus Bestandsliste) ----------
 function toggleExpand(id) {
   expandedId = (expandedId===id) ? null : id;
   renderBestand();
@@ -307,7 +326,8 @@ function renderCards() {
     const dp = diff !== null ? (diff / inv) * 100 : null;
     totalInv += inv;
     totalAkt += akt !== null ? akt : inv;
-    return `<tr>
+    const isSel = expandedId === pos.id;
+    return `<tr class="clickable${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
       <td><span style="font-weight:600;color:#e8eaf0">${esc(pos.name)}</span><span style="color:#6b7280;font-size:11px;margin-left:8px">${esc(pos.wkn)}</span></td>
       <td class="r">${cur(inv)}</td>
       <td class="r">${akt !== null ? cur(akt) : '<span style="color:#4b5563">—</span>'}</td>
@@ -403,7 +423,7 @@ function renderBestand() {
               </div>
               <div class="ifield"><label>Kurs (€)</label><input type="text" id="tx-preis-${pos.id}" placeholder="150,00" /></div>
               <div class="ifield"><label>Datum</label><input type="date" id="tx-datum-${pos.id}" value="${today}" /></div>
-              <button class="btn-sm-confirm blue" id="tx-btn-${pos.id}" data-type="kauf" onclick="doTx(${pos.id})">Zukauf buchen</button>
+              <button class="btn-sm-confirm blue" id="tx-btn-${pos.id}" data-type="kauf" onclick="doTx(${pos.id})">Buchen</button>
             </div>
           </div>
 

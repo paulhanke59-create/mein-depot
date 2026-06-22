@@ -108,8 +108,11 @@
 <div class="wrap">
   <div id="summary"></div>
 
-  <div class="add-panel">
-    <h2>+ Position hinzufügen</h2>
+  <div id="add-panel" class="add-panel" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin:0">Neue Aktie</h2>
+      <button onclick="toggleAddForm(false)" style="background:none;border:none;color:#6b7280;font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
     <div class="form-grid">
       <div class="field"><label>Name</label><input type="text" id="f-name" placeholder="Apple Inc." /><div class="err" id="e-name"></div></div>
       <div class="field"><label>WKN</label><input type="text" id="f-wkn" placeholder="865985" /><div class="err" id="e-wkn"></div></div>
@@ -180,6 +183,12 @@ function getGewinn(pos) {
   return { kurs:k, diff:(k-pos.preis)*pos.stuecke, pct:((k-pos.preis)/pos.preis)*100, updatedAt:e.updatedAt };
 }
 
+// ---------- add form toggle ----------
+function toggleAddForm(open) {
+  document.getElementById("add-panel").style.display = open ? "block" : "none";
+  if (open) setTimeout(() => document.getElementById("f-name").focus(), 50);
+}
+
 // ---------- add position ----------
 function addPosition() {
   const n=document.getElementById("f-name").value.trim();
@@ -201,6 +210,7 @@ function addPosition() {
   positions.push({ id:Date.now(), name:n, wkn:w.toUpperCase(), stuecke:num(st), preis:num(pr), datum:da });
   ["name","wkn","stuecke","preis"].forEach(k=>document.getElementById("f-"+k).value="");
   document.getElementById("f-datum").value="";
+  toggleAddForm(false);
   save(); render();
 }
 
@@ -315,7 +325,12 @@ function setTab(t) {
 // ---------- render summary ----------
 function renderCards() {
   const el = document.getElementById("summary");
-  if (!positions.length) { el.innerHTML = ""; return; }
+  if (!positions.length) {
+    el.innerHTML = `<div class="summary" style="padding:16px">
+      <button class="btn-primary" onclick="toggleAddForm(true)" style="font-size:13px;padding:8px 16px">+ Neue Aktie aufnehmen</button>
+    </div>`;
+    return;
+  }
 
   let totalInv = 0, totalAkt = 0, totalDiff = 0;
   const rows = positions.map(pos => {
@@ -359,6 +374,9 @@ function renderCards() {
         </tr>
       </tbody>
     </table>
+    <div style="padding:14px 16px;border-top:1px solid #2a2f3e">
+      <button class="btn-primary" onclick="toggleAddForm(true)" style="font-size:13px;padding:8px 16px">+ Neue Aktie aufnehmen</button>
+    </div>
   </div>`;
 }
 

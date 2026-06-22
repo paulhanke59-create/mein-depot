@@ -343,6 +343,15 @@ function openFromSummary(id) {
   }
 }
 
+// ---------- name/wkn speichern ----------
+function saveNameWkn(id) {
+  const name = document.getElementById("edit-name-"+id).value.trim();
+  const wkn  = document.getElementById("edit-wkn-"+id).value.trim();
+  if (!name) return;
+  positions = positions.map(p => p.id===id ? {...p, name, wkn: wkn.toUpperCase()} : p);
+  save(); renderCards(); renderEditPanel();
+}
+
 // ---------- render edit-panel ----------
 function renderEditPanel() {
   const panel = document.getElementById("edit-panel");
@@ -363,17 +372,52 @@ function renderEditPanel() {
 
   panel.innerHTML = `<div class="list-panel" style="margin-bottom:20px">
     <div class="expand-inner">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div>
-          <span style="font-weight:700;font-size:16px;color:#f0f2f8">${esc(pos.name)}</span>
-          <span style="color:#6b7280;font-size:12px;margin-left:8px">${esc(pos.wkn)}</span>
-        </div>
+
+      <!-- Kopfzeile mit Schließen -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <span style="font-weight:700;font-size:15px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Position bearbeiten</span>
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn-red" onclick="removePos(${pos.id})">✕ Entfernen</button>
           <button onclick="openFromSummary(${pos.id})" style="background:none;border:none;color:#6b7280;font-size:22px;cursor:pointer;line-height:1">×</button>
         </div>
       </div>
 
+      <!-- Name & WKN editierbar -->
+      <div class="expand-section">
+        <div class="section-label">✏️ Name &amp; WKN</div>
+        <div class="inline-form" style="align-items:flex-end">
+          <div class="ifield" style="flex:2">
+            <label>Name</label>
+            <input type="text" id="edit-name-${pos.id}" value="${esc(pos.name)}" placeholder="Apple Inc." style="width:100%" />
+          </div>
+          <div class="ifield" style="flex:1">
+            <label>WKN</label>
+            <input type="text" id="edit-wkn-${pos.id}" value="${esc(pos.wkn)}" placeholder="865985" style="width:100%" />
+          </div>
+          <button class="btn-sm-confirm" onclick="saveNameWkn(${pos.id})">Speichern</button>
+        </div>
+      </div>
+
+      <!-- Bestand & Kaufkurs -->
+      <div class="expand-section">
+        <div class="section-label">📋 Bestand</div>
+        <div class="kurs-results">
+          <div class="kurs-result-item">
+            <span class="rl">Stücke gesamt</span>
+            <span style="font-size:18px;font-weight:700;color:#e8eaf0">${pos.stuecke}</span>
+          </div>
+          <div class="kurs-result-item">
+            <span class="rl">Ø Kaufkurs</span>
+            <span style="font-size:18px;font-weight:700;color:#e8eaf0">${cur(pos.preis)}</span>
+          </div>
+          <div class="kurs-result-item">
+            <span class="rl">Investiert gesamt</span>
+            <span style="font-size:18px;font-weight:700;color:#e8eaf0">${cur(pos.preis*pos.stuecke)}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aktueller Kurs & Gewinn -->
       <div class="expand-section">
         <div class="section-label">📊 Aktueller Kurs</div>
         <div class="kurs-row">
@@ -387,6 +431,7 @@ function renderEditPanel() {
         </div>
       </div>
 
+      <!-- Transaktion -->
       <div class="expand-section">
         <div class="section-label">Transaktion</div>
         <div class="tx-toggle">
@@ -404,6 +449,7 @@ function renderEditPanel() {
           <button class="btn-sm-confirm blue" id="tx-btn-${pos.id}" data-type="kauf" onclick="doTx(${pos.id})">Buchen</button>
         </div>
       </div>
+
     </div>
   </div>`;
 }

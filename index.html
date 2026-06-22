@@ -15,11 +15,16 @@
   h1 { margin:0; font-size:24px; font-weight:800; letter-spacing:-0.5px; color:#f0f2f8; }
   .subtitle { margin:0; color:#6b7280; font-size:13px; }
   .wrap { max-width:1100px; margin:0 auto; padding:24px 32px 0; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:28px; }
-  .card { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:12px; padding:18px 20px; }
-  .card-label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
-  .card-value { font-size:22px; font-weight:800; }
-  .card-sub { font-size:13px; margin-top:2px; }
+  .summary { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:14px; overflow:hidden; margin-bottom:28px; }
+  .summary table { width:100%; border-collapse:collapse; }
+  .summary thead tr { background:#131720; border-bottom:1px solid #2a2f3e; }
+  .summary th { padding:10px 14px; text-align:left; font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; }
+  .summary th.r { text-align:right; }
+  .summary td { padding:11px 14px; font-size:13px; border-bottom:1px solid #1e2332; }
+  .summary td.r { text-align:right; }
+  .summary tr:last-child td { border-bottom:none; }
+  .summary .total-row td { border-top:2px solid #2a2f3e; font-weight:700; font-size:14px; background:#131720; }
+  .summary .no-data { padding:20px; text-align:center; color:#4b5563; font-size:13px; }
   .add-panel { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:14px; padding:20px 24px; margin-bottom:28px; }
   .add-panel h2 { margin:0 0 16px; font-size:14px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; }
   .form-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1.3fr 1.3fr auto; gap:12px; align-items:end; }
@@ -99,7 +104,7 @@
 </div>
 
 <div class="wrap">
-  <div class="cards" id="cards"></div>
+  <div id="summary"></div>
 
   <div class="add-panel">
     <h2>+ Position hinzufügen</h2>
@@ -288,19 +293,53 @@ function setTab(t) {
   document.getElementById("verkauft-panel").style.display = t==="verkauft"?"block":"none";
 }
 
-// ---------- render cards ----------
+// ---------- render summary ----------
 function renderCards() {
-  const inv = positions.reduce((s,p)=>s+p.preis*p.stuecke,0);
-  const cur2 = positions.reduce((s,p)=>{ const g=getGewinn(p); return s+(g?g.kurs*p.stuecke:p.preis*p.stuecke); },0);
-  const diff = cur2-inv;
-  const dp = inv>0?(diff/inv)*100:0;
-  const real = sold.reduce((s,e)=>s+e.gewinnJe,0);
-  document.getElementById("cards").innerHTML=[
-    {label:"Investiert",val:cur(inv),sub:null,color:"#94a3b8"},
-    {label:"Akt. Wert",val:cur(cur2),sub:null,color:"#94a3b8"},
-    {label:"Unrealisiert",val:cur(diff),sub:pct(dp),color:diff>=0?"#22c55e":"#ef4444"},
-    {label:"Realisiert",val:cur(real),sub:null,color:real>=0?"#22c55e":"#ef4444"},
-  ].map(c=>`<div class="card"><div class="card-label">${c.label}</div><div class="card-value" style="color:${c.color}">${c.val}</div>${c.sub?`<div class="card-sub" style="color:${c.color}">${c.sub}</div>`:""}</div>`).join("");
+  const el = document.getElementById("summary");
+  if (!positions.length) { el.innerHTML = ""; return; }
+
+  let totalInv = 0, totalAkt = 0, totalDiff = 0;
+  const rows = positions.map(pos => {
+    const inv = pos.preis * pos.stuecke;
+    const g = getGewinn(pos);
+    const akt = g ? g.kurs * pos.stuecke : null;
+    const diff = akt !== null ? akt - inv : null;
+    const dp = diff !== null ? (diff / inv) * 100 : null;
+    totalInv += inv;
+    totalAkt += akt !== null ? akt : inv;
+    return `<tr>
+      <td><span style="font-weight:600;color:#e8eaf0">${esc(pos.name)}</span><span style="color:#6b7280;font-size:11px;margin-left:8px">${esc(pos.wkn)}</span></td>
+      <td class="r">${cur(inv)}</td>
+      <td class="r">${akt !== null ? cur(akt) : '<span style="color:#4b5563">—</span>'}</td>
+      <td class="r">${diff !== null ? badge(diff, cur(diff)) : '<span style="color:#4b5563">—</span>'}</td>
+      <td class="r">${dp !== null ? badge(dp, pct(dp)) : '<span style="color:#4b5563">—</span>'}</td>
+    </tr>`;
+  }).join("");
+
+  totalDiff = totalAkt - totalInv;
+  const totalDp = totalInv > 0 ? (totalDiff / totalInv) * 100 : 0;
+
+  el.innerHTML = `<div class="summary">
+    <table>
+      <thead><tr>
+        <th>Position</th>
+        <th class="r">Investiert</th>
+        <th class="r">Akt. Wert</th>
+        <th class="r">Gewinn €</th>
+        <th class="r">Gewinn %</th>
+      </tr></thead>
+      <tbody>
+        ${rows}
+        <tr class="total-row">
+          <td>Gesamtdepot</td>
+          <td class="r">${cur(totalInv)}</td>
+          <td class="r">${cur(totalAkt)}</td>
+          <td class="r">${badge(totalDiff, cur(totalDiff))}</td>
+          <td class="r">${badge(totalDp, pct(totalDp))}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
 }
 
 // ---------- render bestand ----------
@@ -319,8 +358,6 @@ function renderBestand() {
     const mainRow=`<tr class="data-row${open?" open":""}" onclick="toggleExpand(${pos.id})">
       <td><span class="chevron${open?" open":""}">▶</span><span class="stock-name">${esc(pos.name)}</span><div class="stock-wkn">${esc(pos.wkn)}</div></td>
       <td class="muted">${fdate(pos.datum)}</td>
-      <td class="bold">${pos.stuecke}</td>
-      <td class="muted">${cur(pos.preis)}</td>
       <td class="muted">${cur(pos.preis*pos.stuecke)}</td>
       <td onclick="event.stopPropagation()"><button class="btn-red" onclick="removePos(${pos.id})">✕</button></td>
     </tr>`;
@@ -334,7 +371,7 @@ function renderBestand() {
       :`<span class="dim" style="font-size:13px;padding-top:8px">Kurs eingeben →</span>`;
 
     const expandRow=`<tr class="expand-row">
-      <td colspan="6">
+      <td colspan="4">
         <div class="expand-inner">
 
           <!-- Aktueller Kurs + Gewinn -->
@@ -378,7 +415,7 @@ function renderBestand() {
   }).join("");
 
   panel.innerHTML=`<table>
-    <thead><tr><th>Name / WKN</th><th>Kaufdatum</th><th>Stücke</th><th>Ø Kaufkurs</th><th>Invest.</th><th></th></tr></thead>
+    <thead><tr><th>Name / WKN</th><th>Kaufdatum</th><th>Investiert</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }

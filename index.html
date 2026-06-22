@@ -73,6 +73,10 @@
   .action-btns { display:flex; gap:6px; }
   .empty { padding:48px 24px; text-align:center; color:#6b7280; }
   .empty .em { font-size:40px; margin-bottom:12px; }
+  .tx-toggle { display:flex; gap:4px; margin-bottom:14px; }
+  .tx-toggle button { background:#0f1117; border:1px solid #2a2f3e; border-radius:7px; padding:7px 18px; color:#6b7280; font-size:13px; font-weight:600; cursor:pointer; }
+  .tx-toggle button.tx-active { background:#1e2a40; border-color:#3b82f6; color:#60a5fa; }
+  .tx-hint { font-size:11px; color:#6b7280; margin-top:3px; min-height:14px; }
   @media(max-width:800px) {
     .form-grid { grid-template-columns:1fr 1fr; }
     .wrap { padding-left:16px; padding-right:16px; }
@@ -193,43 +197,42 @@ function addPosition() {
   save(); render();
 }
 
-// ---------- kauf (Zukauf) ----------
-function doZukauf(id) {
-  const st = num(document.getElementById("zk-stuecke-"+id).value);
-  const pr = num(document.getElementById("zk-preis-"+id).value.replace(",","."));
-  const da = document.getElementById("zk-datum-"+id).value;
-  const stEl=document.getElementById("zk-stuecke-"+id), prEl=document.getElementById("zk-preis-"+id), daEl=document.getElementById("zk-datum-"+id);
-  let ok=true;
-  if(!st||st<=0){stEl.classList.add("error");ok=false;}else stEl.classList.remove("error");
-  if(!pr||pr<=0){prEl.classList.add("error");ok=false;}else prEl.classList.remove("error");
-  if(!da){daEl.classList.add("error");ok=false;}else daEl.classList.remove("error");
-  if(!ok) return;
+// ---------- transaktionstyp umschalten ----------
+function setTxType(id, type) {
+  document.getElementById("tx-kauf-"+id).classList.toggle("tx-active", type==="kauf");
+  document.getElementById("tx-vk-"+id).classList.toggle("tx-active", type==="vk");
+  document.getElementById("tx-btn-"+id).textContent = type==="kauf" ? "Zukauf buchen" : "Verkauf buchen";
+  document.getElementById("tx-btn-"+id).dataset.type = type;
   const pos = positions.find(p=>p.id===id);
-  // Weighted average price
-  const totalStuecke = pos.stuecke + st;
-  const avgPreis = (pos.preis * pos.stuecke + pr * st) / totalStuecke;
-  positions = positions.map(p => p.id===id ? {...p, stuecke:totalStuecke, preis:Math.round(avgPreis*10000)/10000} : p);
-  save(); render();
+  document.getElementById("tx-stuecke-"+id).placeholder = type==="kauf" ? "5" : String(pos.stuecke);
+  document.getElementById("tx-hint-"+id).textContent = type==="vk" ? `max. ${pos.stuecke} Stück` : "";
 }
 
-// ---------- verkauf ----------
-function doVerkauf(id) {
+// ---------- transaktion buchen ----------
+function doTx(id) {
+  const btn = document.getElementById("tx-btn-"+id);
+  const type = btn.dataset.type || "kauf";
   const pos = positions.find(p=>p.id===id);
-  const st = num(document.getElementById("vk-stuecke-"+id).value);
-  const pr = num(document.getElementById("vk-preis-"+id).value.replace(",","."));
-  const da = document.getElementById("vk-datum-"+id).value;
-  const stEl=document.getElementById("vk-stuecke-"+id), prEl=document.getElementById("vk-preis-"+id), daEl=document.getElementById("vk-datum-"+id);
+  const st = num(document.getElementById("tx-stuecke-"+id).value);
+  const pr = num(document.getElementById("tx-preis-"+id).value);
+  const da = document.getElementById("tx-datum-"+id).value;
+  const stEl=document.getElementById("tx-stuecke-"+id);
+  const prEl=document.getElementById("tx-preis-"+id);
+  const daEl=document.getElementById("tx-datum-"+id);
   let ok=true;
-  if(!st||st<=0||st>pos.stuecke){stEl.classList.add("error");ok=false;}else stEl.classList.remove("error");
+  const maxSt = type==="vk" ? pos.stuecke : Infinity;
+  if(!st||st<=0||st>maxSt){stEl.classList.add("error");ok=false;}else stEl.classList.remove("error");
   if(!pr||pr<=0){prEl.classList.add("error");ok=false;}else prEl.classList.remove("error");
   if(!da){daEl.classList.add("error");ok=false;}else daEl.classList.remove("error");
   if(!ok) return;
-  sold.push({ ...pos, stueckeVerkauft:st, verkaufspreis:pr, verkaufDatum:da, gewinnJe:(pr-pos.preis)*st, gewinnPct:((pr-pos.preis)/pos.preis)*100 });
-  if(st>=pos.stuecke) {
-    positions = positions.filter(p=>p.id!==id);
-    expandedId = null;
+  if(type==="kauf") {
+    const total = pos.stuecke + st;
+    const avg = (pos.preis*pos.stuecke + pr*st) / total;
+    positions = positions.map(p=>p.id===id?{...p,stuecke:total,preis:Math.round(avg*10000)/10000}:p);
   } else {
-    positions = positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st}:p);
+    sold.push({...pos, stueckeVerkauft:st, verkaufspreis:pr, verkaufDatum:da, gewinnJe:(pr-pos.preis)*st, gewinnPct:((pr-pos.preis)/pos.preis)*100});
+    if(st>=pos.stuecke) { positions=positions.filter(p=>p.id!==id); expandedId=null; }
+    else { positions=positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st}:p); }
   }
   save(); render();
 }
@@ -334,7 +337,7 @@ function renderBestand() {
       <td colspan="6">
         <div class="expand-inner">
 
-          <!-- Aktueller Kurs -->
+          <!-- Aktueller Kurs + Gewinn -->
           <div class="expand-section">
             <div class="section-label">📊 Aktueller Kurs</div>
             <div class="kurs-row">
@@ -348,25 +351,22 @@ function renderBestand() {
             </div>
           </div>
 
-          <!-- Zukauf -->
-          <div class="expand-section">
-            <div class="section-label">➕ Zukauf</div>
-            <div class="inline-form" onclick="event.stopPropagation()">
-              <div class="ifield"><label>Stücke</label><input type="text" id="zk-stuecke-${pos.id}" placeholder="5" /></div>
-              <div class="ifield"><label>Kurs (€)</label><input type="text" id="zk-preis-${pos.id}" placeholder="145,00" /></div>
-              <div class="ifield"><label>Datum</label><input type="date" id="zk-datum-${pos.id}" value="${today}" /></div>
-              <button class="btn-sm-confirm blue" onclick="doZukauf(${pos.id})">Zukauf buchen</button>
+          <!-- Einzel-Formular Kauf / Verkauf -->
+          <div class="expand-section" onclick="event.stopPropagation()">
+            <div class="section-label">Transaktion</div>
+            <div class="tx-toggle">
+              <button id="tx-kauf-${pos.id}" class="tx-active" onclick="setTxType(${pos.id},'kauf')">➕ Zukauf</button>
+              <button id="tx-vk-${pos.id}" onclick="setTxType(${pos.id},'vk')">📤 Verkauf</button>
             </div>
-          </div>
-
-          <!-- Verkauf -->
-          <div class="expand-section">
-            <div class="section-label">📤 Verkauf (max. ${pos.stuecke} Stück)</div>
-            <div class="inline-form" onclick="event.stopPropagation()">
-              <div class="ifield"><label>Stücke</label><input type="text" id="vk-stuecke-${pos.id}" placeholder="${pos.stuecke}" /></div>
-              <div class="ifield"><label>Kurs (€)</label><input type="text" id="vk-preis-${pos.id}" placeholder="200,00" /></div>
-              <div class="ifield"><label>Datum</label><input type="date" id="vk-datum-${pos.id}" value="${today}" /></div>
-              <button class="btn-sm-confirm" onclick="doVerkauf(${pos.id})">Verkauf buchen</button>
+            <div class="inline-form">
+              <div class="ifield">
+                <label>Stücke</label>
+                <input type="text" id="tx-stuecke-${pos.id}" placeholder="5" />
+                <div class="tx-hint" id="tx-hint-${pos.id}"></div>
+              </div>
+              <div class="ifield"><label>Kurs (€)</label><input type="text" id="tx-preis-${pos.id}" placeholder="150,00" /></div>
+              <div class="ifield"><label>Datum</label><input type="date" id="tx-datum-${pos.id}" value="${today}" /></div>
+              <button class="btn-sm-confirm blue" id="tx-btn-${pos.id}" data-type="kauf" onclick="doTx(${pos.id})">Zukauf buchen</button>
             </div>
           </div>
 

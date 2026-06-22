@@ -6,87 +6,82 @@
 <title>Mein Depot</title>
 <style>
   * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; background: #0f1117; color: #e8eaf0;
-    font-family: 'Inter','Segoe UI',sans-serif; padding-bottom: 60px;
-  }
-  input[type=text], input[type=date] {
-    background:#0f1117; border:1px solid #2a2f3e; border-radius:8px;
-    padding:9px 12px; color:#e8eaf0; font-size:14px; outline:none; color-scheme: dark;
-  }
-  input.error { border-color:#ef4444; }
-  .header { background: linear-gradient(135deg,#1a1f2e 0%,#141824 100%); border-bottom:1px solid #2a2f3e; padding:28px 32px 20px; }
+  body { margin:0; min-height:100vh; background:#0f1117; color:#e8eaf0; font-family:'Inter','Segoe UI',sans-serif; padding-bottom:60px; }
+  input[type=text], input[type=date] { background:#0f1117; border:1px solid #2a2f3e; border-radius:8px; padding:9px 12px; color:#e8eaf0; font-size:14px; outline:none; color-scheme:dark; width:100%; }
+  input.error { border-color:#ef4444 !important; }
+  .header { background:linear-gradient(135deg,#1a1f2e 0%,#141824 100%); border-bottom:1px solid #2a2f3e; padding:28px 32px 20px; }
   .header-inner { max-width:1100px; margin:0 auto; }
   .title-row { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
-  .title-row span.icon { font-size:26px; }
   h1 { margin:0; font-size:24px; font-weight:800; letter-spacing:-0.5px; color:#f0f2f8; }
   .subtitle { margin:0; color:#6b7280; font-size:13px; }
-  .container { max-width:1100px; margin:0 auto; padding:24px 32px 0; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+  .wrap { max-width:1100px; margin:0 auto; padding:24px 32px 0; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:28px; }
   .card { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:12px; padding:18px 20px; }
   .card-label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
   .card-value { font-size:22px; font-weight:800; }
   .card-sub { font-size:13px; margin-top:2px; }
-  .panel { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:14px; padding:20px 24px; margin-bottom:28px; }
-  .panel h2 { margin:0 0 16px; font-size:14px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; }
-  .form-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1.2fr 1.2fr auto; gap:12px; align-items:end; }
+  .add-panel { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:14px; padding:20px 24px; margin-bottom:28px; }
+  .add-panel h2 { margin:0 0 16px; font-size:14px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; }
+  .form-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1.3fr 1.3fr auto; gap:12px; align-items:end; }
   .field label { display:block; font-size:11px; color:#6b7280; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.8px; }
-  .field input { width:100%; }
-  .field .err { color:#ef4444; font-size:11px; margin-top:3px; }
-  .btn-primary {
-    background: linear-gradient(135deg,#3b82f6,#2563eb); border:none; border-radius:8px;
-    padding:10px 20px; color:#fff; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap;
-  }
-  .btn-sell { background:#1e2d20; border:1px solid #22c55e44; border-radius:6px; padding:5px 10px; color:#22c55e; font-size:12px; cursor:pointer; font-weight:600; }
-  .btn-del { background:#2d1e1e; border:1px solid #ef444444; border-radius:6px; padding:5px 10px; color:#ef4444; font-size:12px; cursor:pointer; font-weight:600; }
+  .err { color:#ef4444; font-size:11px; margin-top:3px; min-height:16px; }
+  .btn-primary { background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; border-radius:8px; padding:10px 20px; color:#fff; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; }
+  .btn-blue { background:#1e2a40; border:1px solid #3b82f644; border-radius:6px; padding:6px 12px; color:#60a5fa; font-size:12px; cursor:pointer; font-weight:600; }
+  .btn-green { background:#1e2d20; border:1px solid #22c55e44; border-radius:6px; padding:6px 12px; color:#22c55e; font-size:12px; cursor:pointer; font-weight:600; }
+  .btn-red { background:#2d1e1e; border:1px solid #ef444444; border-radius:6px; padding:6px 12px; color:#ef4444; font-size:12px; cursor:pointer; font-weight:600; }
+  .btn-sm-confirm { background:linear-gradient(135deg,#22c55e,#16a34a); border:none; border-radius:6px; padding:8px 16px; color:#fff; font-weight:700; font-size:13px; cursor:pointer; }
+  .btn-sm-confirm.blue { background:linear-gradient(135deg,#3b82f6,#2563eb); }
   .tabs { display:flex; gap:4px; margin-bottom:20px; background:#1a1f2e; border:1px solid #2a2f3e; border-radius:10px; padding:4px; width:fit-content; }
   .tab-btn { background:transparent; border:none; border-radius:7px; padding:8px 20px; color:#6b7280; font-weight:600; font-size:14px; cursor:pointer; }
   .tab-btn.active { background:#3b82f6; color:#fff; }
+  .list-panel { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:14px; overflow:hidden; margin-bottom:28px; }
   table { width:100%; border-collapse:collapse; }
   thead tr { background:#131720; border-bottom:1px solid #2a2f3e; }
-  th { padding:12px 16px; text-align:left; font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; }
-  th.center { text-align:center; }
-  td { padding:14px 16px; }
-  tbody tr { border-bottom:1px solid #1e2332; }
-  tbody tr:last-child { border-bottom:none; }
-  tbody tr:hover { background:#1e2332; }
-  .name { font-weight:700; font-size:15px; color:#f0f2f8; }
-  .wkn { font-size:11px; color:#6b7280; margin-top:2px; }
+  th { padding:11px 14px; text-align:left; font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; }
+  td { padding:13px 14px; vertical-align:middle; }
+  .data-row { cursor:pointer; border-bottom:1px solid #1e2332; transition:background .1s; }
+  .data-row:hover, .data-row.open { background:#1e2332; }
+  .data-row:last-of-type { border-bottom:none; }
+  .chevron { display:inline-block; color:#6b7280; font-size:10px; margin-right:7px; transition:transform .15s; }
+  .chevron.open { transform:rotate(90deg); }
+  .stock-name { font-weight:700; font-size:14px; color:#f0f2f8; display:inline; }
+  .stock-wkn { font-size:11px; color:#6b7280; margin-top:2px; padding-left:17px; }
   .muted { color:#94a3b8; font-size:13px; }
   .bold { font-weight:600; color:#e8eaf0; }
-  .price-input { width:130px; padding:8px 12px; font-size:14px; }
-  .price-date { font-size:10px; color:#6b7280; margin-top:4px; }
   .badge { border-radius:6px; padding:2px 8px; font-weight:700; font-size:13px; display:inline-block; border:1px solid; }
   .badge.pos { color:#22c55e; background:rgba(34,197,94,0.12); border-color:#22c55e33; }
   .badge.neg { color:#ef4444; background:rgba(239,68,68,0.12); border-color:#ef444433; }
   .dim { color:#4b5563; }
+  .expand-row { border-bottom:1px solid #2a2f3e; }
+  .expand-row td { padding:0; }
+  .expand-inner { padding:20px; background:rgba(15,17,23,0.6); }
+  .expand-section { margin-bottom:18px; }
+  .expand-section:last-child { margin-bottom:0; }
+  .section-label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; font-weight:600; border-bottom:1px solid #2a2f3e; padding-bottom:6px; }
+  .kurs-row { display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; }
+  .kurs-input-wrap { flex:0 0 150px; }
+  .kurs-input-wrap label { display:block; font-size:11px; color:#6b7280; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.8px; }
+  .kurs-input-wrap input { width:150px; }
+  .kurs-results { display:flex; gap:20px; flex-wrap:wrap; align-items:center; }
+  .kurs-result-item { display:flex; flex-direction:column; gap:3px; }
+  .kurs-result-item .rl { font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; }
+  .kurs-date { font-size:10px; color:#6b7280; margin-top:4px; }
+  .inline-form { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+  .ifield { display:flex; flex-direction:column; gap:5px; }
+  .ifield label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; }
+  .ifield input { width:120px; }
+  .action-btns { display:flex; gap:6px; }
   .empty { padding:48px 24px; text-align:center; color:#6b7280; }
-  .empty .emoji { font-size:40px; margin-bottom:12px; }
-  .action-cell { display:flex; gap:6px; justify-content:center; }
-  .row-clickable { cursor:pointer; }
-  .row-clickable:hover { background:#1e2332; }
-  .row-clickable.expanded { background:#1e2332; }
-  .chevron { display:inline-block; color:#6b7280; font-size:11px; margin-right:6px; transition:transform .15s; }
-  .chevron.open { transform:rotate(90deg); }
-  .expand-row td { padding:0; border-bottom:1px solid #1e2332; }
-  .expand-content { padding:18px 20px; background:#15192580; display:flex; align-items:flex-start; gap:28px; flex-wrap:wrap; }
-  .expand-field label { display:block; font-size:11px; color:#6b7280; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.8px; }
-  .expand-result { display:flex; flex-direction:column; gap:4px; min-width:140px; }
-  .expand-result .r-label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.8px; }
-  .expand-hint { color:#4b5563; font-size:13px; padding-top:8px; }
-  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:100; }
-  .modal { background:#1a1f2e; border:1px solid #2a2f3e; border-radius:16px; padding:28px 32px; min-width:360px; max-width:90vw; }
-  .modal h3 { margin:0 0 6px; color:#f0f2f8; font-size:18px; font-weight:800; }
-  .modal p.sub { margin:0 0 20px; color:#6b7280; font-size:13px; }
-  .modal-fields { display:flex; flex-direction:column; gap:14px; }
-  .modal-actions { display:flex; gap:10px; margin-top:22px; justify-content:flex-end; }
-  .btn-cancel { background:transparent; border:1px solid #2a2f3e; border-radius:8px; padding:9px 18px; color:#94a3b8; cursor:pointer; font-size:14px; }
-  .btn-confirm { background: linear-gradient(135deg,#22c55e,#16a34a); border:none; border-radius:8px; padding:9px 20px; color:#fff; font-weight:700; font-size:14px; cursor:pointer; }
-  @media (max-width: 900px) {
-    .form-grid { grid-template-columns: 1fr 1fr; }
-    .container, .header-inner { padding-left:16px; padding-right:16px; }
+  .empty .em { font-size:40px; margin-bottom:12px; }
+  @media(max-width:800px) {
+    .form-grid { grid-template-columns:1fr 1fr; }
+    .wrap { padding-left:16px; padding-right:16px; }
+    .header-inner { padding-left:16px; padding-right:16px; }
     .header { padding-left:16px; padding-right:16px; }
-    table { font-size:13px; }
+    table { font-size:12px; }
+    td, th { padding:10px 10px; }
+    .kurs-input-wrap input { width:120px; }
+    .ifield input { width:100px; }
   }
 </style>
 </head>
@@ -94,42 +89,22 @@
 
 <div class="header">
   <div class="header-inner">
-    <div class="title-row"><span class="icon">📈</span><h1>Mein Depot</h1></div>
+    <div class="title-row"><span style="font-size:26px">📈</span><h1>Mein Depot</h1></div>
     <p class="subtitle">Aktien verwalten · Kurse aktualisieren · Gewinne im Blick</p>
   </div>
 </div>
 
-<div class="container">
+<div class="wrap">
   <div class="cards" id="cards"></div>
 
-  <div class="panel">
+  <div class="add-panel">
     <h2>+ Position hinzufügen</h2>
     <div class="form-grid">
-      <div class="field">
-        <label>Name</label>
-        <input type="text" id="f-name" placeholder="Apple Inc." />
-        <div class="err" id="e-name"></div>
-      </div>
-      <div class="field">
-        <label>WKN</label>
-        <input type="text" id="f-wkn" placeholder="865985" />
-        <div class="err" id="e-wkn"></div>
-      </div>
-      <div class="field">
-        <label>Stücke</label>
-        <input type="text" id="f-stuecke" placeholder="10" />
-        <div class="err" id="e-stuecke"></div>
-      </div>
-      <div class="field">
-        <label>Kaufpreis (€)</label>
-        <input type="text" id="f-preis" placeholder="150,00" />
-        <div class="err" id="e-preis"></div>
-      </div>
-      <div class="field">
-        <label>Kaufdatum</label>
-        <input type="date" id="f-datum" />
-        <div class="err" id="e-datum"></div>
-      </div>
+      <div class="field"><label>Name</label><input type="text" id="f-name" placeholder="Apple Inc." /><div class="err" id="e-name"></div></div>
+      <div class="field"><label>WKN</label><input type="text" id="f-wkn" placeholder="865985" /><div class="err" id="e-wkn"></div></div>
+      <div class="field"><label>Stücke</label><input type="text" id="f-stuecke" placeholder="10" /><div class="err" id="e-stuecke"></div></div>
+      <div class="field"><label>Kaufpreis (€)</label><input type="text" id="f-preis" placeholder="150,00" /><div class="err" id="e-preis"></div></div>
+      <div class="field"><label>Kaufdatum</label><input type="date" id="f-datum" /><div class="err" id="e-datum"></div></div>
       <button class="btn-primary" onclick="addPosition()">Hinzufügen</button>
     </div>
   </div>
@@ -139,415 +114,299 @@
     <button class="tab-btn" id="tab-verkauft" onclick="setTab('verkauft')">Verkauft (0)</button>
   </div>
 
-  <div id="bestand-panel" class="panel" style="padding:0; overflow:hidden;"></div>
-  <div id="verkauft-panel" class="panel" style="padding:0; overflow:hidden; display:none;"></div>
+  <div id="bestand-panel" class="list-panel"></div>
+  <div id="verkauft-panel" class="list-panel" style="display:none"></div>
 </div>
 
-<div id="sell-modal-root"></div>
-
 <script>
-const STORAGE_KEY = "depot-data-v1";
+const KEY = "depot-v3";
+let positions = [], sold = [], currentPrices = {}, expandedId = null, activeTab = "bestand";
 
-let positions = [];
-let sold = [];
-let currentPrices = {};
-let activeTab = "bestand";
-let sellModalPos = null;
-let expandedId = null;
-
-// ---------- Persistence ----------
+// ---------- load & migrate ----------
 function loadData() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    // Try new key first
+    let raw = localStorage.getItem(KEY);
+    if (!raw) {
+      // Migrate from old key
+      raw = localStorage.getItem("depot-data-v1");
+    }
     if (raw) {
       const d = JSON.parse(raw);
       positions = d.positions || [];
       sold = d.sold || [];
-      currentPrices = d.currentPrices || {};
+      // Migrate currentPrices: old format was {id: "123"}, new is {id: {kurs:"123", updatedAt:"..."}}
+      const cp = d.currentPrices || {};
+      currentPrices = {};
+      for (const [k, v] of Object.entries(cp)) {
+        if (typeof v === "object" && v !== null && "kurs" in v) {
+          currentPrices[k] = v;
+        } else if (v !== "" && v !== undefined && v !== null) {
+          currentPrices[k] = { kurs: String(v), updatedAt: null };
+        }
+      }
     }
-  } catch (e) { console.error("Fehler beim Laden:", e); }
+  } catch(e) { console.error(e); }
 }
 
-function saveData() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ positions, sold, currentPrices }));
-  } catch (e) { console.error("Fehler beim Speichern:", e); }
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify({ positions, sold, currentPrices })); } catch(e) {}
 }
 
-// ---------- Helpers ----------
-function formatCurrency(val) {
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(val);
-}
-function formatPercent(val) {
-  return (val >= 0 ? "+" : "") + val.toFixed(2).replace(".", ",") + " %";
-}
-function formatDate(d) {
-  return d ? new Date(d).toLocaleDateString("de-DE") : "—";
-}
-function toNum(str) {
-  return Number(String(str).replace(",", "."));
-}
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-}
+// ---------- helpers ----------
+function num(s) { return Number(String(s).replace(",",".")); }
+function cur(v) { return new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(v); }
+function pct(v) { return (v>=0?"+":"") + v.toFixed(2).replace(".",",") + " %"; }
+function fdate(d) { return d ? new Date(d).toLocaleDateString("de-DE") : "—"; }
+function esc(s) { const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+function badge(v,t) { return `<span class="badge ${v>=0?"pos":"neg"}">${t}</span>`; }
 
 function getGewinn(pos) {
-  const entry = currentPrices[pos.id];
-  if (!entry || entry.kurs === undefined || entry.kurs === "" || isNaN(toNum(entry.kurs))) return null;
-  const kurs = toNum(entry.kurs);
-  const diff = (kurs - pos.preis) * pos.stuecke;
-  const pct = ((kurs - pos.preis) / pos.preis) * 100;
-  return { diff, pct, kurs, updatedAt: entry.updatedAt };
+  const e = currentPrices[pos.id];
+  if (!e) return null;
+  const k = num(e.kurs);
+  if (!k || isNaN(k)) return null;
+  return { kurs:k, diff:(k-pos.preis)*pos.stuecke, pct:((k-pos.preis)/pos.preis)*100, updatedAt:e.updatedAt };
 }
 
-// ---------- Add Position ----------
-function validateForm() {
-  const name = document.getElementById("f-name").value.trim();
-  const wkn = document.getElementById("f-wkn").value.trim();
-  const stuecke = document.getElementById("f-stuecke").value.trim();
-  const preis = document.getElementById("f-preis").value.trim();
-  const datum = document.getElementById("f-datum").value;
-
-  const errors = {};
-  if (!name) errors.name = "Pflichtfeld";
-  if (!wkn) errors.wkn = "Pflichtfeld";
-  if (!stuecke || isNaN(toNum(stuecke)) || toNum(stuecke) <= 0) errors.stuecke = "Positive Zahl";
-  if (!preis || isNaN(toNum(preis)) || toNum(preis) <= 0) errors.preis = "Positiver Betrag";
-  if (!datum) errors.datum = "Pflichtfeld";
-
-  ["name","wkn","stuecke","preis","datum"].forEach(k => {
-    document.getElementById("f-" + k).classList.toggle("error", !!errors[k]);
-    document.getElementById("e-" + k).textContent = errors[k] || "";
-  });
-
-  return { errors, values: { name, wkn, stuecke, preis, datum } };
-}
-
+// ---------- add position ----------
 function addPosition() {
-  const { errors, values } = validateForm();
-  if (Object.keys(errors).length) return;
-
-  positions.push({
-    id: Date.now(),
-    name: values.name,
-    wkn: values.wkn.toUpperCase(),
-    stuecke: toNum(values.stuecke),
-    preis: toNum(values.preis),
-    datum: values.datum,
+  const n=document.getElementById("f-name").value.trim();
+  const w=document.getElementById("f-wkn").value.trim();
+  const st=document.getElementById("f-stuecke").value.trim();
+  const pr=document.getElementById("f-preis").value.trim();
+  const da=document.getElementById("f-datum").value;
+  const errs={};
+  if(!n) errs.name="Pflichtfeld";
+  if(!w) errs.wkn="Pflichtfeld";
+  if(!st||isNaN(num(st))||num(st)<=0) errs.stuecke="Positive Zahl";
+  if(!pr||isNaN(num(pr))||num(pr)<=0) errs.preis="Positiver Betrag";
+  if(!da) errs.datum="Pflichtfeld";
+  ["name","wkn","stuecke","preis","datum"].forEach(k=>{
+    document.getElementById("f-"+k).classList.toggle("error",!!errs[k]);
+    document.getElementById("e-"+k).textContent=errs[k]||"";
   });
-
-  ["name","wkn","stuecke","preis"].forEach(k => document.getElementById("f-" + k).value = "");
-  document.getElementById("f-datum").value = "";
-
-  saveData();
-  render();
+  if(Object.keys(errs).length) return;
+  positions.push({ id:Date.now(), name:n, wkn:w.toUpperCase(), stuecke:num(st), preis:num(pr), datum:da });
+  ["name","wkn","stuecke","preis"].forEach(k=>document.getElementById("f-"+k).value="");
+  document.getElementById("f-datum").value="";
+  save(); render();
 }
 
-function removePosition(id) {
-  positions = positions.filter(p => p.id !== id);
+// ---------- kauf (Zukauf) ----------
+function doZukauf(id) {
+  const st = num(document.getElementById("zk-stuecke-"+id).value);
+  const pr = num(document.getElementById("zk-preis-"+id).value.replace(",","."));
+  const da = document.getElementById("zk-datum-"+id).value;
+  const stEl=document.getElementById("zk-stuecke-"+id), prEl=document.getElementById("zk-preis-"+id), daEl=document.getElementById("zk-datum-"+id);
+  let ok=true;
+  if(!st||st<=0){stEl.classList.add("error");ok=false;}else stEl.classList.remove("error");
+  if(!pr||pr<=0){prEl.classList.add("error");ok=false;}else prEl.classList.remove("error");
+  if(!da){daEl.classList.add("error");ok=false;}else daEl.classList.remove("error");
+  if(!ok) return;
+  const pos = positions.find(p=>p.id===id);
+  // Weighted average price
+  const totalStuecke = pos.stuecke + st;
+  const avgPreis = (pos.preis * pos.stuecke + pr * st) / totalStuecke;
+  positions = positions.map(p => p.id===id ? {...p, stuecke:totalStuecke, preis:Math.round(avgPreis*10000)/10000} : p);
+  save(); render();
+}
+
+// ---------- verkauf ----------
+function doVerkauf(id) {
+  const pos = positions.find(p=>p.id===id);
+  const st = num(document.getElementById("vk-stuecke-"+id).value);
+  const pr = num(document.getElementById("vk-preis-"+id).value.replace(",","."));
+  const da = document.getElementById("vk-datum-"+id).value;
+  const stEl=document.getElementById("vk-stuecke-"+id), prEl=document.getElementById("vk-preis-"+id), daEl=document.getElementById("vk-datum-"+id);
+  let ok=true;
+  if(!st||st<=0||st>pos.stuecke){stEl.classList.add("error");ok=false;}else stEl.classList.remove("error");
+  if(!pr||pr<=0){prEl.classList.add("error");ok=false;}else prEl.classList.remove("error");
+  if(!da){daEl.classList.add("error");ok=false;}else daEl.classList.remove("error");
+  if(!ok) return;
+  sold.push({ ...pos, stueckeVerkauft:st, verkaufspreis:pr, verkaufDatum:da, gewinnJe:(pr-pos.preis)*st, gewinnPct:((pr-pos.preis)/pos.preis)*100 });
+  if(st>=pos.stuecke) {
+    positions = positions.filter(p=>p.id!==id);
+    expandedId = null;
+  } else {
+    positions = positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st}:p);
+  }
+  save(); render();
+}
+
+// ---------- remove ----------
+function removePos(id) {
+  positions = positions.filter(p=>p.id!==id);
   delete currentPrices[id];
-  saveData();
-  render();
+  if(expandedId===id) expandedId=null;
+  save(); render();
 }
 
-function toggleExpand(id) {
-  expandedId = (expandedId === id) ? null : id;
-  renderBestandTable();
-}
-
-function updateCurrentPrice(id, val) {
-  if (val === "" || val === undefined) {
-    delete currentPrices[id];
-  } else {
-    currentPrices[id] = { kurs: val, updatedAt: new Date().toISOString().slice(0, 10) };
-  }
-  saveData();
+// ---------- current price ----------
+function updateKurs(id, val) {
+  if(val==="") { delete currentPrices[id]; }
+  else { currentPrices[id] = { kurs:val, updatedAt: new Date().toISOString().slice(0,10) }; }
+  save();
   renderCards();
-  refreshExpandResult(id);
+  refreshGewinnDisplay(id);
 }
 
-function refreshExpandResult(id) {
-  const pos = positions.find(p => p.id === id);
-  if (!pos) return;
+function refreshGewinnDisplay(id) {
+  const pos = positions.find(p=>p.id===id);
+  if(!pos) return;
   const g = getGewinn(pos);
-  const resultHost = document.getElementById("expand-result-" + id);
-  const dateHost = document.getElementById("price-date-" + id);
-  if (!resultHost) return;
+  const el = document.getElementById("gr-"+id);
+  const del = document.getElementById("gd-"+id);
+  if(!el) return;
+  el.innerHTML = g
+    ? `<div class="kurs-result-item"><span class="rl">Gewinn €</span>${badge(g.diff,cur(g.diff))}</div>
+       <div class="kurs-result-item"><span class="rl">Gewinn %</span>${badge(g.pct,pct(g.pct))}</div>
+       <div class="kurs-result-item"><span class="rl">Akt. Wert</span><span class="muted">${cur(g.kurs*pos.stuecke)}</span></div>`
+    : `<span class="dim" style="font-size:13px;padding-top:8px">Kurs eingeben →</span>`;
+  if(del) del.textContent = g && g.updatedAt ? "Stand: "+fdate(g.updatedAt) : "";
+}
 
-  resultHost.innerHTML = g ? `
-    <div class="expand-result">
-      <span class="r-label">Gewinn €</span>
-      ${badgeHtml(g.diff, formatCurrency(g.diff))}
-    </div>
-    <div class="expand-result">
-      <span class="r-label">Gewinn %</span>
-      ${badgeHtml(g.pct, formatPercent(g.pct))}
-    </div>
-    <div class="expand-result">
-      <span class="r-label">Akt. Wert</span>
-      <span class="muted" style="font-size:14px;">${formatCurrency(g.kurs * pos.stuecke)}</span>
-    </div>
-  ` : `<div class="expand-hint">Kurs eingeben, um den Gewinn zu berechnen</div>`;
-
-  if (dateHost) {
-    dateHost.innerHTML = g && g.updatedAt ? `Stand: ${formatDate(g.updatedAt)}` : "";
+// ---------- toggle expand ----------
+function toggleExpand(id) {
+  expandedId = (expandedId===id) ? null : id;
+  renderBestand();
+  if(expandedId===id) {
+    // auto-focus kurs input
+    setTimeout(()=>{ const el=document.getElementById("ki-"+id); if(el) el.focus(); },50);
   }
 }
 
-// ---------- Sell ----------
-function openSell(id) {
-  sellModalPos = positions.find(p => p.id === id);
-  renderSellModal();
-}
-function closeSell() {
-  sellModalPos = null;
-  renderSellModal();
-}
-function confirmSell() {
-  const stuecke = document.getElementById("s-stuecke").value.trim();
-  const preis = document.getElementById("s-preis").value.trim();
-  const datum = document.getElementById("s-datum").value;
-
-  const errors = {};
-  const s = toNum(stuecke);
-  const p = toNum(preis);
-  if (!stuecke || isNaN(s) || s <= 0 || s > sellModalPos.stuecke) errors.stuecke = `Max. ${sellModalPos.stuecke}`;
-  if (!preis || isNaN(p) || p <= 0) errors.preis = "Positiver Betrag";
-  if (!datum) errors.datum = "Pflichtfeld";
-
-  ["stuecke","preis","datum"].forEach(k => {
-    document.getElementById("s-" + k).classList.toggle("error", !!errors[k]);
-    document.getElementById("se-" + k).textContent = errors[k] || "";
-  });
-  if (Object.keys(errors).length) return;
-
-  sold.push({
-    ...sellModalPos,
-    stueckeVerkauft: s,
-    verkaufspreis: p,
-    verkaufDatum: datum,
-    gewinnJe: (p - sellModalPos.preis) * s,
-    gewinnPct: ((p - sellModalPos.preis) / sellModalPos.preis) * 100,
-  });
-
-  if (s >= sellModalPos.stuecke) {
-    positions = positions.filter(pp => pp.id !== sellModalPos.id);
-  } else {
-    positions = positions.map(pp => pp.id === sellModalPos.id ? { ...pp, stuecke: pp.stuecke - s } : pp);
-  }
-
-  saveData();
-  sellModalPos = null;
-  render();
+// ---------- tabs ----------
+function setTab(t) {
+  activeTab=t;
+  document.getElementById("tab-bestand").classList.toggle("active",t==="bestand");
+  document.getElementById("tab-verkauft").classList.toggle("active",t==="verkauft");
+  document.getElementById("bestand-panel").style.display = t==="bestand"?"block":"none";
+  document.getElementById("verkauft-panel").style.display = t==="verkauft"?"block":"none";
 }
 
-// ---------- Tabs ----------
-function setTab(tab) {
-  activeTab = tab;
-  document.getElementById("tab-bestand").classList.toggle("active", tab === "bestand");
-  document.getElementById("tab-verkauft").classList.toggle("active", tab === "verkauft");
-  document.getElementById("bestand-panel").style.display = tab === "bestand" ? "block" : "none";
-  document.getElementById("verkauft-panel").style.display = tab === "verkauft" ? "block" : "none";
-}
-
-// ---------- Render ----------
-function badgeHtml(val, text) {
-  const cls = val >= 0 ? "pos" : "neg";
-  return `<span class="badge ${cls}">${text}</span>`;
-}
-
+// ---------- render cards ----------
 function renderCards() {
-  const totalInvest = positions.reduce((s, p) => s + p.preis * p.stuecke, 0);
-  const totalCurrent = positions.reduce((s, p) => {
-    const g = getGewinn(p);
-    return s + (g ? g.kurs * p.stuecke : p.preis * p.stuecke);
-  }, 0);
-  const totalGewinn = totalCurrent - totalInvest;
-  const totalPct = totalInvest > 0 ? (totalGewinn / totalInvest) * 100 : 0;
-  const realizedGain = sold.reduce((s, e) => s + e.gewinnJe, 0);
-
-  const cards = [
-    { label: "Investiert", value: formatCurrency(totalInvest), sub: null, color: "#94a3b8" },
-    { label: "Akt. Wert", value: formatCurrency(totalCurrent), sub: null, color: "#94a3b8" },
-    { label: "Unrealisiert", value: formatCurrency(totalGewinn), sub: formatPercent(totalPct), color: totalGewinn >= 0 ? "#22c55e" : "#ef4444" },
-    { label: "Realisiert", value: formatCurrency(realizedGain), sub: null, color: realizedGain >= 0 ? "#22c55e" : "#ef4444" },
-  ];
-
-  document.getElementById("cards").innerHTML = cards.map(c => `
-    <div class="card">
-      <div class="card-label">${c.label}</div>
-      <div class="card-value" style="color:${c.color}">${c.value}</div>
-      ${c.sub ? `<div class="card-sub" style="color:${c.color}">${c.sub}</div>` : ""}
-    </div>
-  `).join("");
+  const inv = positions.reduce((s,p)=>s+p.preis*p.stuecke,0);
+  const cur2 = positions.reduce((s,p)=>{ const g=getGewinn(p); return s+(g?g.kurs*p.stuecke:p.preis*p.stuecke); },0);
+  const diff = cur2-inv;
+  const dp = inv>0?(diff/inv)*100:0;
+  const real = sold.reduce((s,e)=>s+e.gewinnJe,0);
+  document.getElementById("cards").innerHTML=[
+    {label:"Investiert",val:cur(inv),sub:null,color:"#94a3b8"},
+    {label:"Akt. Wert",val:cur(cur2),sub:null,color:"#94a3b8"},
+    {label:"Unrealisiert",val:cur(diff),sub:pct(dp),color:diff>=0?"#22c55e":"#ef4444"},
+    {label:"Realisiert",val:cur(real),sub:null,color:real>=0?"#22c55e":"#ef4444"},
+  ].map(c=>`<div class="card"><div class="card-label">${c.label}</div><div class="card-value" style="color:${c.color}">${c.val}</div>${c.sub?`<div class="card-sub" style="color:${c.color}">${c.sub}</div>`:""}</div>`).join("");
 }
 
-function renderBestandTable() {
-  document.getElementById("tab-bestand").textContent = `Bestand (${positions.length})`;
-  const panel = document.getElementById("bestand-panel");
+// ---------- render bestand ----------
+function renderBestand() {
+  document.getElementById("tab-bestand").textContent=`Bestand (${positions.length})`;
+  const panel=document.getElementById("bestand-panel");
+  if(!positions.length) { panel.innerHTML=`<div class="empty"><div class="em">📂</div>Noch keine Positionen.</div>`; return; }
 
-  if (positions.length === 0) {
-    panel.innerHTML = `<div class="empty"><div class="emoji">📂</div><div>Noch keine Positionen — füge deine erste Aktie hinzu.</div></div>`;
-    return;
-  }
+  const today=new Date().toISOString().slice(0,10);
+  const rows=positions.map(pos=>{
+    const open=expandedId===pos.id;
+    const g=getGewinn(pos);
+    const kv=(currentPrices[pos.id]||{}).kurs||"";
+    const kd=(currentPrices[pos.id]||{}).updatedAt;
 
-  const rows = positions.map(pos => {
-    const isOpen = expandedId === pos.id;
-    const g = getGewinn(pos);
-    const cpEntry = currentPrices[pos.id];
-    const cpVal = cpEntry ? cpEntry.kurs : "";
+    const mainRow=`<tr class="data-row${open?" open":""}" onclick="toggleExpand(${pos.id})">
+      <td><span class="chevron${open?" open":""}">▶</span><span class="stock-name">${esc(pos.name)}</span><div class="stock-wkn">${esc(pos.wkn)}</div></td>
+      <td class="muted">${fdate(pos.datum)}</td>
+      <td class="bold">${pos.stuecke}</td>
+      <td class="muted">${cur(pos.preis)}</td>
+      <td class="muted">${cur(pos.preis*pos.stuecke)}</td>
+      <td onclick="event.stopPropagation()"><button class="btn-red" onclick="removePos(${pos.id})">✕</button></td>
+    </tr>`;
 
-    const mainRow = `
-      <tr class="row-clickable ${isOpen ? "expanded" : ""}" onclick="toggleExpand(${pos.id})">
-        <td><span class="chevron ${isOpen ? "open" : ""}">▶</span><span class="name" style="display:inline">${escapeHtml(pos.name)}</span><div class="wkn" style="margin-left:17px;">${escapeHtml(pos.wkn)}</div></td>
-        <td class="muted">${formatDate(pos.datum)}</td>
-        <td class="bold">${pos.stuecke}</td>
-        <td class="muted">${formatCurrency(pos.preis)}</td>
-        <td class="muted">${formatCurrency(pos.preis * pos.stuecke)}</td>
-        <td onclick="event.stopPropagation()">
-          <div class="action-cell">
-            <button class="btn-sell" onclick="openSell(${pos.id})">Verkauf</button>
-            <button class="btn-del" onclick="removePosition(${pos.id})">✕</button>
-          </div>
-        </td>
-      </tr>
-    `;
+    if(!open) return mainRow;
 
-    let expandRow = "";
-    if (isOpen) {
-      const resultBlockHtml = g ? `
-        <div class="expand-result">
-          <span class="r-label">Gewinn €</span>
-          ${badgeHtml(g.diff, formatCurrency(g.diff))}
-        </div>
-        <div class="expand-result">
-          <span class="r-label">Gewinn %</span>
-          ${badgeHtml(g.pct, formatPercent(g.pct))}
-        </div>
-        <div class="expand-result">
-          <span class="r-label">Akt. Wert</span>
-          <span class="muted" style="font-size:14px;">${formatCurrency(g.kurs * pos.stuecke)}</span>
-        </div>
-      ` : `<div class="expand-hint">Kurs eingeben, um den Gewinn zu berechnen</div>`;
+    const gewinnHtml=g
+      ?`<div class="kurs-result-item"><span class="rl">Gewinn €</span>${badge(g.diff,cur(g.diff))}</div>
+         <div class="kurs-result-item"><span class="rl">Gewinn %</span>${badge(g.pct,pct(g.pct))}</div>
+         <div class="kurs-result-item"><span class="rl">Akt. Wert</span><span class="muted">${cur(g.kurs*pos.stuecke)}</span></div>`
+      :`<span class="dim" style="font-size:13px;padding-top:8px">Kurs eingeben →</span>`;
 
-      const dateLabelHtml = g && g.updatedAt ? `Stand: ${formatDate(g.updatedAt)}` : "";
+    const expandRow=`<tr class="expand-row">
+      <td colspan="6">
+        <div class="expand-inner">
 
-      expandRow = `
-        <tr class="expand-row">
-          <td colspan="6">
-            <div class="expand-content">
-              <div class="expand-field">
-                <label>Aktueller Kurs (€)</label>
-                <input type="text" class="price-input" id="price-input-${pos.id}" value="${escapeHtml(cpVal)}"
-                  placeholder="z.B. 180,00" onclick="event.stopPropagation()"
-                  oninput="updateCurrentPrice(${pos.id}, this.value)" />
-                <div class="price-date" id="price-date-${pos.id}">${dateLabelHtml}</div>
+          <!-- Aktueller Kurs -->
+          <div class="expand-section">
+            <div class="section-label">📊 Aktueller Kurs</div>
+            <div class="kurs-row">
+              <div class="kurs-input-wrap">
+                <label>Kurs (€)</label>
+                <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 180,00"
+                  onclick="event.stopPropagation()" oninput="updateKurs(${pos.id},this.value)" />
+                <div class="kurs-date" id="gd-${pos.id}">${kd?"Stand: "+fdate(kd):""}</div>
               </div>
-              <div id="expand-result-${pos.id}" style="display:flex; gap:28px; flex-wrap:wrap;">${resultBlockHtml}</div>
+              <div class="kurs-results" id="gr-${pos.id}">${gewinnHtml}</div>
             </div>
-          </td>
-        </tr>
-      `;
-    }
+          </div>
+
+          <!-- Zukauf -->
+          <div class="expand-section">
+            <div class="section-label">➕ Zukauf</div>
+            <div class="inline-form" onclick="event.stopPropagation()">
+              <div class="ifield"><label>Stücke</label><input type="text" id="zk-stuecke-${pos.id}" placeholder="5" /></div>
+              <div class="ifield"><label>Kurs (€)</label><input type="text" id="zk-preis-${pos.id}" placeholder="145,00" /></div>
+              <div class="ifield"><label>Datum</label><input type="date" id="zk-datum-${pos.id}" value="${today}" /></div>
+              <button class="btn-sm-confirm blue" onclick="doZukauf(${pos.id})">Zukauf buchen</button>
+            </div>
+          </div>
+
+          <!-- Verkauf -->
+          <div class="expand-section">
+            <div class="section-label">📤 Verkauf (max. ${pos.stuecke} Stück)</div>
+            <div class="inline-form" onclick="event.stopPropagation()">
+              <div class="ifield"><label>Stücke</label><input type="text" id="vk-stuecke-${pos.id}" placeholder="${pos.stuecke}" /></div>
+              <div class="ifield"><label>Kurs (€)</label><input type="text" id="vk-preis-${pos.id}" placeholder="200,00" /></div>
+              <div class="ifield"><label>Datum</label><input type="date" id="vk-datum-${pos.id}" value="${today}" /></div>
+              <button class="btn-sm-confirm" onclick="doVerkauf(${pos.id})">Verkauf buchen</button>
+            </div>
+          </div>
+
+        </div>
+      </td>
+    </tr>`;
 
     return mainRow + expandRow;
   }).join("");
 
-  panel.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>Name / WKN</th><th>Kaufdatum</th><th>Stücke</th><th>Kaufkurs</th><th>Invest.</th><th class="center"></th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
+  panel.innerHTML=`<table>
+    <thead><tr><th>Name / WKN</th><th>Kaufdatum</th><th>Stücke</th><th>Ø Kaufkurs</th><th>Invest.</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
-function renderVerkauftTable() {
-  document.getElementById("tab-verkauft").textContent = `Verkauft (${sold.length})`;
-  const panel = document.getElementById("verkauft-panel");
-
-  if (sold.length === 0) {
-    panel.innerHTML = `<div class="empty"><div class="emoji">🏦</div><div>Noch keine Verkäufe erfasst.</div></div>`;
-    return;
-  }
-
-  const rows = sold.map(e => `
-    <tr>
-      <td><div class="name">${escapeHtml(e.name)}</div><div class="wkn">${escapeHtml(e.wkn)}</div></td>
-      <td class="muted">${formatDate(e.datum)}</td>
-      <td class="muted">${formatDate(e.verkaufDatum)}</td>
-      <td class="bold">${e.stueckeVerkauft}</td>
-      <td class="muted">${formatCurrency(e.preis)}</td>
-      <td class="muted">${formatCurrency(e.verkaufspreis)}</td>
-      <td>${badgeHtml(e.gewinnJe, formatCurrency(e.gewinnJe))}</td>
-      <td>${badgeHtml(e.gewinnPct, formatPercent(e.gewinnPct))}</td>
-    </tr>
-  `).join("");
-
-  panel.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>Name / WKN</th><th>Kaufdatum</th><th>Verkaufdatum</th><th>Stücke</th>
-          <th>Kaufkurs</th><th>Verkaufskurs</th><th>Gewinn €</th><th>Gewinn %</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
+// ---------- render verkauft ----------
+function renderVerkauft() {
+  document.getElementById("tab-verkauft").textContent=`Verkauft (${sold.length})`;
+  const panel=document.getElementById("verkauft-panel");
+  if(!sold.length){ panel.innerHTML=`<div class="empty"><div class="em">🏦</div>Noch keine Verkäufe.</div>`; return; }
+  const rows=sold.map(e=>`<tr>
+    <td><div class="stock-name">${esc(e.name)}</div><div class="stock-wkn" style="padding-left:0">${esc(e.wkn)}</div></td>
+    <td class="muted">${fdate(e.datum)}</td>
+    <td class="muted">${fdate(e.verkaufDatum)}</td>
+    <td class="bold">${e.stueckeVerkauft}</td>
+    <td class="muted">${cur(e.preis)}</td>
+    <td class="muted">${cur(e.verkaufspreis)}</td>
+    <td>${badge(e.gewinnJe,cur(e.gewinnJe))}</td>
+    <td>${badge(e.gewinnPct,pct(e.gewinnPct))}</td>
+  </tr>`).join("");
+  panel.innerHTML=`<table>
+    <thead><tr><th>Name / WKN</th><th>Kaufdatum</th><th>Verkaufdatum</th><th>Stücke</th><th>Kaufkurs</th><th>Verkaufskurs</th><th>Gewinn €</th><th>Gewinn %</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
-function renderSellModal() {
-  const root = document.getElementById("sell-modal-root");
-  if (!sellModalPos) { root.innerHTML = ""; return; }
+function render() { renderCards(); renderBestand(); renderVerkauft(); setTab(activeTab); }
 
-  const today = new Date().toISOString().slice(0, 10);
-  root.innerHTML = `
-    <div class="modal-overlay" onclick="if(event.target===this) closeSell()">
-      <div class="modal">
-        <h3>Verkauf erfassen</h3>
-        <p class="sub">${escapeHtml(sellModalPos.name)} · ${escapeHtml(sellModalPos.wkn)} · max. ${sellModalPos.stuecke} Stücke</p>
-        <div class="modal-fields">
-          <div class="field">
-            <label>Verkaufte Stücke (max. ${sellModalPos.stuecke})</label>
-            <input type="text" id="s-stuecke" placeholder="${sellModalPos.stuecke}" />
-            <div class="err" id="se-stuecke"></div>
-          </div>
-          <div class="field">
-            <label>Verkaufskurs (€)</label>
-            <input type="text" id="s-preis" placeholder="180,00" />
-            <div class="err" id="se-preis"></div>
-          </div>
-          <div class="field">
-            <label>Verkaufdatum</label>
-            <input type="date" id="s-datum" value="${today}" />
-            <div class="err" id="se-datum"></div>
-          </div>
-        </div>
-        <div class="modal-actions">
-          <button class="btn-cancel" onclick="closeSell()">Abbrechen</button>
-          <button class="btn-confirm" onclick="confirmSell()">Verkauf buchen</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function render() {
-  renderCards();
-  renderBestandTable();
-  renderVerkauftTable();
-  setTab(activeTab);
-}
-
-// ---------- Init ----------
-loadData();
-render();
+loadData(); render();
 </script>
 </body>
 </html>

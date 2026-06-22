@@ -123,13 +123,7 @@
     </div>
   </div>
 
-  <div class="tabs">
-    <button class="tab-btn active" id="tab-bestand" onclick="setTab('bestand')">Bestand (0)</button>
-    <button class="tab-btn" id="tab-verkauft" onclick="setTab('verkauft')">Verkauft (0)</button>
-  </div>
-
-  <div id="bestand-panel" class="list-panel"></div>
-  <div id="verkauft-panel" class="list-panel" style="display:none"></div>
+  <div id="edit-panel"></div>
 </div>
 
 <script>
@@ -285,43 +279,6 @@ function refreshGewinnDisplay(id) {
   if(del) del.textContent = g && g.updatedAt ? "Stand: "+fdate(g.updatedAt) : "";
 }
 
-// ---------- summary → bestand verknüpfen ----------
-function openFromSummary(id) {
-  // Tab auf Bestand schalten
-  setTab("bestand");
-  // aufklappen (oder zuklappen wenn schon offen)
-  expandedId = (expandedId === id) ? null : id;
-  renderBestand();
-  renderCards(); // summary highlight aktualisieren
-  // zur Bestandsliste scrollen
-  if (expandedId === id) {
-    setTimeout(() => {
-      const panel = document.getElementById("bestand-panel");
-      if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
-      setTimeout(() => { const el = document.getElementById("ki-"+id); if(el) el.focus(); }, 300);
-    }, 50);
-  }
-}
-
-// ---------- toggle expand (aus Bestandsliste) ----------
-function toggleExpand(id) {
-  expandedId = (expandedId===id) ? null : id;
-  renderBestand();
-  if(expandedId===id) {
-    // auto-focus kurs input
-    setTimeout(()=>{ const el=document.getElementById("ki-"+id); if(el) el.focus(); },50);
-  }
-}
-
-// ---------- tabs ----------
-function setTab(t) {
-  activeTab=t;
-  document.getElementById("tab-bestand").classList.toggle("active",t==="bestand");
-  document.getElementById("tab-verkauft").classList.toggle("active",t==="verkauft");
-  document.getElementById("bestand-panel").style.display = t==="bestand"?"block":"none";
-  document.getElementById("verkauft-panel").style.display = t==="verkauft"?"block":"none";
-}
-
 // ---------- render summary ----------
 function renderCards() {
   const el = document.getElementById("summary");
@@ -331,8 +288,7 @@ function renderCards() {
     </div>`;
     return;
   }
-
-  let totalInv = 0, totalAkt = 0, totalDiff = 0;
+  let totalInv=0, totalAkt=0;
   const rows = positions.map(pos => {
     const inv = pos.preis * pos.stuecke;
     const g = getGewinn(pos);
@@ -345,23 +301,17 @@ function renderCards() {
     return `<tr class="clickable${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
       <td><span style="font-weight:600;color:#e8eaf0">${esc(pos.name)}</span><span style="color:#6b7280;font-size:11px;margin-left:8px">${esc(pos.wkn)}</span></td>
       <td class="r">${cur(inv)}</td>
-      <td class="r">${akt !== null ? cur(akt) : '<span style="color:#4b5563">—</span>'}</td>
-      <td class="r">${diff !== null ? badge(diff, cur(diff)) : '<span style="color:#4b5563">—</span>'}</td>
-      <td class="r">${dp !== null ? badge(dp, pct(dp)) : '<span style="color:#4b5563">—</span>'}</td>
+      <td class="r">${akt!==null?cur(akt):'<span style="color:#4b5563">—</span>'}</td>
+      <td class="r">${diff!==null?badge(diff,cur(diff)):'<span style="color:#4b5563">—</span>'}</td>
+      <td class="r">${dp!==null?badge(dp,pct(dp)):'<span style="color:#4b5563">—</span>'}</td>
     </tr>`;
   }).join("");
-
-  totalDiff = totalAkt - totalInv;
-  const totalDp = totalInv > 0 ? (totalDiff / totalInv) * 100 : 0;
-
+  const totalDiff = totalAkt - totalInv;
+  const totalDp = totalInv > 0 ? (totalDiff/totalInv)*100 : 0;
   el.innerHTML = `<div class="summary">
     <table>
       <thead><tr>
-        <th>Position</th>
-        <th class="r">Investiert</th>
-        <th class="r">Akt. Wert</th>
-        <th class="r">Gewinn €</th>
-        <th class="r">Gewinn %</th>
+        <th>Position</th><th class="r">Investiert</th><th class="r">Akt. Wert</th><th class="r">Gewinn €</th><th class="r">Gewinn %</th>
       </tr></thead>
       <tbody>
         ${rows}
@@ -369,8 +319,8 @@ function renderCards() {
           <td>Gesamtdepot</td>
           <td class="r">${cur(totalInv)}</td>
           <td class="r">${cur(totalAkt)}</td>
-          <td class="r">${badge(totalDiff, cur(totalDiff))}</td>
-          <td class="r">${badge(totalDp, pct(totalDp))}</td>
+          <td class="r">${badge(totalDiff,cur(totalDiff))}</td>
+          <td class="r">${badge(totalDp,pct(totalDp))}</td>
         </tr>
       </tbody>
     </table>
@@ -380,106 +330,85 @@ function renderCards() {
   </div>`;
 }
 
-// ---------- render bestand ----------
-function renderBestand() {
-  document.getElementById("tab-bestand").textContent=`Bestand (${positions.length})`;
-  const panel=document.getElementById("bestand-panel");
-  if(!positions.length) { panel.innerHTML=`<div class="empty"><div class="em">📂</div>Noch keine Positionen.</div>`; return; }
+// ---------- antippen in Summary → Edit-Panel öffnen ----------
+function openFromSummary(id) {
+  expandedId = (expandedId === id) ? null : id;
+  renderCards();
+  renderEditPanel();
+  if (expandedId === id) {
+    setTimeout(() => {
+      document.getElementById("edit-panel").scrollIntoView({ behavior:"smooth", block:"start" });
+      setTimeout(() => { const el=document.getElementById("ki-"+id); if(el) el.focus(); }, 200);
+    }, 30);
+  }
+}
 
-  const today=new Date().toISOString().slice(0,10);
-  const rows=positions.map(pos=>{
-    const open=expandedId===pos.id;
-    const g=getGewinn(pos);
-    const kv=(currentPrices[pos.id]||{}).kurs||"";
-    const kd=(currentPrices[pos.id]||{}).updatedAt;
+// ---------- render edit-panel ----------
+function renderEditPanel() {
+  const panel = document.getElementById("edit-panel");
+  if (!expandedId) { panel.innerHTML = ""; return; }
+  const pos = positions.find(p => p.id === expandedId);
+  if (!pos) { panel.innerHTML = ""; return; }
 
-    const mainRow=`<tr class="data-row${open?" open":""}" onclick="toggleExpand(${pos.id})">
-      <td><span class="chevron${open?" open":""}">▶</span><span class="stock-name">${esc(pos.name)}</span><div class="stock-wkn">${esc(pos.wkn)}</div></td>
-      <td class="muted">${fdate(pos.datum)}</td>
-      <td class="muted">${cur(pos.preis*pos.stuecke)}</td>
-      <td onclick="event.stopPropagation()"><button class="btn-red" onclick="removePos(${pos.id})">✕</button></td>
-    </tr>`;
+  const g = getGewinn(pos);
+  const kv = (currentPrices[pos.id]||{}).kurs || "";
+  const kd = (currentPrices[pos.id]||{}).updatedAt;
+  const today = new Date().toISOString().slice(0,10);
 
-    if(!open) return mainRow;
+  const gewinnHtml = g
+    ? `<div class="kurs-result-item"><span class="rl">Gewinn €</span>${badge(g.diff,cur(g.diff))}</div>
+       <div class="kurs-result-item"><span class="rl">Gewinn %</span>${badge(g.pct,pct(g.pct))}</div>
+       <div class="kurs-result-item"><span class="rl">Akt. Wert</span><span class="muted">${cur(g.kurs*pos.stuecke)}</span></div>`
+    : `<span class="dim" style="font-size:13px">Kurs eingeben →</span>`;
 
-    const gewinnHtml=g
-      ?`<div class="kurs-result-item"><span class="rl">Gewinn €</span>${badge(g.diff,cur(g.diff))}</div>
-         <div class="kurs-result-item"><span class="rl">Gewinn %</span>${badge(g.pct,pct(g.pct))}</div>
-         <div class="kurs-result-item"><span class="rl">Akt. Wert</span><span class="muted">${cur(g.kurs*pos.stuecke)}</span></div>`
-      :`<span class="dim" style="font-size:13px;padding-top:8px">Kurs eingeben →</span>`;
-
-    const expandRow=`<tr class="expand-row">
-      <td colspan="4">
-        <div class="expand-inner">
-
-          <!-- Aktueller Kurs + Gewinn -->
-          <div class="expand-section">
-            <div class="section-label">📊 Aktueller Kurs</div>
-            <div class="kurs-row">
-              <div class="kurs-input-wrap">
-                <label>Kurs (€)</label>
-                <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 180,00"
-                  onclick="event.stopPropagation()" oninput="updateKurs(${pos.id},this.value)" />
-                <div class="kurs-date" id="gd-${pos.id}">${kd?"Stand: "+fdate(kd):""}</div>
-              </div>
-              <div class="kurs-results" id="gr-${pos.id}">${gewinnHtml}</div>
-            </div>
-          </div>
-
-          <!-- Einzel-Formular Kauf / Verkauf -->
-          <div class="expand-section" onclick="event.stopPropagation()">
-            <div class="section-label">Transaktion</div>
-            <div class="tx-toggle">
-              <button id="tx-kauf-${pos.id}" class="tx-active" onclick="setTxType(${pos.id},'kauf')">➕ Zukauf</button>
-              <button id="tx-vk-${pos.id}" onclick="setTxType(${pos.id},'vk')">📤 Verkauf</button>
-            </div>
-            <div class="inline-form">
-              <div class="ifield">
-                <label>Stücke</label>
-                <input type="text" id="tx-stuecke-${pos.id}" placeholder="5" />
-                <div class="tx-hint" id="tx-hint-${pos.id}"></div>
-              </div>
-              <div class="ifield"><label>Kurs (€)</label><input type="text" id="tx-preis-${pos.id}" placeholder="150,00" /></div>
-              <div class="ifield"><label>Datum</label><input type="date" id="tx-datum-${pos.id}" value="${today}" /></div>
-              <button class="btn-sm-confirm blue" id="tx-btn-${pos.id}" data-type="kauf" onclick="doTx(${pos.id})">Buchen</button>
-            </div>
-          </div>
-
+  panel.innerHTML = `<div class="list-panel" style="margin-bottom:20px">
+    <div class="expand-inner">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div>
+          <span style="font-weight:700;font-size:16px;color:#f0f2f8">${esc(pos.name)}</span>
+          <span style="color:#6b7280;font-size:12px;margin-left:8px">${esc(pos.wkn)}</span>
         </div>
-      </td>
-    </tr>`;
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-red" onclick="removePos(${pos.id})">✕ Entfernen</button>
+          <button onclick="openFromSummary(${pos.id})" style="background:none;border:none;color:#6b7280;font-size:22px;cursor:pointer;line-height:1">×</button>
+        </div>
+      </div>
 
-    return mainRow + expandRow;
-  }).join("");
+      <div class="expand-section">
+        <div class="section-label">📊 Aktueller Kurs</div>
+        <div class="kurs-row">
+          <div class="kurs-input-wrap">
+            <label>Kurs (€)</label>
+            <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 180,00"
+              oninput="updateKurs(${pos.id},this.value)" />
+            <div class="kurs-date" id="gd-${pos.id}">${kd?"Stand: "+fdate(kd):""}</div>
+          </div>
+          <div class="kurs-results" id="gr-${pos.id}">${gewinnHtml}</div>
+        </div>
+      </div>
 
-  panel.innerHTML=`<table>
-    <thead><tr><th>Name / WKN</th><th>Kaufdatum</th><th>Investiert</th><th></th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+      <div class="expand-section">
+        <div class="section-label">Transaktion</div>
+        <div class="tx-toggle">
+          <button id="tx-kauf-${pos.id}" class="tx-active" onclick="setTxType(${pos.id},'kauf')">➕ Zukauf</button>
+          <button id="tx-vk-${pos.id}" onclick="setTxType(${pos.id},'vk')">📤 Verkauf</button>
+        </div>
+        <div class="inline-form">
+          <div class="ifield">
+            <label>Stücke</label>
+            <input type="text" id="tx-stuecke-${pos.id}" placeholder="5" />
+            <div class="tx-hint" id="tx-hint-${pos.id}"></div>
+          </div>
+          <div class="ifield"><label>Kurs (€)</label><input type="text" id="tx-preis-${pos.id}" placeholder="150,00" /></div>
+          <div class="ifield"><label>Datum</label><input type="date" id="tx-datum-${pos.id}" value="${today}" /></div>
+          <button class="btn-sm-confirm blue" id="tx-btn-${pos.id}" data-type="kauf" onclick="doTx(${pos.id})">Buchen</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
 
-// ---------- render verkauft ----------
-function renderVerkauft() {
-  document.getElementById("tab-verkauft").textContent=`Verkauft (${sold.length})`;
-  const panel=document.getElementById("verkauft-panel");
-  if(!sold.length){ panel.innerHTML=`<div class="empty"><div class="em">🏦</div>Noch keine Verkäufe.</div>`; return; }
-  const rows=sold.map(e=>`<tr>
-    <td><div class="stock-name">${esc(e.name)}</div><div class="stock-wkn" style="padding-left:0">${esc(e.wkn)}</div></td>
-    <td class="muted">${fdate(e.datum)}</td>
-    <td class="muted">${fdate(e.verkaufDatum)}</td>
-    <td class="bold">${e.stueckeVerkauft}</td>
-    <td class="muted">${cur(e.preis)}</td>
-    <td class="muted">${cur(e.verkaufspreis)}</td>
-    <td>${badge(e.gewinnJe,cur(e.gewinnJe))}</td>
-    <td>${badge(e.gewinnPct,pct(e.gewinnPct))}</td>
-  </tr>`).join("");
-  panel.innerHTML=`<table>
-    <thead><tr><th>Name / WKN</th><th>Kaufdatum</th><th>Verkaufdatum</th><th>Stücke</th><th>Kaufkurs</th><th>Verkaufskurs</th><th>Gewinn €</th><th>Gewinn %</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-}
-
-function render() { renderCards(); renderBestand(); renderVerkauft(); setTab(activeTab); }
+function render() { renderCards(); renderEditPanel(); }
 
 loadData(); render();
 </script>

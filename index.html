@@ -158,32 +158,53 @@ let positions = [], sold = [], currentPrices = {}, expandedId = null, activeTab 
 // ---------- load & migrate ----------
 function loadData() {
   try {
-    // Try new key first
-    let raw = localStorage.getItem(KEY);
-    if (!raw) {
-      // Migrate from old key
-      raw = localStorage.getItem("depot-data-v1");
+    const KEYS = ["depot-v3", "depot-data-v1", "depot-v2", "depot-v1"];
+    let raw = null;
+    for (const k of KEYS) {
+      raw = localStorage.getItem(k);
+      if (raw) { console.log("Depot: Daten gefunden unter Key:", k); break; }
     }
-    if (raw) {
-      const d = JSON.parse(raw);
-      positions = d.positions || [];
-      sold = d.sold || [];
-      // Migrate currentPrices: old format was {id: "123"}, new is {id: {kurs:"123", updatedAt:"..."}}
-      const cp = d.currentPrices || {};
-      currentPrices = {};
-      for (const [k, v] of Object.entries(cp)) {
-        if (typeof v === "object" && v !== null && "kurs" in v) {
-          currentPrices[k] = v;
-        } else if (v !== "" && v !== undefined && v !== null) {
-          currentPrices[k] = { kurs: String(v), updatedAt: null };
+    // Fallback: alle localStorage-Keys durchsuchen
+    if (!raw) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.toLowerCase().includes("depot")) {
+          raw = localStorage.getItem(k);
+          if (raw) { console.log("Depot: Daten gefunden unter unbekanntem Key:", k); break; }
         }
       }
     }
-  } catch(e) { console.error(e); }
+    if (!raw) { console.log("Depot: Keine gespeicherten Daten gefunden."); return; }
+    const d = JSON.parse(raw);
+    positions = d.positions || [];
+    sold = d.sold || [];
+    const cp = d.currentPrices || {};
+    currentPrices = {};
+    for (const [k, v] of Object.entries(cp)) {
+      if (typeof v === "object" && v !== null && "kurs" in v) {
+        currentPrices[k] = v;
+      } else if (v !== "" && v !== undefined && v !== null) {
+        currentPrices[k] = { kurs: String(v), updatedAt: null };
+      }
+    }
+    // Daten unter aktuellem Key neu speichern (Migration)
+    save();
+    console.log("Depot: Geladen —", positions.length, "Positionen,", sold.length, "Verkäufe");
+  } catch(e) { console.error("Depot Ladefehler:", e); }
 }
 
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ positions, sold, currentPrices })); } catch(e) {}
+  try {
+    const data = JSON.stringify({ positions, sold, currentPrices });
+    localStorage.setItem(KEY, data);
+    // Direkt zurücklesen zur Kontrolle
+    const check = localStorage.getItem(KEY);
+    if (!check) console.error("Depot: Speichern fehlgeschlagen — localStorage nicht beschreibbar!");
+  } catch(e) {
+    console.error("Depot Speicherfehler:", e);
+    // Privater Modus oder Speicher voll
+    alert("⚠️ Daten konnten nicht gespeichert werden. Bitte prüfe, ob der Browser im privaten/Inkognito-Modus läuft — in diesem Modus wird localStorage nach dem Schließen gelöscht.");
+  }
 }
 
 // ---------- helpers ----------

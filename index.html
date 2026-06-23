@@ -84,16 +84,41 @@
   .tx-toggle button { background:#0f1117; border:1px solid #2a2f3e; border-radius:7px; padding:7px 18px; color:#6b7280; font-size:13px; font-weight:600; cursor:pointer; }
   .tx-toggle button.tx-active { background:#1e2a40; border-color:#3b82f6; color:#60a5fa; }
   .tx-hint { font-size:11px; color:#6b7280; margin-top:3px; min-height:14px; }
-  @media(max-width:800px) {
-    .form-grid { grid-template-columns:1fr 1fr; }
-    .wrap { padding-left:16px; padding-right:16px; }
-    .header-inner { padding-left:16px; padding-right:16px; }
+  @media(max-width:600px) {
+    .wrap { padding-left:12px; padding-right:12px; }
     .header { padding-left:16px; padding-right:16px; }
+    .header-inner { padding-left:0; padding-right:0; }
+    h1 { font-size:20px; }
+    /* Summary: Tabelle ausblenden, Cards anzeigen */
+    .summary table, .summary thead, .summary tbody { display:none; }
+    .summary-cards { display:block !important; }
+    /* Edit-Panel: inline-form untereinander */
+    .inline-form { flex-direction:column; align-items:stretch; }
+    .ifield input { width:100% !important; }
+    .kurs-input-wrap input { width:100% !important; }
+    .kurs-row { flex-direction:column; align-items:stretch; }
+    .form-grid { grid-template-columns:1fr 1fr; }
     table { font-size:12px; }
-    td, th { padding:10px 10px; }
-    .kurs-input-wrap input { width:120px; }
-    .ifield input { width:100px; }
+    td, th { padding:8px 8px; }
   }
+  @media(min-width:601px) {
+    .summary-cards { display:none !important; }
+    .form-grid { grid-template-columns:2fr 1fr 1fr 1.3fr 1.3fr auto; }
+  }
+  /* Summary Card-Stil */
+  .summary-cards { background:#1a1f2e; border-radius:14px; border:1px solid #2a2f3e; overflow:hidden; margin-bottom:0; }
+  .s-card { padding:14px 16px; border-bottom:1px solid #1e2332; cursor:pointer; }
+  .s-card:active { background:#1e2332; }
+  .s-card.sel { background:#1a2235; }
+  .s-card-name { font-weight:700; font-size:15px; color:#f0f2f8; }
+  .s-card-wkn { font-size:11px; color:#6b7280; margin-left:8px; }
+  .s-card-row { display:flex; justify-content:space-between; margin-top:8px; gap:8px; flex-wrap:wrap; }
+  .s-card-item { display:flex; flex-direction:column; gap:2px; }
+  .s-card-item .sl { font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.7px; }
+  .s-card-item .sv { font-size:13px; color:#94a3b8; }
+  .s-total { padding:14px 16px; background:#131720; border-top:2px solid #2a2f3e; }
+  .s-total-label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; font-weight:600; }
+  .s-total-row { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
 </style>
 </head>
 <body>
@@ -296,7 +321,8 @@ function renderCards() {
     return;
   }
   let totalInv=0, totalAkt=0;
-  const rows = positions.map(pos => {
+
+  const posData = positions.map(pos => {
     const inv = pos.preis * pos.stuecke;
     const g = getGewinn(pos);
     const akt = g ? g.kurs * pos.stuecke : null;
@@ -304,24 +330,43 @@ function renderCards() {
     const dp = diff !== null ? (diff / inv) * 100 : null;
     totalInv += inv;
     totalAkt += akt !== null ? akt : inv;
-    const isSel = expandedId === pos.id;
-    return `<tr class="clickable${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
+    return { pos, inv, akt, diff, dp, isSel: expandedId === pos.id };
+  });
+
+  const totalDiff = totalAkt - totalInv;
+  const totalDp = totalInv > 0 ? (totalDiff/totalInv)*100 : 0;
+
+  // Desktop: Tabelle
+  const tableRows = posData.map(({pos,inv,akt,diff,dp,isSel}) =>
+    `<tr class="clickable${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
       <td><span style="font-weight:600;color:#e8eaf0">${esc(pos.name)}</span><span style="color:#6b7280;font-size:11px;margin-left:8px">${esc(pos.wkn)}</span></td>
       <td class="r">${cur(inv)}</td>
       <td class="r">${akt!==null?cur(akt):'<span style="color:#4b5563">—</span>'}</td>
       <td class="r">${diff!==null?badge(diff,cur(diff)):'<span style="color:#4b5563">—</span>'}</td>
       <td class="r">${dp!==null?badge(dp,pct(dp)):'<span style="color:#4b5563">—</span>'}</td>
-    </tr>`;
-  }).join("");
-  const totalDiff = totalAkt - totalInv;
-  const totalDp = totalInv > 0 ? (totalDiff/totalInv)*100 : 0;
+    </tr>`
+  ).join("");
+
+  // Mobile: Cards
+  const mobileCards = posData.map(({pos,inv,akt,diff,dp,isSel}) =>
+    `<div class="s-card${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
+      <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
+      <div class="s-card-row">
+        <div class="s-card-item"><span class="sl">Investiert</span><span class="sv">${cur(inv)}</span></div>
+        <div class="s-card-item"><span class="sl">Akt. Wert</span><span class="sv">${akt!==null?cur(akt):'—'}</span></div>
+        <div class="s-card-item"><span class="sl">Gewinn €</span>${diff!==null?badge(diff,cur(diff)):'<span class="sv">—</span>'}</div>
+        <div class="s-card-item"><span class="sl">Gewinn %</span>${dp!==null?badge(dp,pct(dp)):'<span class="sv">—</span>'}</div>
+      </div>
+    </div>`
+  ).join("");
+
   el.innerHTML = `<div class="summary">
     <table>
       <thead><tr>
         <th>Position</th><th class="r">Investiert</th><th class="r">Akt. Wert</th><th class="r">Gewinn €</th><th class="r">Gewinn %</th>
       </tr></thead>
       <tbody>
-        ${rows}
+        ${tableRows}
         <tr class="total-row">
           <td>Gesamtdepot</td>
           <td class="r">${cur(totalInv)}</td>
@@ -331,6 +376,18 @@ function renderCards() {
         </tr>
       </tbody>
     </table>
+    <div class="summary-cards">
+      ${mobileCards}
+      <div class="s-total">
+        <div class="s-total-label">Gesamtdepot</div>
+        <div class="s-total-row">
+          <div class="s-card-item"><span class="sl">Investiert</span><span style="font-weight:700;color:#e8eaf0">${cur(totalInv)}</span></div>
+          <div class="s-card-item"><span class="sl">Akt. Wert</span><span style="font-weight:700;color:#e8eaf0">${cur(totalAkt)}</span></div>
+          <div class="s-card-item"><span class="sl">Gewinn €</span>${badge(totalDiff,cur(totalDiff))}</div>
+          <div class="s-card-item"><span class="sl">Gewinn %</span>${badge(totalDp,pct(totalDp))}</div>
+        </div>
+      </div>
+    </div>
     <div style="padding:14px 16px;border-top:1px solid #2a2f3e">
       <button class="btn-primary" onclick="toggleAddForm(true)" style="font-size:13px;padding:8px 16px">+ Neue Aktie aufnehmen</button>
     </div>

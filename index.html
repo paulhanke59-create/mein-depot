@@ -201,27 +201,16 @@ function addPosition() {
     document.getElementById("e-"+k).textContent=errs[k]||"";
   });
   if(Object.keys(errs).length) return;
-  positions.push({ id:Date.now(), name:n, wkn:w.toUpperCase(), stuecke:num(st), preis:num(pr), datum:da });
+  positions.push({ id:Date.now(), name:n, wkn:w.toUpperCase(), stuecke:num(st), preis:num(pr), datum:da,
+    history:[{type:"kauf", stuecke:num(st), kurs:num(pr), datum:da}] });
   ["name","wkn","stuecke","preis"].forEach(k=>document.getElementById("f-"+k).value="");
   document.getElementById("f-datum").value="";
   toggleAddForm(false);
   save(); render();
 }
 
-// ---------- transaktionstyp umschalten ----------
-function setTxType(id, type) {
-  document.getElementById("tx-kauf-"+id).classList.toggle("tx-active", type==="kauf");
-  document.getElementById("tx-vk-"+id).classList.toggle("tx-active", type==="vk");
-  document.getElementById("tx-btn-"+id).dataset.type = type;
-  const pos = positions.find(p=>p.id===id);
-  document.getElementById("tx-stuecke-"+id).placeholder = type==="kauf" ? "5" : String(pos.stuecke);
-  document.getElementById("tx-hint-"+id).textContent = type==="vk" ? `max. ${pos.stuecke} Stück` : "";
-}
-
-// ---------- transaktion buchen ----------
-function doTx(id) {
-  const btn = document.getElementById("tx-btn-"+id);
-  const type = btn.dataset.type || "kauf";
+// ---------- transaktion direkt über Kauf/Verkauf-Button ----------
+function doTx(id, type) {
   const pos = positions.find(p=>p.id===id);
   const st = num(document.getElementById("tx-stuecke-"+id).value);
   const pr = num(document.getElementById("tx-preis-"+id).value);
@@ -235,14 +224,32 @@ function doTx(id) {
   if(!pr||pr<=0){prEl.classList.add("error");ok=false;}else prEl.classList.remove("error");
   if(!da){daEl.classList.add("error");ok=false;}else daEl.classList.remove("error");
   if(!ok) return;
+
+  // Historie-Eintrag anlegen
+  const histEntry = { type, stuecke:st, kurs:pr, datum:da };
+
   if(type==="kauf") {
     const total = pos.stuecke + st;
     const avg = (pos.preis*pos.stuecke + pr*st) / total;
-    positions = positions.map(p=>p.id===id?{...p,stuecke:total,preis:Math.round(avg*10000)/10000}:p);
+    positions = positions.map(p=>p.id===id ? {
+      ...p,
+      stuecke:total,
+      preis:Math.round(avg*10000)/10000,
+      history:[...(p.history||[]), histEntry]
+    } : p);
   } else {
-    sold.push({...pos, stueckeVerkauft:st, verkaufspreis:pr, verkaufDatum:da, gewinnJe:(pr-pos.preis)*st, gewinnPct:((pr-pos.preis)/pos.preis)*100});
-    if(st>=pos.stuecke) { positions=positions.filter(p=>p.id!==id); expandedId=null; }
-    else { positions=positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st}:p); }
+    const gewinnJe = (pr-pos.preis)*st;
+    const gewinnPct = ((pr-pos.preis)/pos.preis)*100;
+    sold.push({...pos, stueckeVerkauft:st, verkaufspreis:pr, verkaufDatum:da, gewinnJe, gewinnPct});
+    if(st>=pos.stuecke) {
+      positions=positions.filter(p=>p.id!==id); expandedId=null;
+    } else {
+      positions=positions.map(p=>p.id===id ? {
+        ...p,
+        stuecke:p.stuecke-st,
+        history:[...(p.history||[]), histEntry]
+      } : p);
+    }
   }
   save(); render();
 }
@@ -434,10 +441,6 @@ function renderEditPanel() {
       <!-- Transaktion -->
       <div class="expand-section">
         <div class="section-label">Transaktion</div>
-        <div class="tx-toggle">
-          <button id="tx-kauf-${pos.id}" class="tx-active" onclick="setTxType(${pos.id},'kauf')">➕ Zukauf</button>
-          <button id="tx-vk-${pos.id}" onclick="setTxType(${pos.id},'vk')">📤 Verkauf</button>
-        </div>
         <div class="inline-form">
           <div class="ifield">
             <label>Stücke</label>
@@ -446,8 +449,49 @@ function renderEditPanel() {
           </div>
           <div class="ifield"><label>Kurs (€)</label><input type="text" id="tx-preis-${pos.id}" placeholder="150,00" /></div>
           <div class="ifield"><label>Datum</label><input type="date" id="tx-datum-${pos.id}" value="${today}" /></div>
-          <button class="btn-sm-confirm blue" id="tx-btn-${pos.id}" data-type="kauf" onclick="doTx(${pos.id})">Buchen</button>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <button class="btn-sm-confirm blue" onclick="doTx(${pos.id},'kauf')">➕ Zukauf</button>
+            <button class="btn-sm-confirm" onclick="doTx(${pos.id},'vk')">📤 Verkauf</button>
+          </div>
         </div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px">max. ${pos.stuecke} Stück bei Verkauf</div>
+      </div>
+
+      <!-- Historie -->
+      <div class="expand-section">
+        <div class="section-label">📜 Historie</div>
+        ${(()=>{
+          const hist = pos.history || [];
+          const vk = sold.filter(e=>e.id===pos.id);
+          // Alle Einträge zusammenführen und nach Datum sortieren
+          const all = [
+            ...hist.map(h=>({...h, _src:"kauf"})),
+            ...vk.map(v=>({type:"vk", stuecke:v.stueckeVerkauft, kurs:v.verkaufspreis, datum:v.verkaufDatum, gewinnJe:v.gewinnJe, gewinnPct:v.gewinnPct, _src:"vk"}))
+          ].sort((a,b)=>a.datum.localeCompare(b.datum));
+          if(!all.length) return `<span class="dim" style="font-size:13px">Keine Einträge vorhanden</span>`;
+          return `<table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="border-bottom:1px solid #2a2f3e">
+              <th style="text-align:left;padding:6px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Datum</th>
+              <th style="text-align:left;padding:6px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Typ</th>
+              <th style="text-align:right;padding:6px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Stücke</th>
+              <th style="text-align:right;padding:6px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Kurs</th>
+              <th style="text-align:right;padding:6px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gesamt</th>
+              <th style="text-align:right;padding:6px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gewinn</th>
+            </tr></thead>
+            <tbody>${all.map(e=>`<tr style="border-bottom:1px solid #1e2332">
+              <td style="padding:7px 8px;color:#94a3b8">${fdate(e.datum)}</td>
+              <td style="padding:7px 8px">${e.type==="kauf"
+                ? '<span style="color:#60a5fa;font-weight:600">Kauf</span>'
+                : '<span style="color:#f97316;font-weight:600">Verkauf</span>'}</td>
+              <td style="padding:7px 8px;text-align:right;color:#e8eaf0">${e.stuecke}</td>
+              <td style="padding:7px 8px;text-align:right;color:#94a3b8">${cur(e.kurs)}</td>
+              <td style="padding:7px 8px;text-align:right;color:#94a3b8">${cur(e.kurs*e.stuecke)}</td>
+              <td style="padding:7px 8px;text-align:right">${e.type==="vk" && e.gewinnJe!==undefined
+                ? badge(e.gewinnJe, cur(e.gewinnJe))
+                : '<span style="color:#4b5563">—</span>'}</td>
+            </tr>`).join("")}</tbody>
+          </table>`;
+        })()}
       </div>
 
     </div>

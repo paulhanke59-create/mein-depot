@@ -377,8 +377,7 @@ function doTx(id,type){
     const gewinnPct=((pr-pos.preis)/pos.preis)*100;
     sold.push({...pos,stueckeVerkauft:st,verkaufspreis:pr,verkaufDatum:da,gewinnJe,gewinnPct});
     if(st>=pos.stuecke){positions=positions.filter(p=>p.id!==id);expandedId=null;}
-    else positions=positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st,
-      history:[...(p.history||[]),{type:"vk",stuecke:st,kurs:pr,datum:da,gewinnJe,gewinnPct}]}:p);
+    else positions=positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st}:p);
     toast("✅ Verkauf gebucht");
   }
   render();
@@ -494,9 +493,10 @@ function renderEditPanel(){
        <div class="kurs-result-item"><span class="rl">Akt. Wert</span><span class="muted">${cur(g.kurs*pos.stuecke)}</span></div>`
     :`<span class="dim" style="font-size:13px">Kurs eingeben →</span>`;
 
-  // Historie: Käufe aus pos.history + Verkäufe aus sold
+  // Historie: nur Käufe aus pos.history + Verkäufe aus sold (keine Duplikate)
+  const kaufEntries=(pos.history||[]).filter(e=>e.type==="kauf");
   const vkEntries=sold.filter(e=>e.wkn===pos.wkn).map(v=>({type:"vk",stuecke:v.stueckeVerkauft,kurs:v.verkaufspreis,datum:v.verkaufDatum,gewinnJe:v.gewinnJe,gewinnPct:v.gewinnPct}));
-  const allHist=[...(pos.history||[]),...vkEntries].sort((a,b)=>a.datum.localeCompare(b.datum));
+  const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>a.datum.localeCompare(b.datum));
   const histHtml=allHist.length?`<div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:400px">
       <thead><tr style="border-bottom:1px solid #2a2f3e">

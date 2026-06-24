@@ -154,10 +154,10 @@ function badge(v,t){return`<span class="badge ${v>=0?"pos":"neg"}">${t}</span>`}
 function toast(msg,ok=true){const el=document.getElementById("toast");el.textContent=msg;el.style.background=ok?"#22c55e":"#ef4444";el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2500)}
 
 function getGewinn(pos){
-  const e=currentPrices[pos.id];
+  const e=currentPrices[String(pos.id)];
   if(!e)return null;
   const k=num(e.kurs);
-  if(!k||isNaN(k))return null;
+  if(!k||isNaN(k)||k<=0)return null;
   return{kurs:k,diff:(k-pos.preis)*pos.stuecke,pct:((k-pos.preis)/pos.preis)*100,updatedAt:e.updatedAt};
 }
 
@@ -280,8 +280,9 @@ function saveNameWkn(id){
 
 // ---------- Kurs aktualisieren ----------
 function updateKurs(id,val){
-  if(val==="")delete currentPrices[id];
-  else currentPrices[id]={kurs:val,updatedAt:new Date().toISOString().slice(0,10)};
+  const sid=String(id);
+  if(val==="")delete currentPrices[sid];
+  else currentPrices[sid]={kurs:num(val),updatedAt:new Date().toISOString().slice(0,10)};
   renderCards();
   refreshGewinnDisplay(id);
 }
@@ -335,7 +336,7 @@ function doTx(id,type){
 function removePos(id){
   if(!confirm("Position wirklich entfernen?"))return;
   positions=positions.filter(p=>p.id!==id);
-  delete currentPrices[id];
+  delete currentPrices[String(id)];
   if(expandedId===id)expandedId=null;
   render();toast("Position entfernt");
 }
@@ -468,8 +469,8 @@ function renderEditPanel(){
   const pos=positions.find(p=>p.id===expandedId);
   if(!pos){panel.innerHTML="";return;}
   const g=getGewinn(pos);
-  const kv=(currentPrices[pos.id]||{}).kurs||"";
-  const kd=(currentPrices[pos.id]||{}).updatedAt;
+  const kv=(currentPrices[String(pos.id)]||{}).kurs||"";
+  const kd=(currentPrices[String(pos.id)]||{}).updatedAt;
   const today=new Date().toISOString().slice(0,10);
   const gewinnHtml=g
     ?`<div class="kurs-result-item"><span class="rl">Gewinn €</span>${badge(g.diff,cur(g.diff))}</div>

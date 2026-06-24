@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <title>Mein Depot</title>
 <style>
 *{box-sizing:border-box}
@@ -156,7 +159,7 @@ function toast(msg,ok=true){const el=document.getElementById("toast");el.textCon
 function getGewinn(pos){
   const e=currentPrices[String(pos.id)];
   if(!e)return null;
-  const k=num(e.kurs);
+  const k=typeof e.kurs==="number"?e.kurs:num(e.kurs);
   if(!k||isNaN(k)||k<=0)return null;
   return{kurs:k,diff:(k-pos.preis)*pos.stuecke,pct:((k-pos.preis)/pos.preis)*100,updatedAt:e.updatedAt};
 }
@@ -281,10 +284,24 @@ function saveNameWkn(id){
 // ---------- Kurs aktualisieren ----------
 function updateKurs(id,val){
   const sid=String(id);
-  if(val==="")delete currentPrices[sid];
-  else currentPrices[sid]={kurs:num(val),updatedAt:new Date().toISOString().slice(0,10)};
+  const parsed=num(val);
+  if(val===""||parsed<=0||isNaN(parsed)){
+    delete currentPrices[sid];
+  } else {
+    currentPrices[sid]={kurs:parsed,updatedAt:new Date().toISOString().slice(0,10)};
+  }
   renderCards();
-  refreshGewinnDisplay(id);
+  // Panel neu rendern aber Cursor-Position im Eingabefeld wiederherstellen
+  const inputEl=document.getElementById("ki-"+id);
+  const selStart=inputEl?inputEl.selectionStart:null;
+  const selEnd=inputEl?inputEl.selectionEnd:null;
+  renderEditPanel();
+  const newInput=document.getElementById("ki-"+id);
+  if(newInput){
+    newInput.value=val;
+    if(selStart!==null)try{newInput.setSelectionRange(selStart,selEnd);}catch(e){}
+    newInput.focus();
+  }
 }
 
 function refreshGewinnDisplay(id){

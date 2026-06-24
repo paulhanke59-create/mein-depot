@@ -501,56 +501,63 @@ function renderEditPanel(){
   }
 
   const aktKurs=g?g.kurs:null;
-  let fifoKaufIdx2=0; // separater Zähler fürs Rendern
+  let fifoKaufIdx2=0;
 
   const histHtml=allHist.length?`<div style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:480px">
-      <thead><tr style="border-bottom:1px solid #2a2f3e">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
+      <thead><tr style="border-bottom:1px solid #2a2f3e;background:#0f1117">
+        <th style="text-align:center;padding:5px 6px;font-size:10px;color:#6b7280;text-transform:uppercase;width:28px"></th>
         <th style="text-align:left;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Datum</th>
-        <th style="text-align:left;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Typ</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gekauft</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Im Bestand</th>
+        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Anzahl</th>
         <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Kurs</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gewinn (unreal.)</th>
+        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Betrag</th>
+        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Im Bestand</th>
+        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gewinn</th>
       </tr></thead>
       <tbody>${allHist.map(e=>{
         if(e.type==="kauf"){
           const lot=fifoLots[fifoKaufIdx2++];
           const imBestand=lot?lot.stueckeNoch:0;
           const vollVerkauft=imBestand===0;
-          // Unrealisierter Gewinn nur auf den noch gehaltenen Anteil
-          let unrealHtml='<span style="color:#4b5563">Kurs fehlt</span>';
-          if(aktKurs!==null){
-            if(vollVerkauft){
-              unrealHtml='<span style="color:#4b5563">Verkauft</span>';
-            } else {
-              const unrealGewinn=(aktKurs-e.kurs)*imBestand;
-              const unrealPct=((aktKurs-e.kurs)/e.kurs)*100;
-              unrealHtml=`${badge(unrealGewinn,cur(unrealGewinn))}<br><span style="font-size:10px;color:#6b7280">${pct(unrealPct)}</span>`;
-            }
+
+          // Im-Bestand-Zelle
+          let bestandHtml;
+          if(vollVerkauft){
+            bestandHtml='<span style="color:#4b5563">0</span>';
+          } else if(imBestand<e.stuecke){
+            bestandHtml=`<span style="color:#f59e0b;font-weight:700">${imBestand}</span><span style="color:#6b7280;font-size:10px"> / ${e.stuecke}</span>`;
+          } else {
+            bestandHtml=`<span style="color:#22c55e;font-weight:700">${imBestand}</span>`;
           }
-          const bestandColor=vollVerkauft?"#4b5563":imBestand<e.stuecke?"#f59e0b":"#22c55e";
-          const bestandLabel=vollVerkauft
-            ?'<span style="color:#4b5563">0 (voll verk.)</span>'
-            :`<span style="color:${bestandColor};font-weight:600">${imBestand}</span>${imBestand<e.stuecke?`<span style="color:#6b7280;font-size:10px"> / ${e.stuecke}</span>`:""}`;
-          return`<tr style="border-bottom:1px solid #1e2332${vollVerkauft?";opacity:0.5":""}">
-            <td style="padding:6px 8px;color:#94a3b8">${fdate(e.datum)}</td>
-            <td style="padding:6px 8px"><span style="color:#60a5fa;font-weight:600">Kauf</span></td>
-            <td style="padding:6px 8px;text-align:right;color:#e8eaf0">${e.stuecke} × ${cur(e.kurs)}</td>
-            <td style="padding:6px 8px;text-align:right">${bestandLabel}</td>
+
+          // Unrealisierter Gewinn: (aktKurs - kaufKurs) * imBestand
+          let gewinnHtml='<span style="color:#4b5563">—</span>';
+          if(aktKurs!==null && !vollVerkauft){
+            const gb=(aktKurs-e.kurs)*imBestand;
+            const gp=((aktKurs-e.kurs)/e.kurs)*100;
+            gewinnHtml=`${badge(gb,cur(gb))}<br><span style="font-size:10px;color:${gp>=0?"#22c55e":"#ef4444"}">${pct(gp)}</span>`;
+          } else if(vollVerkauft){
+            gewinnHtml='<span style="color:#4b5563">verk.</span>';
+          }
+
+          return`<tr style="border-bottom:1px solid #1e2332${vollVerkauft?";opacity:0.45":""}">
+            <td style="padding:5px 6px;text-align:center"><span style="background:#1e2d40;color:#60a5fa;font-weight:800;font-size:11px;border-radius:4px;padding:1px 5px">K</span></td>
+            <td style="padding:6px 8px;color:#94a3b8;white-space:nowrap">${fdate(e.datum)}</td>
+            <td style="padding:6px 8px;text-align:right;color:#e8eaf0;font-weight:600">${e.stuecke}</td>
+            <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs)}</td>
             <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs*e.stuecke)}</td>
-            <td style="padding:6px 8px;text-align:right">${unrealHtml}</td>
+            <td style="padding:6px 8px;text-align:right">${bestandHtml}</td>
+            <td style="padding:6px 8px;text-align:right">${gewinnHtml}</td>
           </tr>`;
         } else {
-          // Verkauf
-          const realGewinn=e.gewinnJe!==undefined?badge(e.gewinnJe,cur(e.gewinnJe)):'<span style="color:#4b5563">—</span>';
-          return`<tr style="border-bottom:1px solid #1e2332;background:#1a1220">
-            <td style="padding:6px 8px;color:#94a3b8">${fdate(e.datum)}</td>
-            <td style="padding:6px 8px"><span style="color:#f97316;font-weight:600">Verkauf</span></td>
-            <td style="padding:6px 8px;text-align:right;color:#e8eaf0">${e.stuecke} × ${cur(e.kurs)}</td>
-            <td style="padding:6px 8px;text-align:right;color:#4b5563">—</td>
+          return`<tr style="border-bottom:1px solid #1e2332;background:#150f0a">
+            <td style="padding:5px 6px;text-align:center"><span style="background:#2d1e10;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:1px 5px">V</span></td>
+            <td style="padding:6px 8px;color:#94a3b8;white-space:nowrap">${fdate(e.datum)}</td>
+            <td style="padding:6px 8px;text-align:right;color:#e8eaf0;font-weight:600">${e.stuecke}</td>
+            <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs)}</td>
             <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs*e.stuecke)}</td>
-            <td style="padding:6px 8px;text-align:right">${realGewinn}<br><span style="font-size:10px;color:#f97316">realisiert</span></td>
+            <td style="padding:6px 8px;text-align:right;color:#4b5563">—</td>
+            <td style="padding:6px 8px;text-align:right;color:#4b5563">—</td>
           </tr>`;
         }
       }).join("")}</tbody>

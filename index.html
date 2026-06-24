@@ -480,24 +480,80 @@ function renderEditPanel(){
   const kaufEntries=(pos.history||[]).filter(e=>e.type==="kauf");
   const vkEntries=sold.filter(e=>e.wkn===pos.wkn).map(v=>({type:"vk",stuecke:v.stueckeVerkauft,kurs:v.verkaufspreis,datum:v.verkaufDatum,gewinnJe:v.gewinnJe,gewinnPct:v.gewinnPct}));
   const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>a.datum.localeCompare(b.datum));
+
+  // FIFO: berechne für jeden Kauf wie viele Stücke noch im Bestand sind
+  // Wir arbeiten chronologisch: Käufe füllen die Queue, Verkäufe leeren sie von vorne
+  const fifoLots=[]; // {idx, stueckeGekauft, stueckeNoch}
+  let kaufIdx=0;
+  for(const e of allHist){
+    if(e.type==="kauf"){
+      fifoLots.push({idx:kaufIdx++, stueckeGekauft:e.stuecke, stueckeNoch:e.stuecke});
+    } else {
+      // Verkauf: FIFO — älteste Lots zuerst aufbrauchen
+      let restVk=e.stuecke;
+      for(const lot of fifoLots){
+        if(restVk<=0)break;
+        const abzug=Math.min(lot.stueckeNoch, restVk);
+        lot.stueckeNoch-=abzug;
+        restVk-=abzug;
+      }
+    }
+  }
+
+  const aktKurs=g?g.kurs:null;
+  let fifoKaufIdx2=0; // separater Zähler fürs Rendern
+
   const histHtml=allHist.length?`<div style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:400px">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:480px">
       <thead><tr style="border-bottom:1px solid #2a2f3e">
         <th style="text-align:left;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Datum</th>
         <th style="text-align:left;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Typ</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Stücke</th>
+        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gekauft</th>
+        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Im Bestand</th>
         <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Kurs</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gesamt</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gewinn</th>
+        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gewinn (unreal.)</th>
       </tr></thead>
-      <tbody>${allHist.map(e=>`<tr style="border-bottom:1px solid #1e2332">
-        <td style="padding:6px 8px;color:#94a3b8">${fdate(e.datum)}</td>
-        <td style="padding:6px 8px">${e.type==="kauf"?'<span style="color:#60a5fa;font-weight:600">Kauf</span>':'<span style="color:#f97316;font-weight:600">Verkauf</span>'}</td>
-        <td style="padding:6px 8px;text-align:right;color:#e8eaf0">${e.stuecke}</td>
-        <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs)}</td>
-        <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs*e.stuecke)}</td>
-        <td style="padding:6px 8px;text-align:right">${e.type==="vk"&&e.gewinnJe!==undefined?badge(e.gewinnJe,cur(e.gewinnJe)):'<span style="color:#4b5563">—</span>'}</td>
-      </tr>`).join("")}</tbody>
+      <tbody>${allHist.map(e=>{
+        if(e.type==="kauf"){
+          const lot=fifoLots[fifoKaufIdx2++];
+          const imBestand=lot?lot.stueckeNoch:0;
+          const vollVerkauft=imBestand===0;
+          // Unrealisierter Gewinn nur auf den noch gehaltenen Anteil
+          let unrealHtml='<span style="color:#4b5563">Kurs fehlt</span>';
+          if(aktKurs!==null){
+            if(vollVerkauft){
+              unrealHtml='<span style="color:#4b5563">Verkauft</span>';
+            } else {
+              const unrealGewinn=(aktKurs-e.kurs)*imBestand;
+              const unrealPct=((aktKurs-e.kurs)/e.kurs)*100;
+              unrealHtml=`${badge(unrealGewinn,cur(unrealGewinn))}<br><span style="font-size:10px;color:#6b7280">${pct(unrealPct)}</span>`;
+            }
+          }
+          const bestandColor=vollVerkauft?"#4b5563":imBestand<e.stuecke?"#f59e0b":"#22c55e";
+          const bestandLabel=vollVerkauft
+            ?'<span style="color:#4b5563">0 (voll verk.)</span>'
+            :`<span style="color:${bestandColor};font-weight:600">${imBestand}</span>${imBestand<e.stuecke?`<span style="color:#6b7280;font-size:10px"> / ${e.stuecke}</span>`:""}`;
+          return`<tr style="border-bottom:1px solid #1e2332${vollVerkauft?";opacity:0.5":""}">
+            <td style="padding:6px 8px;color:#94a3b8">${fdate(e.datum)}</td>
+            <td style="padding:6px 8px"><span style="color:#60a5fa;font-weight:600">Kauf</span></td>
+            <td style="padding:6px 8px;text-align:right;color:#e8eaf0">${e.stuecke} × ${cur(e.kurs)}</td>
+            <td style="padding:6px 8px;text-align:right">${bestandLabel}</td>
+            <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs*e.stuecke)}</td>
+            <td style="padding:6px 8px;text-align:right">${unrealHtml}</td>
+          </tr>`;
+        } else {
+          // Verkauf
+          const realGewinn=e.gewinnJe!==undefined?badge(e.gewinnJe,cur(e.gewinnJe)):'<span style="color:#4b5563">—</span>';
+          return`<tr style="border-bottom:1px solid #1e2332;background:#1a1220">
+            <td style="padding:6px 8px;color:#94a3b8">${fdate(e.datum)}</td>
+            <td style="padding:6px 8px"><span style="color:#f97316;font-weight:600">Verkauf</span></td>
+            <td style="padding:6px 8px;text-align:right;color:#e8eaf0">${e.stuecke} × ${cur(e.kurs)}</td>
+            <td style="padding:6px 8px;text-align:right;color:#4b5563">—</td>
+            <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs*e.stuecke)}</td>
+            <td style="padding:6px 8px;text-align:right">${realGewinn}<br><span style="font-size:10px;color:#f97316">realisiert</span></td>
+          </tr>`;
+        }
+      }).join("")}</tbody>
     </table></div>`
     :`<span class="dim" style="font-size:13px">Keine Einträge</span>`;
 

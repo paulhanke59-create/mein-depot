@@ -308,9 +308,35 @@ function lesenAuto(){
   input.click();
 }
 
+let speichernReady={a:false,b:false};
+
 function speichernSlot(slot){
   if(!positions.length){toast("Keine Daten zum Speichern",false);return;}
   const other=slot==='a'?'b':'a';
+  const btn=document.getElementById("btn-speichern-"+slot);
+
+  if(!speichernReady[slot]){
+    // Schritt 1: Datei-Manager öffnen
+    speichernReady[slot]=true;
+    if(btn)btn.innerHTML=`💾 Nochmal tippen zum Speichern`;
+    // Versuche Downloads im Datei-Manager zu öffnen
+    try{window.open("content://com.android.externalstorage.documents/document/primary%3ADownload","_blank");}catch(e){}
+    setTimeout(()=>{
+      try{window.open("file:///sdcard/Download/","_blank");}catch(e){}
+    },200);
+    toast(`📁 Downloads geöffnet · daten-${other}.json löschen · dann nochmal tippen`);
+    // Nach 30 Sek. zurücksetzen falls nicht gespeichert
+    setTimeout(()=>{
+      if(speichernReady[slot]){
+        speichernReady[slot]=false;
+        updateSpeichernButton(slot, getSlotDate(slot));
+      }
+    },30000);
+    return;
+  }
+
+  // Schritt 2: Speichern
+  speichernReady[slot]=false;
   const now=new Date().toISOString();
   const data=JSON.stringify({positions,sold,currentPrices,savedAt:now},null,2);
   const blob=new Blob([data],{type:"application/json"});
@@ -318,10 +344,9 @@ function speichernSlot(slot){
   a.href=URL.createObjectURL(blob);
   a.download="daten-"+slot+".json";
   a.click();
-  // Datum speichern und Button aktualisieren
-  saveSlotDate(slot, now);
-  updateSpeichernButton(slot, now);
-  toast(`💾 daten-${slot}.json gespeichert · Bitte daten-${other}.json löschen!`);
+  saveSlotDate(slot,now);
+  updateSpeichernButton(slot,now);
+  toast(`💾 daten-${slot}.json gespeichert`);
 }
 
 function openDownloads(){

@@ -227,7 +227,47 @@ function importXlsx(input){
 }
 
 // ---------- Lesen / Speichern A & B ----------
-let loadedSlot=null; // welcher Slot gerade geladen ist
+let loadedSlot=null;
+
+function slotDateKey(slot){return"depot_slot_date_"+slot;}
+
+function saveSlotDate(slot,isoDate){
+  localStorage.setItem(slotDateKey(slot),isoDate);
+}
+
+function getSlotDate(slot){
+  return localStorage.getItem(slotDateKey(slot))||null;
+}
+
+function formatDate(iso){
+  if(!iso)return null;
+  return new Date(iso).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+
+function updateLesenButton(slot, isoDate){
+  const btn=document.getElementById("btn-lesen-"+slot);
+  if(!btn)return;
+  const d=formatDate(isoDate);
+  btn.innerHTML=d
+    ?`📂 Lesen ${slot.toUpperCase()}<br><span style="font-size:10px;color:#22c55e;font-weight:400">✓ ${d}</span>`
+    :`📂 Lesen ${slot.toUpperCase()}`;
+}
+
+function updateSpeichernButton(slot, isoDate){
+  const btn=document.getElementById("btn-speichern-"+slot);
+  if(!btn)return;
+  const d=formatDate(isoDate);
+  btn.innerHTML=d
+    ?`💾 Speichern ${slot.toUpperCase()}<br><span style="font-size:10px;color:#a78bfa;font-weight:400">${d}</span>`
+    :`💾 Speichern ${slot.toUpperCase()}`;
+}
+
+function restoreButtonDates(){
+  ['a','b'].forEach(slot=>{
+    const d=getSlotDate(slot);
+    if(d) updateLesenButton(slot, d);
+  });
+}
 
 function lesenSlot(slot){
   const input=document.getElementById("json-input");
@@ -242,19 +282,16 @@ function lesenSlot(slot){
         sold=d.sold||[];
         currentPrices=d.currentPrices||{};
         loadedSlot=slot;
-        // Speicherdatum aus JSON lesen
-        const saveDate=d.savedAt?new Date(d.savedAt).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"—";
-        const btnA=document.getElementById("btn-lesen-a");
-        const btnB=document.getElementById("btn-lesen-b");
-        if(slot==='a'){
-          if(btnA)btnA.innerHTML=`📂 Lesen A<br><span style="font-size:10px;color:#22c55e;font-weight:400">✓ ${saveDate}</span>`;
-          if(btnB)btnB.innerHTML=`📂 Lesen B`;
-        } else {
-          if(btnB)btnB.innerHTML=`📂 Lesen B<br><span style="font-size:10px;color:#22c55e;font-weight:400">✓ ${saveDate}</span>`;
-          if(btnA)btnA.innerHTML=`📂 Lesen A`;
-        }
+        const iso=d.savedAt||null;
+        // Im localStorage merken
+        if(iso) saveSlotDate(slot, iso);
+        // Anderen Slot-Button zurücksetzen
+        const other=slot==='a'?'b':'a';
+        updateLesenButton(slot, iso);
+        updateLesenButton(other, getSlotDate(other));
         render();
-        toast(`✅ Daten-${slot.toUpperCase()} geladen · Stand: ${saveDate}`);
+        const d2=formatDate(iso);
+        toast(`✅ Daten-${slot.toUpperCase()} geladen${d2?" · Stand: "+d2:""}`);
       }catch(err){toast("❌ Fehler: "+err.message,false);}
       input.value="";
     };
@@ -267,21 +304,16 @@ function speichernSlot(slot){
   if(!positions.length){toast("Keine Daten zum Speichern",false);return;}
   const other=slot==='a'?'b':'a';
   const now=new Date().toISOString();
-  const saveDate=new Date().toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
-  // Speicherdatum in JSON einbetten
   const data=JSON.stringify({positions,sold,currentPrices,savedAt:now},null,2);
   const blob=new Blob([data],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
   a.download="daten-"+slot+".json";
   a.click();
-  // Button aktualisieren
-  const btn=document.getElementById("btn-speichern-"+slot);
-  if(btn)btn.innerHTML=`💾 Speichern ${slot.toUpperCase()}<br><span style="font-size:10px;color:#a78bfa;font-weight:400">${saveDate}</span>`;
-  // Hinweis: andere Datei löschen
-  setTimeout(()=>{
-    toast(`💾 Gespeichert · Bitte daten-${other}.json löschen!`, true);
-  },100);
+  // Datum speichern und Button aktualisieren
+  saveSlotDate(slot, now);
+  updateSpeichernButton(slot, now);
+  toast(`💾 daten-${slot}.json gespeichert · Bitte daten-${other}.json löschen!`);
 }
 
 function autoSave(){}
@@ -922,6 +954,8 @@ function refreshHistorie(id){
   el.innerHTML=buildHistHtml(pos);
 }
 
+// Beim Start gespeicherte Slot-Daten in Buttons anzeigen
+restoreButtonDates();
 render();
 </script>
 </body>

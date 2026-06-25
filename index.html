@@ -24,7 +24,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
 .toolbar-row:last-child{border-bottom:none}
 .toolbar-group{display:flex;align-items:center;gap:8px;padding:10px 14px;flex:1;flex-wrap:wrap}
 .toolbar-group-label{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:0 14px;min-width:52px;border-right:1px solid #2a2f3e;align-self:stretch;display:flex;align-items:center}
-.btn-tool{border:none;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-tool{border:none;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:normal;line-height:1.3;text-align:left}
 .btn-xlsx{background:#1e2d20;color:#22c55e;border:1px solid #22c55e44}
 .btn-json-imp{background:#1e2a40;color:#60a5fa;border:1px solid #3b82f644}
 .btn-json-exp{background:#2a1e40;color:#a78bfa;border:1px solid #7c3aed44}
@@ -150,8 +150,8 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
         <input type="file" id="json-input" accept=".json" style="display:none"/>
         <button id="btn-lesen-a" class="btn-tool btn-json-imp" onclick="lesenSlot('a')">📂 Lesen A</button>
         <button id="btn-lesen-b" class="btn-tool btn-json-imp" onclick="lesenSlot('b')">📂 Lesen B</button>
-        <button class="btn-tool btn-json-exp" onclick="speichernSlot('a')">💾 Speichern A</button>
-        <button class="btn-tool btn-json-exp" onclick="speichernSlot('b')">💾 Speichern B</button>
+        <button id="btn-speichern-a" class="btn-tool btn-json-exp" onclick="speichernSlot('a')">💾 Speichern A</button>
+        <button id="btn-speichern-b" class="btn-tool btn-json-exp" onclick="speichernSlot('b')">💾 Speichern B</button>
       </div>
     </div>
   </div>
@@ -227,6 +227,8 @@ function importXlsx(input){
 }
 
 // ---------- Lesen / Speichern A & B ----------
+let loadedSlot=null; // welcher Slot gerade geladen ist
+
 function lesenSlot(slot){
   const input=document.getElementById("json-input");
   input.onchange=function(){
@@ -239,18 +241,20 @@ function lesenSlot(slot){
         positions=d.positions||[];
         sold=d.sold||[];
         currentPrices=d.currentPrices||{};
-        // Dateinamen im Button anzeigen
+        loadedSlot=slot;
+        // Speicherdatum aus JSON lesen
+        const saveDate=d.savedAt?new Date(d.savedAt).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"—";
         const btnA=document.getElementById("btn-lesen-a");
         const btnB=document.getElementById("btn-lesen-b");
         if(slot==='a'){
-          if(btnA)btnA.innerHTML=`📂 <span style="color:#22c55e">✓ ${file.name}</span>`;
+          if(btnA)btnA.innerHTML=`📂 Lesen A<br><span style="font-size:10px;color:#22c55e;font-weight:400">✓ ${saveDate}</span>`;
           if(btnB)btnB.innerHTML=`📂 Lesen B`;
         } else {
-          if(btnB)btnB.innerHTML=`📂 <span style="color:#22c55e">✓ ${file.name}</span>`;
+          if(btnB)btnB.innerHTML=`📂 Lesen B<br><span style="font-size:10px;color:#22c55e;font-weight:400">✓ ${saveDate}</span>`;
           if(btnA)btnA.innerHTML=`📂 Lesen A`;
         }
         render();
-        toast(`✅ ${file.name} geladen (${positions.length} Positionen)`);
+        toast(`✅ Daten-${slot.toUpperCase()} geladen · Stand: ${saveDate}`);
       }catch(err){toast("❌ Fehler: "+err.message,false);}
       input.value="";
     };
@@ -262,14 +266,22 @@ function lesenSlot(slot){
 function speichernSlot(slot){
   if(!positions.length){toast("Keine Daten zum Speichern",false);return;}
   const other=slot==='a'?'b':'a';
-  // Datei herunterladen
-  const data=JSON.stringify({positions,sold,currentPrices},null,2);
+  const now=new Date().toISOString();
+  const saveDate=new Date().toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  // Speicherdatum in JSON einbetten
+  const data=JSON.stringify({positions,sold,currentPrices,savedAt:now},null,2);
   const blob=new Blob([data],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
   a.download="daten-"+slot+".json";
   a.click();
-  toast(`💾 daten-${slot}.json gespeichert — bitte daten-${other}.json manuell löschen`);
+  // Button aktualisieren
+  const btn=document.getElementById("btn-speichern-"+slot);
+  if(btn)btn.innerHTML=`💾 Speichern ${slot.toUpperCase()}<br><span style="font-size:10px;color:#a78bfa;font-weight:400">${saveDate}</span>`;
+  // Hinweis: andere Datei löschen
+  setTimeout(()=>{
+    toast(`💾 Gespeichert · Bitte daten-${other}.json löschen!`, true);
+  },100);
 }
 
 function autoSave(){}
@@ -385,9 +397,46 @@ function doTx(id,type){
     positions=positions.map(p=>p.id===id?{...p,stuecke:total,preis:Math.round(avg*10000)/10000,history:[...(p.history||[]),{type:"kauf",stuecke:st,kurs:pr,datum:da}]}:p);
     toast("✅ Zukauf gebucht");
   }else{
-    const gewinnJe=(pr-pos.preis)*st;
-    const gewinnPct=((pr-pos.preis)/pos.preis)*100;
-    sold.push({...pos,stueckeVerkauft:st,verkaufspreis:pr,verkaufDatum:da,gewinnJe,gewinnPct});
+    // FIFO: älteste Kaufchargen zuerst aufbrauchen
+    const kaufLots=(pos.history||[])
+      .filter(e=>e.type==="kauf")
+      .map(e=>({...e})); // Kopie damit Original nicht verändert wird
+
+    // Bereits verbrauchte Stücke durch frühere Verkäufe abziehen
+    const bereitsVerkauft=sold
+      .filter(e=>e.wkn===pos.wkn)
+      .reduce((sum,e)=>sum+(e.stueckeVerkauft||0),0);
+    let skip=bereitsVerkauft;
+    for(const lot of kaufLots){
+      const abzug=Math.min(lot.stuecke, skip);
+      lot.stuecke-=abzug;
+      skip-=abzug;
+      if(skip<=0)break;
+    }
+
+    // Jetzt FIFO für diesen Verkauf berechnen
+    let restVk=st;
+    let fifoGewinn=0;
+    const fifoDetails=[];
+    for(const lot of kaufLots){
+      if(restVk<=0||lot.stuecke<=0)continue;
+      const verbraucht=Math.min(lot.stuecke, restVk);
+      const gewinnLot=(pr-lot.kurs)*verbraucht;
+      fifoGewinn+=gewinnLot;
+      fifoDetails.push({kaufKurs:lot.kurs, stuecke:verbraucht, gewinn:gewinnLot, datum:lot.datum});
+      restVk-=verbraucht;
+    }
+    const fifoGewinnPct=fifoGewinn/((fifoDetails.reduce((s,d)=>s+d.kaufKurs*d.stuecke,0)||1))*100;
+
+    sold.push({
+      ...pos,
+      stueckeVerkauft:st,
+      verkaufspreis:pr,
+      verkaufDatum:da,
+      gewinnJe:fifoGewinn,
+      gewinnPct:fifoGewinnPct,
+      fifoDetails
+    });
     if(st>=pos.stuecke){positions=positions.filter(p=>p.id!==id);expandedId=null;}
     else positions=positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st}:p);
     toast("✅ Verkauf gebucht");
@@ -760,7 +809,15 @@ function buildHistHtml(pos){
   const aktKurs=g?g.kurs:null;
 
   const kaufEntries=(pos.history||[]).filter(e=>e.type==="kauf");
-  const vkEntries=sold.filter(e=>e.wkn===pos.wkn).map(v=>({type:"vk",stuecke:v.stueckeVerkauft,kurs:v.verkaufspreis,datum:v.verkaufDatum,gewinnJe:v.gewinnJe,gewinnPct:v.gewinnPct}));
+  const vkEntries=sold.filter(e=>e.wkn===pos.wkn).map(v=>({
+    type:"vk",
+    stuecke:v.stueckeVerkauft,
+    kurs:v.verkaufspreis,
+    datum:v.verkaufDatum,
+    gewinnJe:v.gewinnJe,
+    gewinnPct:v.gewinnPct,
+    fifoDetails:v.fifoDetails||null
+  }));
   const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>a.datum.localeCompare(b.datum));
 
   const fifoLots=[];
@@ -818,6 +875,14 @@ function buildHistHtml(pos){
         </div>`;
       } else {
         const myVi=vi++;
+        const gJ=e.gewinnJe||0;
+        const gP=e.gewinnPct||0;
+        const gColor=gJ>=0?"#22c55e":"#ef4444";
+        const hasFifo=e.fifoDetails&&e.fifoDetails.length>0;
+        // FIFO-Tooltip: welche Lots wurden verbraucht
+        const fifoTip=hasFifo
+          ?e.fifoDetails.map(d=>`${d.stuecke}×${cur(d.kaufKurs)}→${cur(d.gewinn)}`).join(" | ")
+          :"";
         return`<div onclick="openHistModal(${pos.id},${myVi},'vk')" style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;background:#150f0a;cursor:pointer" onmouseenter="this.style.background='#1a1410'" onmouseleave="this.style.background='#150f0a'">
           <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="background:#2d1e10;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">V</span>
@@ -825,21 +890,23 @@ function buildHistHtml(pos){
           </div>
           <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="${v1}">${e.stuecke}</span>
-            <span style="${v2}">—</span>
+            <span style="font-size:10px;color:#6b7280">FIFO</span>
           </div>
           <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="${v1}">${cur(e.kurs)}</span>
-            <span style="${v2}">—</span>
+            <span style="${v2}">Verkaufskurs</span>
           </div>
           <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="${v1}">${cur(e.kurs*e.stuecke)}</span>
-            <span style="${v2}">—</span>
+            <span style="${v2}">Erlös</span>
           </div>
-          <div style="padding:7px 8px;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-            <span style="font-size:13px;color:#4b5563">—</span>
-            <span style="font-size:12px;color:#4b5563">—</span>
+          <div style="padding:7px 8px;display:flex;flex-direction:column;justify-content:space-between;gap:4px" title="${fifoTip}">
+            <span style="font-size:13px;color:${gColor};font-weight:700">${cur(gJ)}</span>
+            <span style="font-size:12px;color:${gColor}">${pct(gP)}</span>
           </div>
-        </div>`;
+        </div>${hasFifo?`<div style="background:#100d08;border-bottom:1px solid #1e2332;padding:4px 8px 6px 52px;display:flex;flex-wrap:wrap;gap:6px">
+          ${e.fifoDetails.map(d=>`<span style="font-size:10px;color:#6b7280;background:#1e1a14;border-radius:4px;padding:2px 6px">${d.stuecke} × ${cur(d.kaufKurs)} <span style="color:${d.gewinn>=0?"#22c55e":"#ef4444"}">${cur(d.gewinn)}</span></span>`).join("")}
+        </div>`:""}`;
       }
     }).join("")}
   </div>`;

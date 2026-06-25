@@ -151,7 +151,6 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
         <button id="btn-lesen-a" class="btn-tool btn-json-imp" onclick="lesenAuto()">📂 Depot laden</button>
         <button id="btn-speichern-a" class="btn-tool btn-json-exp" onclick="speichernSlot('a')">💾 Speichern A</button>
         <button id="btn-speichern-b" class="btn-tool btn-json-exp" onclick="speichernSlot('b')">💾 Speichern B</button>
-        <button class="btn-tool" onclick="openDownloads()" style="background:#1e2332;color:#94a3b8;border:1px solid #2a2f3e">📁 Downloads öffnen</button>
       </div>
     </div>
   </div>
@@ -308,35 +307,9 @@ function lesenAuto(){
   input.click();
 }
 
-let speichernReady={a:false,b:false};
-
 function speichernSlot(slot){
   if(!positions.length){toast("Keine Daten zum Speichern",false);return;}
   const other=slot==='a'?'b':'a';
-  const btn=document.getElementById("btn-speichern-"+slot);
-
-  if(!speichernReady[slot]){
-    // Schritt 1: Datei-Manager öffnen
-    speichernReady[slot]=true;
-    if(btn)btn.innerHTML=`💾 Nochmal tippen zum Speichern`;
-    // Versuche Downloads im Datei-Manager zu öffnen
-    try{window.open("content://com.android.externalstorage.documents/document/primary%3ADownload","_blank");}catch(e){}
-    setTimeout(()=>{
-      try{window.open("file:///sdcard/Download/","_blank");}catch(e){}
-    },200);
-    toast(`📁 Downloads geöffnet · daten-${other}.json löschen · dann nochmal tippen`);
-    // Nach 30 Sek. zurücksetzen falls nicht gespeichert
-    setTimeout(()=>{
-      if(speichernReady[slot]){
-        speichernReady[slot]=false;
-        updateSpeichernButton(slot, getSlotDate(slot));
-      }
-    },30000);
-    return;
-  }
-
-  // Schritt 2: Speichern
-  speichernReady[slot]=false;
   const now=new Date().toISOString();
   const data=JSON.stringify({positions,sold,currentPrices,savedAt:now},null,2);
   const blob=new Blob([data],{type:"application/json"});
@@ -346,7 +319,21 @@ function speichernSlot(slot){
   a.click();
   saveSlotDate(slot,now);
   updateSpeichernButton(slot,now);
+  // Hinweis-Banner anzeigen
+  showDeleteHint(other);
   toast(`💾 daten-${slot}.json gespeichert`);
+}
+
+function showDeleteHint(slot){
+  let el=document.getElementById("delete-hint");
+  if(!el){
+    el=document.createElement("div");
+    el.id="delete-hint";
+    el.style.cssText="background:#2d1e1e;border:1px solid #ef444444;border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px";
+    document.getElementById("summary").before(el);
+  }
+  el.innerHTML=`<span style="font-size:13px;color:#ef4444">🗑 Bitte <b>daten-${slot}.json</b> im Downloads-Ordner löschen</span>
+    <button onclick="document.getElementById('delete-hint').remove()" style="background:none;border:none;color:#6b7280;font-size:20px;cursor:pointer;line-height:1">×</button>`;
 }
 
 function openDownloads(){

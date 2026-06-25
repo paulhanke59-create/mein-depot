@@ -131,9 +131,8 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
     <span class="toolbar-label">Daten</span>
     <button class="btn-tool btn-xlsx" onclick="document.getElementById('xlsx-input').click()">📥 Excel importieren</button>
     <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)"/>
-    <button class="btn-tool btn-json-imp" onclick="document.getElementById('json-input').click()">🔄 dlist.json laden</button>
-    <input type="file" id="json-input" accept=".json" style="display:none" onchange="importJson(this)"/>
-    <button class="btn-tool btn-json-exp" onclick="exportJson()">💾 dlist.json speichern</button>
+    <button id="btn-slot-a" class="btn-tool" onclick="switchSlot('a')">📁 Daten A</button>
+    <button id="btn-slot-b" class="btn-tool" onclick="switchSlot('b')">📁 Daten B</button>
   </div>
 
   <div id="summary"></div>
@@ -205,39 +204,65 @@ function importXlsx(input){
   reader.readAsArrayBuffer(file);
 }
 
-// ---------- JSON Export (immer als dlist.json) ----------
-function exportJson(){
-  if(!positions.length){toast("Keine Daten",false);return;}
-  const data=JSON.stringify({positions,sold,currentPrices},null,2);
-  const blob=new Blob([data],{type:"application/json"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="dlist.json";
-  a.click();
-  toast("💾 dlist.json gespeichert");
+// ---------- Zwei-Slot System ----------
+let activeSlot='a'; // aktuell aktiver Slot
+
+function slotKey(slot){return"depot_slot_"+slot;}
+
+function saveSlot(slot){
+  localStorage.setItem(slotKey(slot),JSON.stringify({positions,sold,currentPrices}));
 }
 
-// ---------- JSON Import ----------
-function importJson(input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const d=JSON.parse(e.target.result);
-      positions=d.positions||[];
-      sold=d.sold||[];
-      currentPrices=d.currentPrices||{};
-      toast(`✅ ${positions.length} Positionen geladen`);
-      render();
-    }
-    catch(err){toast("❌ Fehler: "+err.message,false);}
-    input.value="";
-  };
-  reader.readAsText(file);
+function loadSlot(slot){
+  try{
+    const raw=localStorage.getItem(slotKey(slot));
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    positions=d.positions||[];
+    sold=d.sold||[];
+    currentPrices=d.currentPrices||{};
+    return true;
+  }catch(e){return false;}
 }
 
-function autoSave(){ /* Option A: kein automatisches Speichern, nur manuell */ }
+function switchSlot(slot){
+  // Aktuellen Slot speichern, anderen löschen
+  saveSlot(slot);
+  localStorage.removeItem(slotKey(slot==='a'?'b':'a'));
+  activeSlot=slot;
+  localStorage.setItem("depot_active_slot", slot);
+  // Daten aus neuem Slot laden
+  loadSlot(slot);
+  updateSlotButtons();
+  render();
+  toast(`✅ Daten ${slot.toUpperCase()} aktiv`);
+}
+
+function updateSlotButtons(){
+  const a=document.getElementById("btn-slot-a");
+  const b=document.getElementById("btn-slot-b");
+  if(!a||!b)return;
+  const hasA=!!localStorage.getItem(slotKey('a'));
+  const hasB=!!localStorage.getItem(slotKey('b'));
+  a.style.background=activeSlot==='a'?"#1e3a20":"";
+  a.style.color=activeSlot==='a'?"#22c55e":"";
+  a.style.border=activeSlot==='a'?"1px solid #22c55e44":"";
+  a.textContent=(hasA?"💾":"📁")+" Daten A"+(activeSlot==='a'?" ✓":"");
+  b.style.background=activeSlot==='b'?"#1e3a20":"";
+  b.style.color=activeSlot==='b'?"#22c55e":"";
+  b.style.border=activeSlot==='b'?"1px solid #22c55e44":"";
+  b.textContent=(hasB?"💾":"📁")+" Daten B"+(activeSlot==='b'?" ✓":"");
+}
+
+function autoSave(){
+  saveSlot(activeSlot);
+  updateSlotButtons();
+}
+
+function exportJson(){ /* nicht mehr benötigt */ }
+function importJson(){ /* nicht mehr benötigt */ }
+
+
 
 // ---------- Position hinzufügen ----------
 function toggleAddForm(open){
@@ -662,6 +687,10 @@ function refreshHistorie(id){
   el.innerHTML=buildHistHtml(pos);
 }
 
+// Beim Start letzten aktiven Slot laden
+activeSlot=localStorage.getItem("depot_active_slot")||"a";
+loadSlot(activeSlot);
+updateSlotButtons();
 render();
 </script>
 </body>

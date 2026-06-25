@@ -226,16 +226,15 @@ function loadSlot(slot){
 }
 
 function switchSlot(slot){
-  // Aktuellen Slot speichern, anderen löschen
-  saveSlot(slot);
-  localStorage.removeItem(slotKey(slot==='a'?'b':'a'));
+  // Aktuellen Stand im bisherigen Slot speichern
+  saveSlot(activeSlot);
+  // Neuen Slot laden
   activeSlot=slot;
   localStorage.setItem("depot_active_slot", slot);
-  // Daten aus neuem Slot laden
-  loadSlot(slot);
+  const loaded=loadSlot(slot);
   updateSlotButtons();
   render();
-  toast(`✅ Daten ${slot.toUpperCase()} aktiv`);
+  toast(loaded?`✅ Daten ${slot.toUpperCase()} geladen`:`📁 Daten ${slot.toUpperCase()} — leer`);
 }
 
 function updateSlotButtons(){

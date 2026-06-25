@@ -152,6 +152,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
         <button id="btn-lesen-b" class="btn-tool btn-json-imp" onclick="lesenSlot('b')">📂 Lesen B</button>
         <button id="btn-speichern-a" class="btn-tool btn-json-exp" onclick="speichernSlot('a')">💾 Speichern A</button>
         <button id="btn-speichern-b" class="btn-tool btn-json-exp" onclick="speichernSlot('b')">💾 Speichern B</button>
+        <button class="btn-tool" onclick="openDownloads()" style="background:#1e2332;color:#94a3b8;border:1px solid #2a2f3e">📁 Downloads öffnen</button>
       </div>
     </div>
   </div>
@@ -316,7 +317,17 @@ function speichernSlot(slot){
   toast(`💾 daten-${slot}.json gespeichert · Bitte daten-${other}.json löschen!`);
 }
 
-function autoSave(){}
+function openDownloads(){
+  // Android: versuche Downloads-Ordner im Datei-Manager zu öffnen
+  const a=document.createElement("a");
+  a.href="content://com.android.externalstorage.documents/document/primary%3ADownload";
+  a.click();
+  setTimeout(()=>{
+    // Fallback: direkte URI
+    window.open("file:///sdcard/Download/","_blank");
+  },500);
+  toast("📁 Downloads wird geöffnet...");
+}
 function exportJson(){}
 function importJson(){}
 function switchSlot(){}

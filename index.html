@@ -131,8 +131,9 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
     <span class="toolbar-label">Daten</span>
     <button class="btn-tool btn-xlsx" onclick="document.getElementById('xlsx-input').click()">📥 Excel importieren</button>
     <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)"/>
-    <button class="btn-tool btn-json-imp" onclick="document.getElementById('json-input').click()">🔄 Änderungen aktualisieren</button>
+    <button class="btn-tool btn-json-imp" onclick="document.getElementById('json-input').click()">🔄 dlist.json laden</button>
     <input type="file" id="json-input" accept=".json" style="display:none" onchange="importJson(this)"/>
+    <button class="btn-tool btn-json-exp" onclick="exportJson()">💾 dlist.json speichern</button>
   </div>
 
   <div id="summary"></div>
@@ -195,6 +196,7 @@ function importXlsx(input){
       }
       positions=Object.values(posMap).filter(p=>p.stuecke>0.001).map(p=>({...p,stuecke:Math.round(p.stuecke),preis:Math.round(p.preis*10000)/10000}));
       currentPrices={};
+      autoSave();
       toast(`✅ ${positions.length} Positionen importiert`);
       render();
     }catch(err){console.error(err);toast("❌ Import fehlgeschlagen: "+err.message,false);}
@@ -203,19 +205,15 @@ function importXlsx(input){
   reader.readAsArrayBuffer(file);
 }
 
+// ---------- JSON Export (immer als dlist.json) ----------
 function exportJson(){
-  if(!positions.length)return;
+  if(!positions.length){toast("Keine Daten",false);return;}
   const data=JSON.stringify({positions,sold,currentPrices},null,2);
   const blob=new Blob([data],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
   a.download="dlist.json";
   a.click();
-}
-
-function autoSave(){
-  if(!positions.length)return;
-  exportJson();
   toast("💾 dlist.json gespeichert");
 }
 
@@ -232,14 +230,14 @@ function importJson(input){
       currentPrices=d.currentPrices||{};
       toast(`✅ ${positions.length} Positionen geladen`);
       render();
-      // Sofort als dlist.json zurückspeichern damit Änderungen aktuell sind
-      setTimeout(exportJson, 500);
     }
     catch(err){toast("❌ Fehler: "+err.message,false);}
     input.value="";
   };
   reader.readAsText(file);
 }
+
+function autoSave(){ /* Option A: kein automatisches Speichern, nur manuell */ }
 
 // ---------- Position hinzufügen ----------
 function toggleAddForm(open){

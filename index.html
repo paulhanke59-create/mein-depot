@@ -521,65 +521,79 @@ function renderEditPanel(){
   const aktKurs=g?g.kurs:null;
   let fifoKaufIdx2=0;
 
-  const histHtml=allHist.length?`<div style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
-      <thead><tr style="border-bottom:1px solid #2a2f3e;background:#0f1117">
-        <th style="text-align:center;padding:5px 6px;font-size:10px;color:#6b7280;text-transform:uppercase;width:28px"></th>
-        <th style="text-align:left;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Datum</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Anzahl</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Kurs</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Betrag</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Im Bestand</th>
-        <th style="text-align:right;padding:5px 8px;font-size:10px;color:#6b7280;text-transform:uppercase">Gewinn</th>
-      </tr></thead>
-      <tbody>${allHist.map(e=>{
+  const histHtml=allHist.length
+    ?`<div>${allHist.map(e=>{
         if(e.type==="kauf"){
           const lot=fifoLots[fifoKaufIdx2++];
           const imBestand=lot?lot.stueckeNoch:0;
           const vollVerkauft=imBestand===0;
 
-          // Im-Bestand-Zelle
-          let bestandHtml;
-          if(vollVerkauft){
-            bestandHtml='<span style="color:#4b5563">0</span>';
-          } else if(imBestand<e.stuecke){
-            bestandHtml=`<span style="color:#f59e0b;font-weight:700">${imBestand}</span><span style="color:#6b7280;font-size:10px"> / ${e.stuecke}</span>`;
-          } else {
-            bestandHtml=`<span style="color:#22c55e;font-weight:700">${imBestand}</span>`;
-          }
-
-          // Unrealisierter Gewinn: (aktKurs - kaufKurs) * imBestand
-          let gewinnHtml='<span style="color:#4b5563">—</span>';
+          // Gewinn berechnen
+          let gwBetrag=null, gwPct=null;
           if(aktKurs!==null && !vollVerkauft){
-            const gb=(aktKurs-e.kurs)*imBestand;
-            const gp=((aktKurs-e.kurs)/e.kurs)*100;
-            gewinnHtml=`${badge(gb,cur(gb))}<br><span style="font-size:10px;color:${gp>=0?"#22c55e":"#ef4444"}">${pct(gp)}</span>`;
-          } else if(vollVerkauft){
-            gewinnHtml='<span style="color:#4b5563">verk.</span>';
+            gwBetrag=(aktKurs-e.kurs)*imBestand;
+            gwPct=((aktKurs-e.kurs)/e.kurs)*100;
           }
 
-          return`<tr style="border-bottom:1px solid #1e2332${vollVerkauft?";opacity:0.45":""}">
-            <td style="padding:5px 6px;text-align:center"><span style="background:#1e2d40;color:#60a5fa;font-weight:800;font-size:11px;border-radius:4px;padding:1px 5px">K</span></td>
-            <td style="padding:6px 8px;color:#94a3b8;white-space:nowrap">${fdate(e.datum)}</td>
-            <td style="padding:6px 8px;text-align:right;color:#e8eaf0;font-weight:600">${e.stuecke}</td>
-            <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs)}</td>
-            <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs*e.stuecke)}</td>
-            <td style="padding:6px 8px;text-align:right">${bestandHtml}</td>
-            <td style="padding:6px 8px;text-align:right">${gewinnHtml}</td>
-          </tr>`;
+          // Bestandsfarbe
+          const bColor=vollVerkauft?"#4b5563":imBestand<e.stuecke?"#f59e0b":"#22c55e";
+          const bLabel=vollVerkauft?"0":String(imBestand);
+
+          return`<div style="display:flex;align-items:stretch;border-bottom:1px solid #1e2332;${vollVerkauft?"opacity:0.45":""}">
+            <!-- Typ-Badge -->
+            <div style="display:flex;align-items:center;padding:0 8px;border-right:1px solid #1e2332">
+              <span style="background:#1e2d40;color:#60a5fa;font-weight:800;font-size:11px;border-radius:4px;padding:2px 5px">K</span>
+            </div>
+            <!-- Linke Infospalte: Kauf-Daten oben, Bestand-Daten unten -->
+            <div style="flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:5px">
+              <!-- Zeile 1: Datum · Anzahl · Kurs · Betrag -->
+              <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline">
+                <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
+                <span style="font-size:13px;color:#e8eaf0;font-weight:700">${e.stuecke} Stk.</span>
+                <span style="font-size:12px;color:#94a3b8">${cur(e.kurs)}</span>
+                <span style="font-size:12px;color:#6b7280">${cur(e.kurs*e.stuecke)}</span>
+              </div>
+              <!-- Zeile 2: Im Bestand · Akt. Kurs · Akt. Wert -->
+              <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline">
+                <span style="font-size:10px;color:#6b7280">Bestand:</span>
+                <span style="font-size:13px;color:${bColor};font-weight:700">${bLabel}${imBestand<e.stuecke&&!vollVerkauft?`<span style="color:#6b7280;font-size:10px;font-weight:400"> / ${e.stuecke}</span>`:""}
+                </span>
+                ${aktKurs!==null&&!vollVerkauft
+                  ?`<span style="font-size:11px;color:#6b7280">@ ${cur(aktKurs)}</span>
+                    <span style="font-size:12px;color:#94a3b8">${cur(aktKurs*imBestand)}</span>`
+                  :""}
+              </div>
+            </div>
+            <!-- Rechte Gewinnspalte -->
+            <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:8px 10px;min-width:90px;border-left:1px solid #1e2332">
+              ${gwBetrag!==null
+                ?`${badge(gwBetrag,cur(gwBetrag))}
+                  <span style="font-size:11px;color:${gwPct>=0?"#22c55e":"#ef4444"};margin-top:3px;font-weight:700">${pct(gwPct)}</span>`
+                :vollVerkauft
+                  ?`<span style="font-size:11px;color:#4b5563">verk.</span>`
+                  :`<span style="font-size:11px;color:#4b5563">—</span>`}
+            </div>
+          </div>`;
         } else {
-          return`<tr style="border-bottom:1px solid #1e2332;background:#150f0a">
-            <td style="padding:5px 6px;text-align:center"><span style="background:#2d1e10;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:1px 5px">V</span></td>
-            <td style="padding:6px 8px;color:#94a3b8;white-space:nowrap">${fdate(e.datum)}</td>
-            <td style="padding:6px 8px;text-align:right;color:#e8eaf0;font-weight:600">${e.stuecke}</td>
-            <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs)}</td>
-            <td style="padding:6px 8px;text-align:right;color:#94a3b8">${cur(e.kurs*e.stuecke)}</td>
-            <td style="padding:6px 8px;text-align:right;color:#4b5563">—</td>
-            <td style="padding:6px 8px;text-align:right;color:#4b5563">—</td>
-          </tr>`;
+          // Verkauf
+          return`<div style="display:flex;align-items:stretch;border-bottom:1px solid #1e2332;background:#150f0a">
+            <div style="display:flex;align-items:center;padding:0 8px;border-right:1px solid #1e2332">
+              <span style="background:#2d1e10;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:2px 5px">V</span>
+            </div>
+            <div style="flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline">
+                <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
+                <span style="font-size:13px;color:#e8eaf0;font-weight:700">${e.stuecke} Stk.</span>
+                <span style="font-size:12px;color:#94a3b8">${cur(e.kurs)}</span>
+                <span style="font-size:12px;color:#6b7280">${cur(e.kurs*e.stuecke)}</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:8px 10px;min-width:90px;border-left:1px solid #1e2332">
+              <span style="font-size:11px;color:#4b5563">—</span>
+            </div>
+          </div>`;
         }
-      }).join("")}</tbody>
-    </table></div>`
+      }).join("")}</div>`
     :`<span class="dim" style="font-size:13px">Keine Einträge</span>`;
 
   panel.innerHTML=`<div class="edit-panel">

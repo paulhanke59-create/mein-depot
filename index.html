@@ -290,18 +290,12 @@ function updateKurs(id,val){
   } else {
     currentPrices[sid]={kurs:parsed,updatedAt:new Date().toISOString().slice(0,10)};
   }
+  // Karten-Übersicht aktualisieren
   renderCards();
-  // Panel neu rendern aber Cursor-Position im Eingabefeld wiederherstellen
-  const inputEl=document.getElementById("ki-"+id);
-  const selStart=inputEl?inputEl.selectionStart:null;
-  const selEnd=inputEl?inputEl.selectionEnd:null;
-  renderEditPanel();
-  const newInput=document.getElementById("ki-"+id);
-  if(newInput){
-    newInput.value=val;
-    if(selStart!==null)try{newInput.setSelectionRange(selStart,selEnd);}catch(e){}
-    newInput.focus();
-  }
+  // Nur Gewinn-Badges + Historie aktualisieren, NICHT das gesamte Panel
+  // (sonst verliert das Input-Feld den Fokus und die Tastatur springt zurück)
+  refreshGewinnDisplay(id);
+  refreshHistorie(id);
 }
 
 function refreshGewinnDisplay(id){
@@ -495,113 +489,7 @@ function renderEditPanel(){
        <div class="kurs-result-item"><span class="rl">Akt. Wert</span><span class="muted">${cur(g.kurs*pos.stuecke)}</span></div>`
     :`<span class="dim" style="font-size:13px">Kurs eingeben →</span>`;
 
-  const kaufEntries=(pos.history||[]).filter(e=>e.type==="kauf");
-  const vkEntries=sold.filter(e=>e.wkn===pos.wkn).map(v=>({type:"vk",stuecke:v.stueckeVerkauft,kurs:v.verkaufspreis,datum:v.verkaufDatum,gewinnJe:v.gewinnJe,gewinnPct:v.gewinnPct}));
-  const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>a.datum.localeCompare(b.datum));
-
-  // FIFO: berechne für jeden Kauf wie viele Stücke noch im Bestand sind
-  // Wir arbeiten chronologisch: Käufe füllen die Queue, Verkäufe leeren sie von vorne
-  const fifoLots=[]; // {idx, stueckeGekauft, stueckeNoch}
-  let kaufIdx=0;
-  for(const e of allHist){
-    if(e.type==="kauf"){
-      fifoLots.push({idx:kaufIdx++, stueckeGekauft:e.stuecke, stueckeNoch:e.stuecke});
-    } else {
-      // Verkauf: FIFO — älteste Lots zuerst aufbrauchen
-      let restVk=e.stuecke;
-      for(const lot of fifoLots){
-        if(restVk<=0)break;
-        const abzug=Math.min(lot.stueckeNoch, restVk);
-        lot.stueckeNoch-=abzug;
-        restVk-=abzug;
-      }
-    }
-  }
-
-  const aktKurs=g?g.kurs:null;
-  let fifoKaufIdx2=0;
-
-  const v1='font-size:13px;color:#e8eaf0;font-weight:700';
-  const v2='font-size:12px;color:#94a3b8';
-
-  const histHtml=allHist.length
-    ?`<div style="border:1px solid #2a2f3e;border-radius:8px;overflow:hidden">
-      <!-- Header -->
-      <div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;background:#0f1117;border-bottom:1px solid #2a2f3e">
-        <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Typ<br>Datum</div>
-        <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Gekauft<br>Bestand</div>
-        <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Kurs<br>Akt. Kurs</div>
-        <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Betrag<br>Akt. Wert</div>
-        <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Gewinn<br>Prozent</div>
-      </div>
-      ${allHist.map(e=>{
-        if(e.type==="kauf"){
-          const lot=fifoLots[fifoKaufIdx2++];
-          const imBestand=lot?lot.stueckeNoch:0;
-          const vollVerkauft=imBestand===0;
-          const bColor=vollVerkauft?"#4b5563":imBestand<e.stuecke?"#f59e0b":"#22c55e";
-
-          let gwBetrag=null,gwPct=null;
-          if(aktKurs!==null&&!vollVerkauft){
-            gwBetrag=(aktKurs-e.kurs)*imBestand;
-            gwPct=((aktKurs-e.kurs)/e.kurs)*100;
-          }
-          const gColor=gwBetrag!==null?(gwBetrag>=0?"#22c55e":"#ef4444"):"#4b5563";
-
-          return`<div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;${vollVerkauft?"opacity:0.45":""}">
-            <!-- Spalte 1: K oben, Datum unten -->
-            <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="background:#1e2d40;color:#60a5fa;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">K</span>
-              <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
-            </div>
-            <!-- Spalte 2: Gekauft oben, Bestand unten -->
-            <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="${v1}">${e.stuecke}</span>
-              <span style="font-size:13px;color:${bColor};font-weight:700">${imBestand}${imBestand<e.stuecke&&!vollVerkauft?`<span style="color:#4b5563;font-size:10px;font-weight:400"> /${e.stuecke}</span>`:""}</span>
-            </div>
-            <!-- Spalte 3: Kaufkurs oben, Akt. Kurs unten -->
-            <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="${v1}">${cur(e.kurs)}</span>
-              <span style="${v2}">${aktKurs!==null&&!vollVerkauft?cur(aktKurs):"—"}</span>
-            </div>
-            <!-- Spalte 4: Kaufbetrag oben, Akt. Wert unten -->
-            <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="${v1}">${cur(e.kurs*e.stuecke)}</span>
-              <span style="${v2}">${aktKurs!==null&&!vollVerkauft?cur(aktKurs*imBestand):"—"}</span>
-            </div>
-            <!-- Spalte 5: Gewinn € oben, % unten -->
-            <div style="padding:7px 8px;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="font-size:13px;color:${gColor};font-weight:700">${gwBetrag!==null?cur(gwBetrag):vollVerkauft?"verk.":"—"}</span>
-              <span style="font-size:12px;color:${gColor}">${gwPct!==null?pct(gwPct):"—"}</span>
-            </div>
-          </div>`;
-        } else {
-          return`<div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;background:#150f0a">
-            <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="background:#2d1e10;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">V</span>
-              <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
-            </div>
-            <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="${v1}">${e.stuecke}</span>
-              <span style="${v2}">—</span>
-            </div>
-            <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="${v1}">${cur(e.kurs)}</span>
-              <span style="${v2}">—</span>
-            </div>
-            <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="${v1}">${cur(e.kurs*e.stuecke)}</span>
-              <span style="${v2}">—</span>
-            </div>
-            <div style="padding:7px 8px;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-              <span style="font-size:13px;color:#4b5563">—</span>
-              <span style="font-size:12px;color:#4b5563">—</span>
-            </div>
-          </div>`;
-        }
-      }).join("")}
-    </div>`
-    :`<span class="dim" style="font-size:13px">Keine Einträge</span>`;
+  const histHtml=buildHistHtml(pos);
 
   panel.innerHTML=`<div class="edit-panel">
     <div class="expand-inner">
@@ -659,13 +547,110 @@ function renderEditPanel(){
 
       <div class="expand-section">
         <div class="section-label">📜 Historie</div>
-        ${histHtml}
+        <div id="hist-${pos.id}">${histHtml}</div>
       </div>
     </div>
   </div>`;
 }
 
 function render(){renderCards();renderEditPanel();}
+
+function buildHistHtml(pos){
+  const g=getGewinn(pos);
+  const aktKurs=g?g.kurs:null;
+
+  const kaufEntries=(pos.history||[]).filter(e=>e.type==="kauf");
+  const vkEntries=sold.filter(e=>e.wkn===pos.wkn).map(v=>({type:"vk",stuecke:v.stueckeVerkauft,kurs:v.verkaufspreis,datum:v.verkaufDatum,gewinnJe:v.gewinnJe,gewinnPct:v.gewinnPct}));
+  const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>a.datum.localeCompare(b.datum));
+
+  const fifoLots=[];
+  let kaufIdx=0;
+  for(const e of allHist){
+    if(e.type==="kauf"){fifoLots.push({idx:kaufIdx++,stueckeGekauft:e.stuecke,stueckeNoch:e.stuecke});}
+    else{let r=e.stuecke;for(const l of fifoLots){if(r<=0)break;const a=Math.min(l.stueckeNoch,r);l.stueckeNoch-=a;r-=a;}}
+  }
+
+  const v1='font-size:13px;color:#e8eaf0;font-weight:700';
+  const v2='font-size:12px;color:#94a3b8';
+  let fi=0;
+
+  if(!allHist.length) return `<span class="dim" style="font-size:13px">Keine Einträge</span>`;
+
+  return`<div style="border:1px solid #2a2f3e;border-radius:8px;overflow:hidden">
+    <div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;background:#0f1117;border-bottom:1px solid #2a2f3e">
+      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Typ<br>Datum</div>
+      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Gekauft<br>Bestand</div>
+      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Kurs<br>Akt. Kurs</div>
+      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Betrag<br>Akt. Wert</div>
+      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Gewinn<br>Prozent</div>
+    </div>
+    ${allHist.map(e=>{
+      if(e.type==="kauf"){
+        const lot=fifoLots[fi++];
+        const imBestand=lot?lot.stueckeNoch:0;
+        const vollVerkauft=imBestand===0;
+        const bColor=vollVerkauft?"#4b5563":imBestand<e.stuecke?"#f59e0b":"#22c55e";
+        let gwBetrag=null,gwPct=null;
+        if(aktKurs!==null&&!vollVerkauft){gwBetrag=(aktKurs-e.kurs)*imBestand;gwPct=((aktKurs-e.kurs)/e.kurs)*100;}
+        const gColor=gwBetrag!==null?(gwBetrag>=0?"#22c55e":"#ef4444"):"#4b5563";
+        return`<div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;${vollVerkauft?"opacity:0.45":""}">
+          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="background:#1e2d40;color:#60a5fa;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">K</span>
+            <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
+          </div>
+          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="${v1}">${e.stuecke}</span>
+            <span style="font-size:13px;color:${bColor};font-weight:700">${imBestand}${imBestand<e.stuecke&&!vollVerkauft?`<span style="color:#4b5563;font-size:10px;font-weight:400"> /${e.stuecke}</span>`:""}</span>
+          </div>
+          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="${v1}">${cur(e.kurs)}</span>
+            <span style="${v2}">${aktKurs!==null&&!vollVerkauft?cur(aktKurs):"—"}</span>
+          </div>
+          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="${v1}">${cur(e.kurs*e.stuecke)}</span>
+            <span style="${v2}">${aktKurs!==null&&!vollVerkauft?cur(aktKurs*imBestand):"—"}</span>
+          </div>
+          <div style="padding:7px 8px;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="font-size:13px;color:${gColor};font-weight:700">${gwBetrag!==null?cur(gwBetrag):vollVerkauft?"verk.":"—"}</span>
+            <span style="font-size:12px;color:${gColor}">${gwPct!==null?pct(gwPct):"—"}</span>
+          </div>
+        </div>`;
+      } else {
+        return`<div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;background:#150f0a">
+          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="background:#2d1e10;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">V</span>
+            <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
+          </div>
+          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="${v1}">${e.stuecke}</span>
+            <span style="${v2}">—</span>
+          </div>
+          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="${v1}">${cur(e.kurs)}</span>
+            <span style="${v2}">—</span>
+          </div>
+          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="${v1}">${cur(e.kurs*e.stuecke)}</span>
+            <span style="${v2}">—</span>
+          </div>
+          <div style="padding:7px 8px;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="font-size:13px;color:#4b5563">—</span>
+            <span style="font-size:12px;color:#4b5563">—</span>
+          </div>
+        </div>`;
+      }
+    }).join("")}
+  </div>`;
+}
+
+function refreshHistorie(id){
+  const el=document.getElementById("hist-"+id);
+  if(!el)return;
+  const pos=positions.find(p=>p.id===id);
+  if(!pos)return;
+  el.innerHTML=buildHistHtml(pos);
+}
+
 render();
 </script>
 </body>

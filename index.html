@@ -131,9 +131,8 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
     <span class="toolbar-label">Daten</span>
     <button class="btn-tool btn-xlsx" onclick="document.getElementById('xlsx-input').click()">📥 Excel importieren</button>
     <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)"/>
-    <button class="btn-tool btn-json-imp" onclick="document.getElementById('json-input').click()">📂 JSON laden</button>
+    <button class="btn-tool btn-json-imp" onclick="document.getElementById('json-input').click()">🔄 Änderungen aktualisieren</button>
     <input type="file" id="json-input" accept=".json" style="display:none" onchange="importJson(this)"/>
-    <button class="btn-tool btn-json-exp" onclick="exportJson()">💾 JSON speichern</button>
   </div>
 
   <div id="summary"></div>
@@ -204,16 +203,20 @@ function importXlsx(input){
   reader.readAsArrayBuffer(file);
 }
 
-// ---------- JSON Export ----------
 function exportJson(){
-  if(!positions.length){toast("Keine Daten zum Speichern",false);return;}
+  if(!positions.length)return;
   const data=JSON.stringify({positions,sold,currentPrices},null,2);
   const blob=new Blob([data],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download="depot-"+new Date().toISOString().slice(0,10)+".json";
+  a.download="dlist.json";
   a.click();
-  toast("💾 Datei gespeichert");
+}
+
+function autoSave(){
+  if(!positions.length)return;
+  exportJson();
+  toast("💾 dlist.json gespeichert");
 }
 
 // ---------- JSON Import ----------
@@ -222,7 +225,16 @@ function importJson(input){
   if(!file)return;
   const reader=new FileReader();
   reader.onload=function(e){
-    try{const d=JSON.parse(e.target.result);positions=d.positions||[];sold=d.sold||[];currentPrices=d.currentPrices||{};toast(`✅ ${positions.length} Positionen geladen`);render();}
+    try{
+      const d=JSON.parse(e.target.result);
+      positions=d.positions||[];
+      sold=d.sold||[];
+      currentPrices=d.currentPrices||{};
+      toast(`✅ ${positions.length} Positionen geladen`);
+      render();
+      // Sofort als dlist.json zurückspeichern damit Änderungen aktuell sind
+      setTimeout(exportJson, 500);
+    }
     catch(err){toast("❌ Fehler: "+err.message,false);}
     input.value="";
   };
@@ -269,7 +281,7 @@ function addPosition(){
   if(Object.keys(errs).length)return;
   const stuecke=num(st),preis=num(pr);
   positions.push({id:Date.now(),name:n,wkn:w.toUpperCase(),stuecke,preis,datum:da,history:[{type:"kauf",stuecke,kurs:preis,datum:da}]});
-  toggleAddForm(false);render();toast("✅ Position hinzugefügt");
+  toggleAddForm(false);render();autoSave();toast("✅ Position hinzugefügt");
 }
 
 // ---------- Name/WKN speichern ----------
@@ -278,7 +290,7 @@ function saveNameWkn(id){
   const wkn=document.getElementById("edit-wkn-"+id).value.trim();
   if(!name)return;
   positions=positions.map(p=>p.id===id?{...p,name,wkn:wkn.toUpperCase()}:p);
-  renderCards();renderEditPanel();toast("✅ Gespeichert");
+  renderCards();renderEditPanel();autoSave();toast("✅ Gespeichert");
 }
 
 // ---------- Kurs aktualisieren ----------
@@ -292,10 +304,11 @@ function updateKurs(id,val){
   }
   // Karten-Übersicht aktualisieren
   renderCards();
-  // Nur Gewinn-Badges + Historie aktualisieren, NICHT das gesamte Panel
-  // (sonst verliert das Input-Feld den Fokus und die Tastatur springt zurück)
   refreshGewinnDisplay(id);
   refreshHistorie(id);
+  // Verzögert speichern damit nicht bei jedem Tastendruck ein Download startet
+  clearTimeout(window._saveTimer);
+  window._saveTimer=setTimeout(autoSave, 2000);
 }
 
 function refreshGewinnDisplay(id){
@@ -340,7 +353,7 @@ function doTx(id,type){
     else positions=positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st}:p);
     toast("✅ Verkauf gebucht");
   }
-  render();
+  render();autoSave();
 }
 
 // ---------- Position entfernen ----------
@@ -349,7 +362,7 @@ function removePos(id){
   positions=positions.filter(p=>p.id!==id);
   delete currentPrices[String(id)];
   if(expandedId===id)expandedId=null;
-  render();toast("Position entfernt");
+  render();autoSave();toast("Position entfernt");
 }
 
 // ---------- Summary öffnet Edit ----------

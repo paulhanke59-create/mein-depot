@@ -115,6 +115,18 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
 .dim{color:#4b5563}
 .muted{color:#94a3b8;font-size:13px}
 
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:990;display:flex;align-items:flex-end;justify-content:center}
+.modal-box{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:16px 16px 0 0;padding:20px 16px;width:100%;max-width:500px}
+.modal-title{font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+.modal-info{background:#131720;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#e8eaf0}
+.modal-info .mi-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.modal-info .mi-row:last-child{margin-bottom:0}
+.modal-info .ml{font-size:10px;color:#6b7280;text-transform:uppercase}
+.modal-info .mv{color:#e8eaf0;font-weight:600}
+.modal-btns{display:flex;gap:8px;flex-wrap:wrap}
+.modal-btns button{flex:1;min-width:80px}
+
 /* Toast */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:10px 20px;border-radius:10px;font-weight:600;font-size:14px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
@@ -136,8 +148,8 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
         <button class="btn-tool btn-xlsx" onclick="document.getElementById('xlsx-input').click()">📥 Excel</button>
         <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)"/>
         <input type="file" id="json-input" accept=".json" style="display:none"/>
-        <button class="btn-tool btn-json-imp" onclick="lesenSlot('a')">📂 Lesen A</button>
-        <button class="btn-tool btn-json-imp" onclick="lesenSlot('b')">📂 Lesen B</button>
+        <button id="btn-lesen-a" class="btn-tool btn-json-imp" onclick="lesenSlot('a')">📂 Lesen A</button>
+        <button id="btn-lesen-b" class="btn-tool btn-json-imp" onclick="lesenSlot('b')">📂 Lesen B</button>
         <button class="btn-tool btn-json-exp" onclick="speichernSlot('a')">💾 Speichern A</button>
         <button class="btn-tool btn-json-exp" onclick="speichernSlot('b')">💾 Speichern B</button>
       </div>
@@ -150,6 +162,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="hist-modal" style="display:none"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -226,8 +239,18 @@ function lesenSlot(slot){
         positions=d.positions||[];
         sold=d.sold||[];
         currentPrices=d.currentPrices||{};
+        // Dateinamen im Button anzeigen
+        const btnA=document.getElementById("btn-lesen-a");
+        const btnB=document.getElementById("btn-lesen-b");
+        if(slot==='a'){
+          if(btnA)btnA.innerHTML=`📂 <span style="color:#22c55e">✓ ${file.name}</span>`;
+          if(btnB)btnB.innerHTML=`📂 Lesen B`;
+        } else {
+          if(btnB)btnB.innerHTML=`📂 <span style="color:#22c55e">✓ ${file.name}</span>`;
+          if(btnA)btnA.innerHTML=`📂 Lesen A`;
+        }
         render();
-        toast(`✅ Daten ${slot.toUpperCase()} geladen (${positions.length} Positionen)`);
+        toast(`✅ ${file.name} geladen (${positions.length} Positionen)`);
       }catch(err){toast("❌ Fehler: "+err.message,false);}
       input.value="";
     };
@@ -582,7 +605,155 @@ function renderEditPanel(){
   </div>`;
 }
 
-function render(){renderCards();renderEditPanel();}
+// ---------- Historie Eintrag bearbeiten ----------
+function openHistModal(posId, entryIdx, entryType){
+  const pos=positions.find(p=>p.id===posId);
+  if(!pos)return;
+
+  let entry, isSold=false, soldIdx=-1;
+  if(entryType==='kauf'){
+    const kaufEntries=(pos.history||[]).filter(e=>e.type==="kauf");
+    entry=kaufEntries[entryIdx];
+  } else {
+    const vkEntries=sold.filter(e=>e.wkn===pos.wkn);
+    soldIdx=sold.findIndex((e,i)=>e.wkn===pos.wkn && sold.filter(s=>s.wkn===pos.wkn).indexOf(e)===entryIdx);
+    entry=vkEntries[entryIdx];
+    isSold=true;
+  }
+  if(!entry)return;
+
+  const modal=document.getElementById("hist-modal");
+  modal.style.display="";
+  modal.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeHistModal()">
+    <div class="modal-box">
+      <div class="modal-title">${entryType==='kauf'?'Kauf':'Verkauf'} bearbeiten</div>
+      <div class="modal-info">
+        <div class="mi-row">
+          <span><span class="ml">Datum </span><span class="mv">${fdate(entry.datum)}</span></span>
+          <span><span class="ml">Stücke </span><span class="mv">${entry.stuecke}</span></span>
+          <span><span class="ml">Kurs </span><span class="mv">${cur(entry.kurs)}</span></span>
+          <span><span class="ml">Betrag </span><span class="mv">${cur(entry.kurs*entry.stuecke)}</span></span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:14px">Was möchtest du tun?</div>
+      <div class="modal-btns">
+        <button class="btn-red" style="padding:10px" onclick="deleteHistEntry(${posId},${entryIdx},'${entryType}')">🗑 Löschen</button>
+        <button class="btn-sm-confirm blue" style="padding:10px" onclick="openEditHistEntry(${posId},${entryIdx},'${entryType}')">✏️ Ändern</button>
+        <button onclick="closeHistModal()" style="background:#1e2332;border:1px solid #2a2f3e;border-radius:6px;padding:10px;color:#6b7280;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function closeHistModal(){
+  const m=document.getElementById("hist-modal");
+  m.style.display="none";
+  m.innerHTML="";
+}
+
+function deleteHistEntry(posId, entryIdx, entryType){
+  if(!confirm("Eintrag wirklich löschen?"))return;
+  closeHistModal();
+  const pos=positions.find(p=>p.id===posId);
+  if(!pos)return;
+
+  if(entryType==='kauf'){
+    const kaufEntries=pos.history.filter(e=>e.type==="kauf");
+    const toDelete=kaufEntries[entryIdx];
+    // Aus history entfernen
+    let ki=0;
+    pos.history=pos.history.filter(e=>{
+      if(e.type!=='kauf')return true;
+      return ki++!==entryIdx;
+    });
+    // Stücke und Durchschnittskurs neu berechnen
+    let total=0,cost=0;
+    pos.history.filter(e=>e.type==='kauf').forEach(e=>{total+=e.stuecke;cost+=e.kurs*e.stuecke;});
+    pos.stuecke=Math.round(total);
+    pos.preis=total>0?Math.round(cost/total*10000)/10000:0;
+    if(pos.stuecke<=0)positions=positions.filter(p=>p.id!==posId);
+  } else {
+    // Verkauf aus sold entfernen
+    const vkOfPos=sold.filter(e=>e.wkn===pos.wkn);
+    const toRemove=vkOfPos[entryIdx];
+    const globalIdx=sold.indexOf(toRemove);
+    if(globalIdx>=0)sold.splice(globalIdx,1);
+    // Stücke zurückbuchen
+    pos.stuecke+=toRemove.stueckeVerkauft||0;
+  }
+  render();
+  toast("🗑 Eintrag gelöscht");
+}
+
+function openEditHistEntry(posId, entryIdx, entryType){
+  closeHistModal();
+  const pos=positions.find(p=>p.id===posId);
+  if(!pos)return;
+  let entry;
+  if(entryType==='kauf'){
+    entry=(pos.history||[]).filter(e=>e.type==="kauf")[entryIdx];
+  } else {
+    entry=sold.filter(e=>e.wkn===pos.wkn)[entryIdx];
+  }
+  if(!entry)return;
+
+  const modal=document.getElementById("hist-modal");
+  modal.style.display="";
+  modal.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeHistModal()">
+    <div class="modal-box">
+      <div class="modal-title">${entryType==='kauf'?'Kauf':'Verkauf'} ändern</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+        <div><label style="font-size:10px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Datum</label>
+          <input type="date" id="edit-h-datum" value="${entry.datum}" style="background:#0f1117;border:1px solid #2a2f3e;border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:14px;width:100%;color-scheme:dark"/></div>
+        <div><label style="font-size:10px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Stücke</label>
+          <input type="text" id="edit-h-stuecke" value="${entry.stuecke}" style="background:#0f1117;border:1px solid #2a2f3e;border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:14px;width:100%"/></div>
+        <div><label style="font-size:10px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
+          <input type="text" id="edit-h-kurs" value="${String(entry.kurs).replace('.',',')}" style="background:#0f1117;border:1px solid #2a2f3e;border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:14px;width:100%"/></div>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-sm-confirm" onclick="saveEditHistEntry(${posId},${entryIdx},'${entryType}')">✅ Speichern</button>
+        <button onclick="closeHistModal()" style="background:#1e2332;border:1px solid #2a2f3e;border-radius:6px;padding:10px;color:#6b7280;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function saveEditHistEntry(posId, entryIdx, entryType){
+  const datum=document.getElementById("edit-h-datum").value;
+  const stuecke=num(document.getElementById("edit-h-stuecke").value);
+  const kurs=num(document.getElementById("edit-h-kurs").value);
+  if(!datum||!stuecke||!kurs){toast("Bitte alle Felder ausfüllen",false);return;}
+  closeHistModal();
+  const pos=positions.find(p=>p.id===posId);
+  if(!pos)return;
+
+  if(entryType==='kauf'){
+    let ki=0;
+    pos.history=pos.history.map(e=>{
+      if(e.type!=='kauf')return e;
+      if(ki++===entryIdx)return{...e,datum,stuecke,kurs};
+      return e;
+    });
+    // Durchschnitt neu berechnen
+    let total=0,cost=0;
+    pos.history.filter(e=>e.type==='kauf').forEach(e=>{total+=e.stuecke;cost+=e.kurs*e.stuecke;});
+    pos.stuecke=Math.round(total);
+    pos.preis=total>0?Math.round(cost/total*10000)/10000:0;
+  } else {
+    const vkOfPos=sold.filter(e=>e.wkn===pos.wkn);
+    const toEdit=vkOfPos[entryIdx];
+    const globalIdx=sold.indexOf(toEdit);
+    if(globalIdx>=0){
+      sold[globalIdx]={...sold[globalIdx],datum,stuecke:stuecke,verkaufspreis:kurs,
+        gewinnJe:(kurs-pos.preis)*stuecke,
+        gewinnPct:((kurs-pos.preis)/pos.preis)*100};
+    }
+  }
+  render();
+  toast("✅ Eintrag geändert");
+}
+
+
 
 function buildHistHtml(pos){
   const g=getGewinn(pos);
@@ -601,7 +772,7 @@ function buildHistHtml(pos){
 
   const v1='font-size:13px;color:#e8eaf0;font-weight:700';
   const v2='font-size:12px;color:#94a3b8';
-  let fi=0;
+  let fi=0, ki=0, vi=0;
 
   if(!allHist.length) return `<span class="dim" style="font-size:13px">Keine Einträge</span>`;
 
@@ -616,13 +787,14 @@ function buildHistHtml(pos){
     ${allHist.map(e=>{
       if(e.type==="kauf"){
         const lot=fifoLots[fi++];
+        const myKi=ki++;
         const imBestand=lot?lot.stueckeNoch:0;
         const vollVerkauft=imBestand===0;
         const bColor=vollVerkauft?"#4b5563":imBestand<e.stuecke?"#f59e0b":"#22c55e";
         let gwBetrag=null,gwPct=null;
         if(aktKurs!==null&&!vollVerkauft){gwBetrag=(aktKurs-e.kurs)*imBestand;gwPct=((aktKurs-e.kurs)/e.kurs)*100;}
         const gColor=gwBetrag!==null?(gwBetrag>=0?"#22c55e":"#ef4444"):"#4b5563";
-        return`<div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;${vollVerkauft?"opacity:0.45":""}">
+        return`<div onclick="openHistModal(${pos.id},${myKi},'kauf')" style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;${vollVerkauft?"opacity:0.45":""}cursor:pointer" onmouseenter="this.style.background='#1a2235'" onmouseleave="this.style.background=''">
           <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="background:#1e2d40;color:#60a5fa;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">K</span>
             <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
@@ -645,7 +817,8 @@ function buildHistHtml(pos){
           </div>
         </div>`;
       } else {
-        return`<div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;background:#150f0a">
+        const myVi=vi++;
+        return`<div onclick="openHistModal(${pos.id},${myVi},'vk')" style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;background:#150f0a;cursor:pointer" onmouseenter="this.style.background='#1a1410'" onmouseleave="this.style.background='#150f0a'">
           <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="background:#2d1e10;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">V</span>
             <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
@@ -671,6 +844,8 @@ function buildHistHtml(pos){
     }).join("")}
   </div>`;
 }
+
+function render(){renderCards();renderEditPanel();}
 
 function refreshHistorie(id){
   const el=document.getElementById("hist-"+id);

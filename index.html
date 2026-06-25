@@ -205,7 +205,7 @@ function importXlsx(input){
 }
 
 // ---------- Zwei-Slot System ----------
-let activeSlot='a'; // aktuell aktiver Slot
+let activeSlot='a';
 
 function slotKey(slot){return"depot_slot_"+slot;}
 
@@ -225,31 +225,63 @@ function loadSlot(slot){
   }catch(e){return false;}
 }
 
+function hasSlot(slot){return!!localStorage.getItem(slotKey(slot));}
+
 function switchSlot(slot){
-  // Aktuellen Stand im bisherigen Slot speichern
-  saveSlot(activeSlot);
-  // Neuen Slot laden
+  const other=slot==='a'?'b':'a';
+  if(!hasSlot('a')&&!hasSlot('b')){
+    // Noch gar keine Daten — Datei laden
+    loadFromFile(slot);
+    return;
+  }
+  // Daten vorhanden: in gewählten Slot speichern, anderen löschen, anzeigen
+  saveSlot(slot);
+  localStorage.removeItem(slotKey(other));
   activeSlot=slot;
-  localStorage.setItem("depot_active_slot", slot);
-  const loaded=loadSlot(slot);
+  localStorage.setItem("depot_active_slot",slot);
+  loadSlot(slot);
   updateSlotButtons();
   render();
-  toast(loaded?`✅ Daten ${slot.toUpperCase()} geladen`:`📁 Daten ${slot.toUpperCase()} — leer`);
+  toast(`💾 Daten ${slot.toUpperCase()} gespeichert`);
+}
+
+function loadFromFile(slot){
+  // Datei-Dialog öffnen, Daten laden und in Slot speichern
+  const input=document.createElement("input");
+  input.type="file";
+  input.accept=".json";
+  input.onchange=function(){
+    const file=input.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const d=JSON.parse(e.target.result);
+        positions=d.positions||[];
+        sold=d.sold||[];
+        currentPrices=d.currentPrices||{};
+        activeSlot=slot;
+        localStorage.setItem("depot_active_slot",slot);
+        saveSlot(slot);
+        updateSlotButtons();
+        render();
+        toast(`✅ Daten ${slot.toUpperCase()} geladen (${positions.length} Positionen)`);
+      }catch(err){toast("❌ Fehler: "+err.message,false);}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 function updateSlotButtons(){
   const a=document.getElementById("btn-slot-a");
   const b=document.getElementById("btn-slot-b");
   if(!a||!b)return;
-  const hasA=!!localStorage.getItem(slotKey('a'));
-  const hasB=!!localStorage.getItem(slotKey('b'));
-  a.style.background=activeSlot==='a'?"#1e3a20":"";
-  a.style.color=activeSlot==='a'?"#22c55e":"";
-  a.style.border=activeSlot==='a'?"1px solid #22c55e44":"";
+  const hasA=hasSlot('a');
+  const hasB=hasSlot('b');
+  a.style.cssText=activeSlot==='a'?"background:#1e3a20;color:#22c55e;border:1px solid #22c55e44":"";
+  b.style.cssText=activeSlot==='b'?"background:#1e3a20;color:#22c55e;border:1px solid #22c55e44":"";
   a.textContent=(hasA?"💾":"📁")+" Daten A"+(activeSlot==='a'?" ✓":"");
-  b.style.background=activeSlot==='b'?"#1e3a20":"";
-  b.style.color=activeSlot==='b'?"#22c55e":"";
-  b.style.border=activeSlot==='b'?"1px solid #22c55e44":"";
   b.textContent=(hasB?"💾":"📁")+" Daten B"+(activeSlot==='b'?" ✓":"");
 }
 
@@ -258,8 +290,8 @@ function autoSave(){
   updateSlotButtons();
 }
 
-function exportJson(){ /* nicht mehr benötigt */ }
-function importJson(){ /* nicht mehr benötigt */ }
+function exportJson(){}
+function importJson(){}
 
 
 

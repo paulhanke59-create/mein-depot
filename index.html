@@ -147,9 +147,8 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
       <div class="toolbar-group">
         <button class="btn-tool btn-xlsx" onclick="document.getElementById('xlsx-input').click()">📥 Excel</button>
         <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)"/>
-        <input type="file" id="json-input" accept=".json" style="display:none"/>
-        <button id="btn-lesen-a" class="btn-tool btn-json-imp" onclick="lesenSlot('a')">📂 Lesen A</button>
-        <button id="btn-lesen-b" class="btn-tool btn-json-imp" onclick="lesenSlot('b')">📂 Lesen B</button>
+        <input type="file" id="json-input" accept=".json" style="display:none" multiple/>
+        <button id="btn-lesen-a" class="btn-tool btn-json-imp" onclick="lesenAuto()">📂 Depot laden</button>
         <button id="btn-speichern-a" class="btn-tool btn-json-exp" onclick="speichernSlot('a')">💾 Speichern A</button>
         <button id="btn-speichern-b" class="btn-tool btn-json-exp" onclick="speichernSlot('b')">💾 Speichern B</button>
         <button class="btn-tool" onclick="openDownloads()" style="background:#1e2332;color:#94a3b8;border:1px solid #2a2f3e">📁 Downloads öffnen</button>
@@ -270,33 +269,41 @@ function restoreButtonDates(){
   });
 }
 
-function lesenSlot(slot){
+function lesenAuto(){
   const input=document.getElementById("json-input");
   input.onchange=function(){
-    const file=input.files[0];
-    if(!file)return;
-    const reader=new FileReader();
-    reader.onload=function(e){
-      try{
-        const d=JSON.parse(e.target.result);
-        positions=d.positions||[];
-        sold=d.sold||[];
-        currentPrices=d.currentPrices||{};
-        loadedSlot=slot;
-        const iso=d.savedAt||null;
-        // Im localStorage merken
-        if(iso) saveSlotDate(slot, iso);
-        // Anderen Slot-Button zurücksetzen
-        const other=slot==='a'?'b':'a';
-        updateLesenButton(slot, iso);
-        updateLesenButton(other, getSlotDate(other));
-        render();
-        const d2=formatDate(iso);
-        toast(`✅ Daten-${slot.toUpperCase()} geladen${d2?" · Stand: "+d2:""}`);
-      }catch(err){toast("❌ Fehler: "+err.message,false);}
-      input.value="";
-    };
-    reader.readAsText(file);
+    const files=Array.from(input.files);
+    if(!files.length)return;
+    // Alle Dateien lesen, dann neueste wählen
+    const reads=files.map(file=>new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=e=>{
+        try{
+          const d=JSON.parse(e.target.result);
+          resolve({file,d,savedAt:d.savedAt?new Date(d.savedAt):new Date(0)});
+        }catch(err){reject(err);}
+      };
+      reader.readAsText(file);
+    }));
+    Promise.all(reads).then(results=>{
+      // Neueste Datei gewinnt
+      results.sort((a,b)=>b.savedAt-a.savedAt);
+      const newest=results[0];
+      const older=results.slice(1);
+      positions=newest.d.positions||[];
+      sold=newest.d.sold||[];
+      currentPrices=newest.d.currentPrices||{};
+      const iso=newest.d.savedAt||null;
+      if(iso) saveSlotDate('a',iso);
+      updateLesenButton('a',iso);
+      render();
+      let msg=`✅ ${newest.file.name} geladen`;
+      if(older.length>0){
+        msg+=` · ${older.map(r=>r.file.name).join(", ")} ignoriert (älter)`;
+      }
+      toast(msg);
+    }).catch(err=>toast("❌ Fehler: "+err.message,false));
+    input.value="";
   };
   input.click();
 }

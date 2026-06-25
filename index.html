@@ -19,9 +19,12 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
 .wrap{max-width:1100px;margin:0 auto;padding:16px}
 
 /* Toolbar */
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;align-items:center}
-.toolbar-label{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-right:4px}
-.btn-tool{border:none;border-radius:7px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+.toolbar{margin-bottom:16px;background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;overflow:hidden}
+.toolbar-row{display:flex;align-items:center;gap:0;border-bottom:1px solid #2a2f3e}
+.toolbar-row:last-child{border-bottom:none}
+.toolbar-group{display:flex;align-items:center;gap:8px;padding:10px 14px;flex:1;flex-wrap:wrap}
+.toolbar-group-label{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:0 14px;min-width:52px;border-right:1px solid #2a2f3e;align-self:stretch;display:flex;align-items:center}
+.btn-tool{border:none;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
 .btn-xlsx{background:#1e2d20;color:#22c55e;border:1px solid #22c55e44}
 .btn-json-imp{background:#1e2a40;color:#60a5fa;border:1px solid #3b82f644}
 .btn-json-exp{background:#2a1e40;color:#a78bfa;border:1px solid #7c3aed44}
@@ -128,11 +131,17 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
 
   <!-- Toolbar -->
   <div class="toolbar">
-    <span class="toolbar-label">Daten</span>
-    <button class="btn-tool btn-xlsx" onclick="document.getElementById('xlsx-input').click()">📥 Excel importieren</button>
-    <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)"/>
-    <button id="btn-slot-a" class="btn-tool" onclick="switchSlot('a')">📁 Daten A</button>
-    <button id="btn-slot-b" class="btn-tool" onclick="switchSlot('b')">📁 Daten B</button>
+    <div class="toolbar-row" style="border-bottom:none">
+      <div class="toolbar-group">
+        <button class="btn-tool btn-xlsx" onclick="document.getElementById('xlsx-input').click()">📥 Excel</button>
+        <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)"/>
+        <input type="file" id="json-input" accept=".json" style="display:none"/>
+        <button class="btn-tool btn-json-imp" onclick="lesenSlot('a')">📂 Lesen A</button>
+        <button class="btn-tool btn-json-imp" onclick="lesenSlot('b')">📂 Lesen B</button>
+        <button class="btn-tool btn-json-exp" onclick="speichernSlot('a')">💾 Speichern A</button>
+        <button class="btn-tool btn-json-exp" onclick="speichernSlot('b')">💾 Speichern B</button>
+      </div>
+    </div>
   </div>
 
   <div id="summary"></div>
@@ -204,52 +213,9 @@ function importXlsx(input){
   reader.readAsArrayBuffer(file);
 }
 
-// ---------- Zwei-Slot System ----------
-let activeSlot='a';
-
-function slotKey(slot){return"depot_slot_"+slot;}
-
-function saveSlot(slot){
-  localStorage.setItem(slotKey(slot),JSON.stringify({positions,sold,currentPrices}));
-}
-
-function loadSlot(slot){
-  try{
-    const raw=localStorage.getItem(slotKey(slot));
-    if(!raw)return false;
-    const d=JSON.parse(raw);
-    positions=d.positions||[];
-    sold=d.sold||[];
-    currentPrices=d.currentPrices||{};
-    return true;
-  }catch(e){return false;}
-}
-
-function hasSlot(slot){return!!localStorage.getItem(slotKey(slot));}
-
-function switchSlot(slot){
-  const other=slot==='a'?'b':'a';
-  if(!hasSlot('a')&&!hasSlot('b')){
-    // Noch gar keine Daten — Datei laden
-    loadFromFile(slot);
-    return;
-  }
-  // Daten vorhanden: in gewählten Slot speichern, anderen löschen, anzeigen
-  saveSlot(slot);
-  localStorage.removeItem(slotKey(other));
-  activeSlot=slot;
-  localStorage.setItem("depot_active_slot",slot);
-  loadSlot(slot);
-  updateSlotButtons();
-  render();
-  toast(`💾 Daten ${slot.toUpperCase()} gespeichert`);
-}
-
-function loadFromFile(slot){
-  // Datei-Dialog öffnen, Daten laden und in Slot speichern
-  const input=document.createElement("input");
-  input.type="file";
-  input.accept=".json";
+// ---------- Lesen / Speichern A & B ----------
+function lesenSlot(slot){
+  const input=document.getElementById("json-input");
   input.onchange=function(){
     const file=input.files[0];
     if(!file)return;
@@ -260,38 +226,34 @@ function loadFromFile(slot){
         positions=d.positions||[];
         sold=d.sold||[];
         currentPrices=d.currentPrices||{};
-        activeSlot=slot;
-        localStorage.setItem("depot_active_slot",slot);
-        saveSlot(slot);
-        updateSlotButtons();
         render();
         toast(`✅ Daten ${slot.toUpperCase()} geladen (${positions.length} Positionen)`);
       }catch(err){toast("❌ Fehler: "+err.message,false);}
+      input.value="";
     };
     reader.readAsText(file);
   };
   input.click();
 }
 
-function updateSlotButtons(){
-  const a=document.getElementById("btn-slot-a");
-  const b=document.getElementById("btn-slot-b");
-  if(!a||!b)return;
-  const hasA=hasSlot('a');
-  const hasB=hasSlot('b');
-  a.style.cssText=activeSlot==='a'?"background:#1e3a20;color:#22c55e;border:1px solid #22c55e44":"";
-  b.style.cssText=activeSlot==='b'?"background:#1e3a20;color:#22c55e;border:1px solid #22c55e44":"";
-  a.textContent=(hasA?"💾":"📁")+" Daten A"+(activeSlot==='a'?" ✓":"");
-  b.textContent=(hasB?"💾":"📁")+" Daten B"+(activeSlot==='b'?" ✓":"");
+function speichernSlot(slot){
+  if(!positions.length){toast("Keine Daten zum Speichern",false);return;}
+  const other=slot==='a'?'b':'a';
+  // Datei herunterladen
+  const data=JSON.stringify({positions,sold,currentPrices},null,2);
+  const blob=new Blob([data],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="daten-"+slot+".json";
+  a.click();
+  toast(`💾 daten-${slot}.json gespeichert — bitte daten-${other}.json manuell löschen`);
 }
 
-function autoSave(){
-  saveSlot(activeSlot);
-  updateSlotButtons();
-}
-
+function autoSave(){}
 function exportJson(){}
 function importJson(){}
+function switchSlot(){}
+function updateSlotButtons(){}
 
 
 
@@ -718,10 +680,6 @@ function refreshHistorie(id){
   el.innerHTML=buildHistHtml(pos);
 }
 
-// Beim Start letzten aktiven Slot laden
-activeSlot=localStorage.getItem("depot_active_slot")||"a";
-loadSlot(activeSlot);
-updateSlotButtons();
 render();
 </script>
 </body>

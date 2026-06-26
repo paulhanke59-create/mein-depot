@@ -148,9 +148,9 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
         <button class="btn-tool btn-xlsx" onclick="document.getElementById('xlsx-input').click()">📥 Excel</button>
         <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)"/>
         <input type="file" id="json-input" accept=".json" style="display:none" multiple/>
-        <button id="btn-lesen-a" class="btn-tool btn-json-imp" onclick="lesenAuto()">📂 Depot laden</button>
-        <button id="btn-speichern-a" class="btn-tool btn-json-exp" onclick="speichernSlot('a')">💾 Speichern A</button>
-        <button id="btn-speichern-b" class="btn-tool btn-json-exp" onclick="speichernSlot('b')">💾 Speichern B</button>
+        <button id="btn-laden" class="btn-tool btn-json-imp" onclick="lesenAuto()">📂 Laden</button>
+        <button id="btn-sichern" class="btn-tool btn-json-exp" onclick="sichern()">💾 Sichern</button>
+        <button class="btn-tool" onclick="tryOpenFileManager()" style="background:#1e2332;color:#94a3b8;border:1px solid #2a2f3e">📁 Datei-Manager</button>
       </div>
     </div>
   </div>
@@ -273,33 +273,27 @@ function lesenAuto(){
   input.onchange=function(){
     const files=Array.from(input.files);
     if(!files.length)return;
-    // Alle Dateien lesen, dann neueste wählen
     const reads=files.map(file=>new Promise((resolve,reject)=>{
       const reader=new FileReader();
       reader.onload=e=>{
-        try{
-          const d=JSON.parse(e.target.result);
-          resolve({file,d,savedAt:d.savedAt?new Date(d.savedAt):new Date(0)});
-        }catch(err){reject(err);}
+        try{const d=JSON.parse(e.target.result);resolve({file,d,savedAt:d.savedAt?new Date(d.savedAt):new Date(0)});}
+        catch(err){reject(err);}
       };
       reader.readAsText(file);
     }));
     Promise.all(reads).then(results=>{
-      // Neueste Datei gewinnt
       results.sort((a,b)=>b.savedAt-a.savedAt);
       const newest=results[0];
-      const older=results.slice(1);
       positions=newest.d.positions||[];
       sold=newest.d.sold||[];
       currentPrices=newest.d.currentPrices||{};
-      const iso=newest.d.savedAt||null;
-      if(iso) saveSlotDate('a',iso);
-      updateLesenButton('a',iso);
+      const iso=newest.d.savedAt||new Date().toISOString();
+      saveSlotDate('a',iso);
+      const btn=document.getElementById("btn-laden");
+      if(btn)btn.innerHTML=`📂 Laden<br><span style="font-size:10px;color:#22c55e;font-weight:400">✓ ${newest.file.name}</span>`;
       render();
       let msg=`✅ ${newest.file.name} geladen`;
-      if(older.length>0){
-        msg+=` · ${older.map(r=>r.file.name).join(", ")} ignoriert (älter)`;
-      }
+      if(results.length>1)msg+=` · ${results.slice(1).map(r=>r.file.name).join(", ")} ignoriert`;
       toast(msg);
     }).catch(err=>toast("❌ Fehler: "+err.message,false));
     input.value="";
@@ -307,46 +301,56 @@ function lesenAuto(){
   input.click();
 }
 
-function speichernSlot(slot){
+function sichern(){
   if(!positions.length){toast("Keine Daten zum Speichern",false);return;}
-  const other=slot==='a'?'b':'a';
-  const now=new Date().toISOString();
-  const data=JSON.stringify({positions,sold,currentPrices,savedAt:now},null,2);
+  const now=new Date();
+  const iso=now.toISOString();
+  // Dateiname: JJJJ.MM.TT.json
+  const name=`${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")}.json`;
+  const data=JSON.stringify({positions,sold,currentPrices,savedAt:iso},null,2);
   const blob=new Blob([data],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download="daten-"+slot+".json";
+  a.download=name;
   a.click();
-  saveSlotDate(slot,now);
-  updateSpeichernButton(slot,now);
-  // Hinweis-Banner anzeigen
-  showDeleteHint(other);
-  toast(`💾 daten-${slot}.json gespeichert`);
+  saveSlotDate('a',iso);
+  const btn=document.getElementById("btn-sichern");
+  const d=formatDate(iso);
+  if(btn)btn.innerHTML=`💾 Sichern<br><span style="font-size:10px;color:#a78bfa;font-weight:400">${d}</span>`;
+  toast(`💾 ${name} gespeichert`);
 }
 
-function showDeleteHint(slot){
-  let el=document.getElementById("delete-hint");
-  if(!el){
-    el=document.createElement("div");
-    el.id="delete-hint";
-    el.style.cssText="background:#2d1e1e;border:1px solid #ef444444;border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px";
-    document.getElementById("summary").before(el);
+// Alte Funktionen — nicht mehr benötigt
+function speichernSlot(slot){sichern();}
+function lesenSlot(slot){lesenAuto();}
+
+function tryOpenFileManager(){
+  // Verschiedene URL-Schemes probieren — eines davon klappt je nach Gerät/App
+  const schemes=[
+    "intent://com.android.documentsui/.files.FilesActivity#Intent;scheme=android-app;end",
+    "content://com.android.externalstorage.documents/root/primary",
+    "com.google.android.apps.nbu.files",
+    "file:///sdcard/Download/",
+    "downloads:",
+  ];
+  // Versuche nacheinander über <a href>
+  let tried=0;
+  function tryNext(){
+    if(tried>=schemes.length)return;
+    const a=document.createElement("a");
+    a.href=schemes[tried++];
+    a.target="_blank";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
-  el.innerHTML=`<span style="font-size:13px;color:#ef4444">🗑 Bitte <b>daten-${slot}.json</b> im Downloads-Ordner löschen</span>
-    <button onclick="document.getElementById('delete-hint').remove()" style="background:none;border:none;color:#6b7280;font-size:20px;cursor:pointer;line-height:1">×</button>`;
+  tryNext();
+  // Als Fallback: direkt navigieren
+  setTimeout(()=>{ try{window.location.href="file:///sdcard/Download/";}catch(e){} },300);
+  toast("📁 Versuche Datei-Manager zu öffnen...");
 }
 
-function openDownloads(){
-  // Android: versuche Downloads-Ordner im Datei-Manager zu öffnen
-  const a=document.createElement("a");
-  a.href="content://com.android.externalstorage.documents/document/primary%3ADownload";
-  a.click();
-  setTimeout(()=>{
-    // Fallback: direkte URI
-    window.open("file:///sdcard/Download/","_blank");
-  },500);
-  toast("📁 Downloads wird geöffnet...");
-}
+function openDownloads(){tryOpenFileManager();}
 function exportJson(){}
 function importJson(){}
 function switchSlot(){}

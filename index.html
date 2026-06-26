@@ -669,10 +669,12 @@ function renderEditPanel(){
 
       <div class="expand-section">
         <div class="section-label">✏️ Name &amp; WKN</div>
-        <div class="inline-form">
-          <div class="ifield" style="flex:2"><label>Name</label><input type="text" id="edit-name-${pos.id}" value="${esc(pos.name)}" style="width:100%"/></div>
-          <div class="ifield" style="flex:1"><label>WKN</label><input type="text" id="edit-wkn-${pos.id}" value="${esc(pos.wkn)}" style="width:100%"/></div>
-          <button class="btn-sm-confirm" onclick="saveNameWkn(${pos.id})">Speichern</button>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px">Name</label>
+            <input type="text" id="edit-name-${pos.id}" value="${esc(pos.name)}" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px"/></div>
+          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px">WKN</label>
+            <input type="text" id="edit-wkn-${pos.id}" value="${esc(pos.wkn)}" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px"/></div>
+          <button class="btn-sm-confirm" onclick="saveNameWkn(${pos.id})" style="align-self:flex-start">Speichern</button>
         </div>
       </div>
 
@@ -687,11 +689,11 @@ function renderEditPanel(){
 
       <div class="expand-section">
         <div class="section-label">📊 Aktueller Kurs</div>
-        <div class="kurs-row">
-          <div class="kurs-input-wrap">
-            <label>Kurs (€)</label>
-            <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 180,00" oninput="updateKurs(${pos.id},this.value)"/>
-            <div class="kurs-date" id="gd-${pos.id}">${kd?"Stand: "+fdate(kd):""}</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div>
+            <label style="font-size:11px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
+            <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 9,64" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px" oninput="updateKurs(${pos.id},this.value)"/>
+            <div class="kurs-date" id="gd-${pos.id}" style="margin-top:4px">${kd?"Stand: "+fdate(kd):""}</div>
           </div>
           <div class="kurs-results" id="gr-${pos.id}">${gewinnHtml}</div>
         </div>
@@ -699,13 +701,16 @@ function renderEditPanel(){
 
       <div class="expand-section">
         <div class="section-label">Transaktion</div>
-        <div class="inline-form">
-          <div class="ifield"><label>Stücke</label><input type="text" id="tx-stuecke-${pos.id}" placeholder="5"/></div>
-          <div class="ifield"><label>Kurs (€)</label><input type="text" id="tx-preis-${pos.id}" placeholder="150,00"/></div>
-          <div class="ifield"><label>Datum</label><input type="date" id="tx-datum-${pos.id}" value="${today}"/></div>
-          <div style="display:flex;gap:6px;align-items:flex-end">
-            <button class="btn-sm-confirm blue" onclick="doTx(${pos.id},'kauf')">➕ Zukauf</button>
-            <button class="btn-sm-confirm" onclick="doTx(${pos.id},'vk')">📤 Verkauf</button>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Stücke</label>
+            <input type="text" id="tx-stuecke-${pos.id}" placeholder="5" style="width:100%;font-size:16px;padding:10px 12px"/></div>
+          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
+            <input type="text" id="tx-preis-${pos.id}" placeholder="150,00" style="width:100%;font-size:16px;padding:10px 12px"/></div>
+          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Datum</label>
+            <input type="date" id="tx-datum-${pos.id}" value="${today}" style="width:100%;font-size:16px;padding:10px 12px"/></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sm-confirm blue" onclick="doTx(${pos.id},'kauf')" style="flex:1;padding:12px">➕ Zukauf</button>
+            <button class="btn-sm-confirm" onclick="doTx(${pos.id},'vk')" style="flex:1;padding:12px">📤 Verkauf</button>
           </div>
         </div>
         <div style="font-size:11px;color:#6b7280;margin-top:5px">max. ${pos.stuecke} Stück bei Verkauf</div>

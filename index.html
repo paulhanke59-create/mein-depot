@@ -150,7 +150,6 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
         <input type="file" id="json-input" accept=".json" style="display:none" multiple/>
         <button id="btn-laden" class="btn-tool btn-json-imp" onclick="lesenAuto()">📂 Laden</button>
         <button id="btn-sichern" class="btn-tool btn-json-exp" onclick="sichern()">💾 Sichern</button>
-        <button class="btn-tool" onclick="tryOpenFileManager()" style="background:#1e2332;color:#94a3b8;border:1px solid #2a2f3e">📁 Datei-Manager</button>
       </div>
     </div>
   </div>
@@ -306,7 +305,7 @@ function sichern(){
   const now=new Date();
   const iso=now.toISOString();
   // Dateiname: JJJJ.MM.TT.json
-  const name=`${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")}.json`;
+  const name=`Uebst-${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")}.json`;
   const data=JSON.stringify({positions,sold,currentPrices,savedAt:iso},null,2);
   const blob=new Blob([data],{type:"application/json"});
   const a=document.createElement("a");

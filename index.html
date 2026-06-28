@@ -171,7 +171,10 @@ function num(s){return Number(String(s||0).replace(",","."))}
 function num2(v){return new Intl.NumberFormat("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v)}
 function tsd(v){return new Intl.NumberFormat("de-DE").format(v)}
 function cur(v){return new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(v)}
-function pct(v){return(v>=0?"+":"")+v.toFixed(2).replace(".",",")+"%"}
+function pct(v){
+  const formatted=new Intl.NumberFormat("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Math.abs(v));
+  return(v>=0?"+":"-")+formatted+"%";
+}
 function fdate(d){
   if(!d)return"—";
   const dt=new Date(d);
@@ -711,8 +714,8 @@ function renderEditPanel(){
         <!-- Bestand in einer Zeile -->
         <div style="display:flex;gap:0;border:1px solid #e8f0f9;border-radius:8px;overflow:hidden">
           <div style="flex:1;padding:7px 10px;border-right:1px solid #e8f0f9;background:#f8fafc">
-            <div style="font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.5px">Stücke</div>
-            <div style="font-size:15px;font-weight:700;color:#1e3a5f">${pos.stuecke}</div>
+            <div style="font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.5px">Bestand</div>
+            <div style="font-size:15px;font-weight:700;color:#1e3a5f">${tsd(pos.stuecke)}</div>
           </div>
           <div style="flex:1;padding:7px 10px;border-right:1px solid #e8f0f9;background:#f8fafc">
             <div style="font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.5px">Ø Kaufkurs</div>
@@ -937,9 +940,9 @@ function buildHistHtml(pos){
     <div style="display:grid;grid-template-columns:52px 18% 18% 26% 26%;background:#f0f7ff;border-bottom:1px solid #bcd0e8">
       <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Datum</div>
       <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Kauf<br>Bestand</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Kaufkurs €<br>Akt.Kurs €</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Einstand €<br>Akt. Wert €</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Gewinn €<br>Prozent %</div>
+      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Kaufkurs<br>Akt.Kurs</div>
+      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Einstand<br>Akt. Wert</div>
+      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Gewinn<br>Prozent</div>
     </div>
     ${allHist.map(e=>{
       if(e.type==="kauf"){

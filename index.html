@@ -453,38 +453,25 @@ function refreshPrognose(id){
 
 function buildPrognoseHtml(pos,g){
   const pairs=[[5,-5],[10,-10],[20,-20]];
-  return`<div style="font-size:11px;color:#6b8fb5;margin-bottom:8px">Kurs: <strong style="color:#1e3a5f">${cur(g.kurs)}</strong> · Bestand: <strong style="color:#1e3a5f">${tsd(pos.stuecke)} Stk.</strong></div>
-  <div style="border:1px solid #bcd0e8;border-radius:8px;overflow:hidden">
-    <!-- Header -->
+  return`<div style="border:1px solid #bcd0e8;border-radius:8px;overflow:hidden">
     <div style="display:grid;grid-template-columns:1fr 56px 1fr;background:#f0f7ff;border-bottom:1px solid #bcd0e8">
       <div style="padding:5px 8px;font-size:9px;color:#16a34a;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">Gewinn</div>
       <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">±%</div>
       <div style="padding:5px 8px;font-size:9px;color:#dc2626;text-transform:uppercase;font-weight:700;text-align:center">Verlust</div>
     </div>
-    <!-- Aktuell -->
-    <div style="background:#f0f7ff;padding:7px 10px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #bcd0e8">
-      <span style="font-size:10px;color:#6b8fb5;text-transform:uppercase;font-weight:700">Aktuell</span>
-      <span style="font-size:13px;font-weight:800;color:#1e3a5f">${cur(g.kurs)}</span>
-      <span style="font-size:11px;color:#6b8fb5">→ ${cur(g.kurs*pos.stuecke)}</span>
-      <span style="font-size:12px;font-weight:700;color:${g.diff>=0?"#16a34a":"#dc2626"}">${cur(g.diff)}</span>
-    </div>
-    <!-- Zeilen: pos links, neg rechts -->
     ${pairs.map(([pos2,neg])=>{
       const kP=g.kurs*(1+pos2/100), wP=kP*pos.stuecke, dP=(kP-pos.preis)*pos.stuecke, pP=((kP-pos.preis)/pos.preis)*100;
       const kN=g.kurs*(1+neg/100), wN=kN*pos.stuecke, dN=(kN-pos.preis)*pos.stuecke, pN=((kN-pos.preis)/pos.preis)*100;
       return`<div style="display:grid;grid-template-columns:1fr 56px 1fr;border-top:1px solid #e8f0f9">
-        <!-- Gewinn -->
         <div style="padding:7px 8px;border-right:1px solid #e8f0f9;background:#f0fff4">
           <div style="font-size:12px;font-weight:700;color:#16a34a">${cur(wP)}</div>
           <div style="font-size:10px;color:#16a34a">+${cur(Math.abs(dP))} / ${pct(pP)}</div>
           <div style="font-size:9px;color:#86efac">${cur(kP)}</div>
         </div>
-        <!-- Mitte: Prozent -->
         <div style="padding:7px 4px;border-right:1px solid #e8f0f9;background:#f0f7ff;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:2px">
           <div style="font-size:10px;font-weight:800;color:#16a34a">+${pos2}%</div>
           <div style="font-size:10px;font-weight:800;color:#dc2626">${neg}%</div>
         </div>
-        <!-- Verlust -->
         <div style="padding:7px 8px;background:#fffafa">
           <div style="font-size:12px;font-weight:700;color:#dc2626">${cur(wN)}</div>
           <div style="font-size:10px;color:#dc2626">${cur(dN)} / ${pct(pN)}</div>
@@ -784,22 +771,24 @@ function renderEditPanel(){
         </div>
       </div>
 
-      ${collapsible("sec-kurs-"+pos.id, "📊 Aktueller Kurs & Historie", true, `
-        <div style="padding:12px 16px;border-bottom:1px solid #e8f0f9">
+      ${collapsible("sec-kurs-"+pos.id, "📊 Aktueller Kurs", true, `
+        <div style="padding:12px 16px">
           <label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
           <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 9,64" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px" oninput="updateKurs(${pos.id},this.value)"/>
           <div class="kurs-date" id="gd-${pos.id}" style="margin-top:4px">${kd?"Stand: "+fdate(kd):""}</div>
           <div class="kurs-results" id="gr-${pos.id}" style="margin-top:10px">${gewinnHtml}</div>
-        </div>
-        <div style="padding:12px 16px">
-          <div id="hist-${pos.id}">${histHtml}</div>
         </div>`)}
 
-      ${collapsible("sec-prognose-"+pos.id, "📈 Prognose", false, `
+      ${collapsible("sec-prognose-"+pos.id, "📈 Prognose", true, `
         <div style="padding:12px 16px">
           <div id="prognose-${pos.id}">
             ${g ? buildPrognoseHtml(pos,g) : `<div style="font-size:13px;color:#9bb5cc;text-align:center;padding:10px 0">Bitte zuerst aktuellen Kurs eingeben</div>`}
           </div>
+        </div>`)}
+
+      ${collapsible("sec-hist-"+pos.id, "📜 Historie", true, `
+        <div style="padding:12px 16px">
+          <div id="hist-${pos.id}">${histHtml}</div>
         </div>`)}
 
       ${collapsible("sec-tx-"+pos.id, "💱 Transaktion", false, `

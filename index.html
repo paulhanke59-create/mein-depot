@@ -9,65 +9,66 @@
 <title>Mein Depot</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:#0f1117;color:#e8eaf0;font-family:'Inter','Segoe UI',sans-serif;padding-bottom:60px}
-input[type=text],input[type=date]{background:#0f1117;border:1px solid #2a2f3e;border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:14px;outline:none;color-scheme:dark;width:100%}
+body{margin:0;min-height:100vh;background:#f0f4f8;color:#1e3a5f;font-family:'Inter','Segoe UI',sans-serif;padding-bottom:60px}
+input[type=text],input[type=date]{background:#fff;border:1px solid #bcd0e8;border-radius:8px;padding:9px 12px;color:#1e3a5f;font-size:14px;outline:none;color-scheme:light;width:100%}
+input[type=text]:focus,input[type=date]:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,0.15)}
 input.error{border-color:#ef4444!important}
-.header{background:linear-gradient(135deg,#1a1f2e,#141824);border-bottom:1px solid #2a2f3e;padding:20px 16px 14px}
+.header{background:linear-gradient(135deg,#1e3a5f,#1d4ed8);border-bottom:1px solid #bcd0e8;padding:20px 16px 14px}
 .title-row{display:flex;align-items:center;gap:10px;margin-bottom:2px}
-h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
-.subtitle{margin:0;color:#6b7280;font-size:12px}
+h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+.subtitle{margin:0;color:#93c5fd;font-size:12px}
 .wrap{max-width:1100px;margin:0 auto;padding:16px}
 
 /* Toolbar */
-.toolbar{margin-bottom:16px;background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;overflow:hidden}
-.toolbar-row{display:flex;align-items:center;gap:0;border-bottom:1px solid #2a2f3e}
+.toolbar{margin-bottom:16px;background:#fff;border:1px solid #bcd0e8;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(30,58,95,0.08)}
+.toolbar-row{display:flex;align-items:center;gap:0;border-bottom:1px solid #dbeafe}
 .toolbar-row:last-child{border-bottom:none}
 .toolbar-group{display:flex;align-items:center;gap:8px;padding:10px 14px;flex:1;flex-wrap:wrap}
-.toolbar-group-label{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:0 14px;min-width:52px;border-right:1px solid #2a2f3e;align-self:stretch;display:flex;align-items:center}
+.toolbar-group-label{font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:0 14px;min-width:52px;border-right:1px solid #dbeafe;align-self:stretch;display:flex;align-items:center}
 .btn-tool{border:none;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:normal;line-height:1.3;text-align:left}
-.btn-xlsx{background:#1e2d20;color:#22c55e;border:1px solid #22c55e44}
-.btn-json-imp{background:#1e2a40;color:#60a5fa;border:1px solid #3b82f644}
-.btn-json-exp{background:#2a1e40;color:#a78bfa;border:1px solid #7c3aed44}
-.btn-primary{background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:8px;padding:9px 18px;color:#fff;font-weight:700;font-size:13px;cursor:pointer}
-.btn-sm-confirm{background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:6px;padding:8px 14px;color:#fff;font-weight:700;font-size:13px;cursor:pointer}
-.btn-sm-confirm.blue{background:linear-gradient(135deg,#3b82f6,#2563eb)}
-.btn-red{background:#2d1e1e;border:1px solid #ef444444;border-radius:6px;padding:6px 12px;color:#ef4444;font-size:12px;cursor:pointer;font-weight:600}
+.btn-xlsx{background:#f0fdf4;color:#16a34a;border:1px solid #86efac}
+.btn-json-imp{background:#eff6ff;color:#2563eb;border:1px solid #93c5fd}
+.btn-json-exp{background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd}
+.btn-primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;border-radius:8px;padding:9px 18px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,0.25)}
+.btn-sm-confirm{background:linear-gradient(135deg,#16a34a,#15803d);border:none;border-radius:6px;padding:8px 14px;color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+.btn-sm-confirm.blue{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff}
+.btn-red{background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:6px 12px;color:#dc2626;font-size:12px;cursor:pointer;font-weight:600}
 
 /* Summary */
-.summary{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:14px;overflow:hidden;margin-bottom:16px}
+.summary{background:#fff;border:1px solid #bcd0e8;border-radius:14px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 4px rgba(30,58,95,0.08)}
 .summary table{width:100%;border-collapse:collapse}
-.summary thead tr{background:#131720;border-bottom:1px solid #2a2f3e}
-.summary th{padding:9px 12px;text-align:left;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
+.summary thead tr{background:#f0f7ff;border-bottom:1px solid #bcd0e8}
+.summary th{padding:9px 12px;text-align:left;font-size:10px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
 .summary th.r{text-align:right}
-.summary td{padding:10px 12px;font-size:13px;border-bottom:1px solid #1e2332}
+.summary td{padding:10px 12px;font-size:13px;border-bottom:1px solid #e8f0f9;color:#1e3a5f}
 .summary td.r{text-align:right}
 .summary tr:last-child td{border-bottom:none}
-.summary .total-row td{border-top:2px solid #2a2f3e;font-weight:700;font-size:14px;background:#131720}
+.summary .total-row td{border-top:2px solid #bcd0e8;font-weight:700;font-size:14px;background:#f0f7ff}
 .summary tr.clickable{cursor:pointer}
-.summary tr.clickable:hover td,.summary tr.clickable.sel td{background:#1a2235}
+.summary tr.clickable:hover td,.summary tr.clickable.sel td{background:#dbeafe}
 
 /* Mobile cards */
 .s-cards{display:none}
-.s-card{padding:13px 14px;border-bottom:1px solid #1e2332;cursor:pointer}
-.s-card.sel{background:#1a2235}
-.s-card-name{font-weight:700;font-size:15px;color:#f0f2f8}
-.s-card-wkn{font-size:11px;color:#6b7280;margin-left:6px}
+.s-card{padding:13px 14px;border-bottom:1px solid #e8f0f9;cursor:pointer}
+.s-card.sel{background:#dbeafe}
+.s-card-name{font-weight:700;font-size:15px;color:#1e3a5f}
+.s-card-wkn{font-size:11px;color:#6b8fb5;margin-left:6px}
 
 /* Beide Datenzeilen */
-.s-card-row{display:flex;gap:0;margin-top:9px;border:1px solid #2a2f3e;border-radius:8px;overflow:hidden}
-.s-card-row.row2{margin-top:6px;border-color:#252b3b}
+.s-card-row{display:flex;gap:0;margin-top:9px;border:1px solid #bcd0e8;border-radius:8px;overflow:hidden}
+.s-card-row.row2{margin-top:6px;border-color:#dbeafe}
 
 /* Einzelne Felder */
-.s-card-item{flex:1;display:flex;flex-direction:column;gap:3px;padding:8px 10px;border-right:1px solid #1e2332}
+.s-card-item{flex:1;display:flex;flex-direction:column;gap:3px;padding:8px 10px;border-right:1px solid #e8f0f9}
 .s-card-item:last-child{border-right:none}
-.s-card-row .s-card-item{background:#131720}
-.s-card-row.row2 .s-card-item{background:#0f1117}
-.s-card-item .sl{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
-.s-card-item .sv{font-size:13px;color:#94a3b8;font-weight:500}
-.s-card-item .sv.bold{color:#e8eaf0;font-weight:700}
+.s-card-row .s-card-item{background:#f0f7ff}
+.s-card-row.row2 .s-card-item{background:#f8fafc}
+.s-card-item .sl{font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+.s-card-item .sv{font-size:13px;color:#3b6ea5;font-weight:500}
+.s-card-item .sv.bold{color:#1e3a5f;font-weight:700}
 
-.s-total{padding:12px 14px;background:#131720;border-top:2px solid #2a2f3e}
-.s-total-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700}
+.s-total{padding:12px 14px;background:#f0f7ff;border-top:2px solid #bcd0e8}
+.s-total-label{font-size:10px;color:#6b8fb5;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700}
 .s-total-row{display:flex;flex-wrap:wrap;gap:10px}
 
 @media(max-width:600px){
@@ -84,51 +85,51 @@ h1{margin:0;font-size:22px;font-weight:800;color:#f0f2f8}
 }
 
 /* Add form */
-.add-panel{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.add-panel{background:#fff;border:1px solid #bcd0e8;border-radius:14px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 4px rgba(30,58,95,0.08)}
 .form-grid{display:grid;gap:10px;align-items:end}
-.field label{display:block;font-size:11px;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.8px}
-.err{color:#ef4444;font-size:11px;margin-top:2px;min-height:14px}
+.field label{display:block;font-size:11px;color:#6b8fb5;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.8px}
+.err{color:#dc2626;font-size:11px;margin-top:2px;min-height:14px}
 
 /* Edit panel */
-.edit-panel{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:14px;overflow:hidden;margin-bottom:16px}
+.edit-panel{background:#fff;border:1px solid #bcd0e8;border-radius:14px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 4px rgba(30,58,95,0.08)}
 .expand-inner{padding:0}
-.expand-section{margin-bottom:0;border-bottom:1px solid #1e2332;padding:14px 16px}
+.expand-section{margin-bottom:0;border-bottom:1px solid #e8f0f9;padding:14px 16px}
 .expand-section:last-child{border-bottom:none}
-.section-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600;border-bottom:1px solid #2a2f3e;padding-bottom:5px}
+.section-label{font-size:10px;color:#6b8fb5;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600;border-bottom:1px solid #dbeafe;padding-bottom:5px}
 .kurs-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
 .kurs-input-wrap{flex:0 0 140px}
-.kurs-input-wrap label{display:block;font-size:11px;color:#6b7280;margin-bottom:4px;text-transform:uppercase}
+.kurs-input-wrap label{display:block;font-size:11px;color:#6b8fb5;margin-bottom:4px;text-transform:uppercase}
 .kurs-input-wrap input{width:140px}
 .kurs-results{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 .kurs-result-item{display:flex;flex-direction:column;gap:2px}
-.kurs-result-item .rl{font-size:10px;color:#6b7280;text-transform:uppercase}
-.kurs-date{font-size:10px;color:#6b7280;margin-top:3px}
+.kurs-result-item .rl{font-size:10px;color:#6b8fb5;text-transform:uppercase}
+.kurs-date{font-size:10px;color:#6b8fb5;margin-top:3px}
 .inline-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
 .ifield{display:flex;flex-direction:column;gap:4px}
-.ifield label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.8px}
+.ifield label{font-size:10px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.8px}
 .ifield input{width:110px}
 
 /* Badges */
 .badge{border-radius:6px;padding:2px 7px;font-weight:700;font-size:12px;display:inline-block;border:1px solid}
-.badge.pos{color:#22c55e;background:rgba(34,197,94,0.12);border-color:#22c55e33}
-.badge.neg{color:#ef4444;background:rgba(239,68,68,0.12);border-color:#ef444433}
-.dim{color:#4b5563}
-.muted{color:#94a3b8;font-size:13px}
+.badge.pos{color:#15803d;background:rgba(21,128,61,0.08);border-color:#86efac}
+.badge.neg{color:#dc2626;background:rgba(220,38,38,0.08);border-color:#fca5a5}
+.dim{color:#9bb5cc}
+.muted{color:#3b6ea5;font-size:13px}
 
 /* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:990;display:flex;align-items:flex-end;justify-content:center}
-.modal-box{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:16px 16px 0 0;padding:20px 16px;width:100%;max-width:500px}
-.modal-title{font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
-.modal-info{background:#131720;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#e8eaf0}
+.modal-overlay{position:fixed;inset:0;background:rgba(30,58,95,0.5);z-index:990;display:flex;align-items:flex-end;justify-content:center}
+.modal-box{background:#fff;border:1px solid #bcd0e8;border-radius:16px 16px 0 0;padding:20px 16px;width:100%;max-width:500px;box-shadow:0 -4px 20px rgba(30,58,95,0.15)}
+.modal-title{font-size:13px;font-weight:700;color:#6b8fb5;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+.modal-info{background:#f0f7ff;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#1e3a5f}
 .modal-info .mi-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
 .modal-info .mi-row:last-child{margin-bottom:0}
-.modal-info .ml{font-size:10px;color:#6b7280;text-transform:uppercase}
-.modal-info .mv{color:#e8eaf0;font-weight:600}
+.modal-info .ml{font-size:10px;color:#6b8fb5;text-transform:uppercase}
+.modal-info .mv{color:#1e3a5f;font-weight:600}
 .modal-btns{display:flex;gap:8px;flex-wrap:wrap}
 .modal-btns button{flex:1;min-width:80px}
 
 /* Toast */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:10px 20px;border-radius:10px;font-weight:600;font-size:14px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#4ade80;color:#fff;padding:10px 20px;border-radius:10px;font-weight:600;font-size:14px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 </style>
 </head>
@@ -173,7 +174,7 @@ function pct(v){return(v>=0?"+":"")+v.toFixed(2).replace(".",",")+"%"}
 function fdate(d){return d?new Date(d).toLocaleDateString("de-DE"):"—"}
 function esc(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML}
 function badge(v,t){return`<span class="badge ${v>=0?"pos":"neg"}">${t}</span>`}
-function toast(msg,ok=true){const el=document.getElementById("toast");el.textContent=msg;el.style.background=ok?"#22c55e":"#ef4444";el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2500)}
+function toast(msg,ok=true){const el=document.getElementById("toast");el.textContent=msg;el.style.background=ok?"#4ade80":"#f87171";el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2500)}
 
 function getGewinn(pos){
   const e=currentPrices[String(pos.id)];
@@ -247,7 +248,7 @@ function updateLesenButton(slot, isoDate){
   if(!btn)return;
   const d=formatDate(isoDate);
   btn.innerHTML=d
-    ?`📂 Lesen ${slot.toUpperCase()}<br><span style="font-size:10px;color:#22c55e;font-weight:400">✓ ${d}</span>`
+    ?`📂 Lesen ${slot.toUpperCase()}<br><span style="font-size:10px;color:#15803d;font-weight:400">✓ ${d}</span>`
     :`📂 Lesen ${slot.toUpperCase()}`;
 }
 
@@ -289,7 +290,7 @@ function lesenAuto(){
       const iso=newest.d.savedAt||new Date().toISOString();
       saveSlotDate('a',iso);
       const btn=document.getElementById("btn-laden");
-      if(btn)btn.innerHTML=`📂 Laden<br><span style="font-size:10px;color:#22c55e;font-weight:400">✓ ${newest.file.name}</span>`;
+      if(btn)btn.innerHTML=`📂 Laden<br><span style="font-size:10px;color:#15803d;font-weight:400">✓ ${newest.file.name}</span>`;
       render();
       let msg=`✅ ${newest.file.name} geladen`;
       if(results.length>1)msg+=` · ${results.slice(1).map(r=>r.file.name).join(", ")} ignoriert`;
@@ -363,8 +364,8 @@ function toggleAddForm(open){
   if(!open){el.innerHTML="";return;}
   el.innerHTML=`<div class="add-panel">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-weight:700;font-size:13px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Neue Aktie</span>
-      <button onclick="toggleAddForm(false)" style="background:none;border:none;color:#6b7280;font-size:20px;cursor:pointer">×</button>
+      <span style="font-weight:700;font-size:13px;color:#3b6ea5;text-transform:uppercase;letter-spacing:1px">Neue Aktie</span>
+      <button onclick="toggleAddForm(false)" style="background:none;border:none;color:#6b8fb5;font-size:20px;cursor:pointer">×</button>
     </div>
     <div class="form-grid">
       <div class="field"><label>Name</label><input type="text" id="f-name" placeholder="Apple Inc."/><div class="err" id="e-name"></div></div>
@@ -555,7 +556,7 @@ function renderCards(){
 
   const tRows=posData.map(({pos,einstand,aktWert,diff,dp,isSel})=>`
     <tr class="clickable${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
-      <td><span style="font-weight:600;color:#e8eaf0">${esc(pos.name)}</span><span style="color:#6b7280;font-size:11px;margin-left:6px">${esc(pos.wkn)}</span></td>
+      <td><span style="font-weight:600;color:#1e3a5f">${esc(pos.name)}</span><span style="color:#6b8fb5;font-size:11px;margin-left:6px">${esc(pos.wkn)}</span></td>
       <td class="r">${cur(einstand)}</td>
       <td class="r">${aktWert!==null?cur(aktWert):'<span style="color:#4b5563">—</span>'}</td>
       <td class="r">${diff!==null?badge(diff,cur(diff)):'<span style="color:#4b5563">—</span>'}</td>
@@ -626,14 +627,14 @@ function renderCards(){
       <div class="s-total">
         <div class="s-total-label">Gesamtdepot</div>
         <div class="s-total-row">
-          <div class="s-card-item" style="flex:none"><span class="sl">Einstand</span><span style="font-weight:700;color:#e8eaf0">${cur(totalInv)}</span></div>
-          <div class="s-card-item" style="flex:none"><span class="sl">Akt. Wert</span><span style="font-weight:700;color:#e8eaf0">${cur(totalAkt)}</span></div>
+          <div class="s-card-item" style="flex:none"><span class="sl">Einstand</span><span style="font-weight:700;color:#1e3a5f">${cur(totalInv)}</span></div>
+          <div class="s-card-item" style="flex:none"><span class="sl">Akt. Wert</span><span style="font-weight:700;color:#1e3a5f">${cur(totalAkt)}</span></div>
           <div class="s-card-item" style="flex:none"><span class="sl">Gewinn €</span>${badge(totalDiff,cur(totalDiff))}</div>
           <div class="s-card-item" style="flex:none"><span class="sl">Gewinn %</span>${badge(totalDp,pct(totalDp))}</div>
         </div>
       </div>
     </div>
-    <div style="padding:12px 14px;border-top:1px solid #2a2f3e">
+    <div style="padding:12px 14px;border-top:1px solid #1e3a5f">
       <button class="btn-primary" onclick="toggleAddForm(true)" style="font-size:13px;padding:8px 14px">+ Neue Aktie aufnehmen</button>
     </div>
   </div>`;
@@ -659,20 +660,20 @@ function renderEditPanel(){
 
   panel.innerHTML=`<div class="edit-panel">
     <div class="expand-inner">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #1e2332">
-        <span style="font-weight:700;font-size:13px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Position bearbeiten</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #e8f0f9">
+        <span style="font-weight:700;font-size:13px;color:#3b6ea5;text-transform:uppercase;letter-spacing:1px">Position bearbeiten</span>
         <div style="display:flex;gap:6px">
           <button class="btn-red" onclick="removePos(${pos.id})">✕ Entfernen</button>
-          <button onclick="openFromSummary(${pos.id})" style="background:none;border:none;color:#6b7280;font-size:22px;cursor:pointer;line-height:1">×</button>
+          <button onclick="openFromSummary(${pos.id})" style="background:none;border:none;color:#6b8fb5;font-size:22px;cursor:pointer;line-height:1">×</button>
         </div>
       </div>
 
       <div class="expand-section">
         <div class="section-label">✏️ Name &amp; WKN</div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px">Name</label>
+          <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px">Name</label>
             <input type="text" id="edit-name-${pos.id}" value="${esc(pos.name)}" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px"/></div>
-          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px">WKN</label>
+          <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px">WKN</label>
             <input type="text" id="edit-wkn-${pos.id}" value="${esc(pos.wkn)}" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px"/></div>
           <button class="btn-sm-confirm" onclick="saveNameWkn(${pos.id})" style="align-self:flex-start">Speichern</button>
         </div>
@@ -681,9 +682,9 @@ function renderEditPanel(){
       <div class="expand-section">
         <div class="section-label">📋 Bestand</div>
         <div class="kurs-results">
-          <div class="kurs-result-item"><span class="rl">Stücke</span><span style="font-size:17px;font-weight:700;color:#e8eaf0">${pos.stuecke}</span></div>
-          <div class="kurs-result-item"><span class="rl">Ø Kaufkurs</span><span style="font-size:17px;font-weight:700;color:#e8eaf0">${cur(pos.preis)}</span></div>
-          <div class="kurs-result-item"><span class="rl">Einstandswert</span><span style="font-size:17px;font-weight:700;color:#e8eaf0">${cur(pos.preis*pos.stuecke)}</span></div>
+          <div class="kurs-result-item"><span class="rl">Stücke</span><span style="font-size:17px;font-weight:700;color:#1e3a5f">${pos.stuecke}</span></div>
+          <div class="kurs-result-item"><span class="rl">Ø Kaufkurs</span><span style="font-size:17px;font-weight:700;color:#1e3a5f">${cur(pos.preis)}</span></div>
+          <div class="kurs-result-item"><span class="rl">Einstandswert</span><span style="font-size:17px;font-weight:700;color:#1e3a5f">${cur(pos.preis*pos.stuecke)}</span></div>
         </div>
       </div>
 
@@ -691,7 +692,7 @@ function renderEditPanel(){
         <div class="section-label">📊 Aktueller Kurs</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <div>
-            <label style="font-size:11px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
+            <label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
             <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 9,64" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px" oninput="updateKurs(${pos.id},this.value)"/>
             <div class="kurs-date" id="gd-${pos.id}" style="margin-top:4px">${kd?"Stand: "+fdate(kd):""}</div>
           </div>
@@ -702,18 +703,18 @@ function renderEditPanel(){
       <div class="expand-section">
         <div class="section-label">Transaktion</div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Stücke</label>
+          <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Stücke</label>
             <input type="text" id="tx-stuecke-${pos.id}" placeholder="5" style="width:100%;font-size:16px;padding:10px 12px"/></div>
-          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
+          <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
             <input type="text" id="tx-preis-${pos.id}" placeholder="150,00" style="width:100%;font-size:16px;padding:10px 12px"/></div>
-          <div><label style="font-size:11px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Datum</label>
+          <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Datum</label>
             <input type="date" id="tx-datum-${pos.id}" value="${today}" style="width:100%;font-size:16px;padding:10px 12px"/></div>
           <div style="display:flex;gap:8px">
             <button class="btn-sm-confirm blue" onclick="doTx(${pos.id},'kauf')" style="flex:1;padding:12px">➕ Zukauf</button>
             <button class="btn-sm-confirm" onclick="doTx(${pos.id},'vk')" style="flex:1;padding:12px">📤 Verkauf</button>
           </div>
         </div>
-        <div style="font-size:11px;color:#6b7280;margin-top:5px">max. ${pos.stuecke} Stück bei Verkauf</div>
+        <div style="font-size:11px;color:#6b8fb5;margin-top:5px">max. ${pos.stuecke} Stück bei Verkauf</div>
       </div>
 
       <div class="expand-section">
@@ -754,11 +755,11 @@ function openHistModal(posId, entryIdx, entryType){
           <span><span class="ml">Betrag </span><span class="mv">${cur(entry.kurs*entry.stuecke)}</span></span>
         </div>
       </div>
-      <div style="font-size:12px;color:#6b7280;margin-bottom:14px">Was möchtest du tun?</div>
+      <div style="font-size:12px;color:#6b8fb5;margin-bottom:14px">Was möchtest du tun?</div>
       <div class="modal-btns">
         <button class="btn-red" style="padding:10px" onclick="deleteHistEntry(${posId},${entryIdx},'${entryType}')">🗑 Löschen</button>
         <button class="btn-sm-confirm blue" style="padding:10px" onclick="openEditHistEntry(${posId},${entryIdx},'${entryType}')">✏️ Ändern</button>
-        <button onclick="closeHistModal()" style="background:#1e2332;border:1px solid #2a2f3e;border-radius:6px;padding:10px;color:#6b7280;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
+        <button onclick="closeHistModal()" style="background:#e8f0f9;border:1px solid #bcd0e8;border-radius:6px;padding:10px;color:#6b8fb5;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
       </div>
     </div>
   </div>`;
@@ -822,16 +823,16 @@ function openEditHistEntry(posId, entryIdx, entryType){
     <div class="modal-box">
       <div class="modal-title">${entryType==='kauf'?'Kauf':'Verkauf'} ändern</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
-        <div><label style="font-size:10px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Datum</label>
-          <input type="date" id="edit-h-datum" value="${entry.datum}" style="background:#0f1117;border:1px solid #2a2f3e;border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:14px;width:100%;color-scheme:dark"/></div>
-        <div><label style="font-size:10px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Stücke</label>
-          <input type="text" id="edit-h-stuecke" value="${entry.stuecke}" style="background:#0f1117;border:1px solid #2a2f3e;border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:14px;width:100%"/></div>
-        <div><label style="font-size:10px;color:#6b7280;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
-          <input type="text" id="edit-h-kurs" value="${String(entry.kurs).replace('.',',')}" style="background:#0f1117;border:1px solid #2a2f3e;border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:14px;width:100%"/></div>
+        <div><label style="font-size:10px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Datum</label>
+          <input type="date" id="edit-h-datum" value="${entry.datum}" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:8px;padding:9px 12px;color:#1e3a5f;font-size:14px;width:100%;color-scheme:dark"/></div>
+        <div><label style="font-size:10px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Stücke</label>
+          <input type="text" id="edit-h-stuecke" value="${entry.stuecke}" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:8px;padding:9px 12px;color:#1e3a5f;font-size:14px;width:100%"/></div>
+        <div><label style="font-size:10px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
+          <input type="text" id="edit-h-kurs" value="${String(entry.kurs).replace('.',',')}" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:8px;padding:9px 12px;color:#1e3a5f;font-size:14px;width:100%"/></div>
       </div>
       <div class="modal-btns">
         <button class="btn-sm-confirm" onclick="saveEditHistEntry(${posId},${entryIdx},'${entryType}')">✅ Speichern</button>
-        <button onclick="closeHistModal()" style="background:#1e2332;border:1px solid #2a2f3e;border-radius:6px;padding:10px;color:#6b7280;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
+        <button onclick="closeHistModal()" style="background:#e8f0f9;border:1px solid #bcd0e8;border-radius:6px;padding:10px;color:#6b8fb5;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
       </div>
     </div>
   </div>`;
@@ -897,19 +898,19 @@ function buildHistHtml(pos){
     else{let r=e.stuecke;for(const l of fifoLots){if(r<=0)break;const a=Math.min(l.stueckeNoch,r);l.stueckeNoch-=a;r-=a;}}
   }
 
-  const v1='font-size:13px;color:#e8eaf0;font-weight:700';
-  const v2='font-size:12px;color:#94a3b8';
+  const v1='font-size:13px;color:#1e3a5f;font-weight:700';
+  const v2='font-size:12px;color:#3b6ea5';
   let fi=0, ki=0, vi=0;
 
   if(!allHist.length) return `<span class="dim" style="font-size:13px">Keine Einträge</span>`;
 
-  return`<div style="border:1px solid #2a2f3e;border-radius:8px;overflow:hidden">
-    <div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;background:#0f1117;border-bottom:1px solid #2a2f3e">
-      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Typ<br>Datum</div>
-      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Gekauft<br>Bestand</div>
-      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Kurs<br>Akt. Kurs</div>
-      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Betrag<br>Akt. Wert</div>
-      <div style="padding:6px 8px;font-size:9px;color:#6b7280;text-transform:uppercase">Gewinn<br>Prozent</div>
+  return`<div style="border:1px solid #bcd0e8;border-radius:8px;overflow:hidden">
+    <div style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;background:#f8fafc;border-bottom:1px solid #bcd0e8">
+      <div style="padding:6px 8px;font-size:9px;color:#6b8fb5;text-transform:uppercase">Typ<br>Datum</div>
+      <div style="padding:6px 8px;font-size:9px;color:#6b8fb5;text-transform:uppercase">Gekauft<br>Bestand</div>
+      <div style="padding:6px 8px;font-size:9px;color:#6b8fb5;text-transform:uppercase">Kurs<br>Akt. Kurs</div>
+      <div style="padding:6px 8px;font-size:9px;color:#6b8fb5;text-transform:uppercase">Betrag<br>Akt. Wert</div>
+      <div style="padding:6px 8px;font-size:9px;color:#6b8fb5;text-transform:uppercase">Gewinn<br>Prozent</div>
     </div>
     ${allHist.map(e=>{
       if(e.type==="kauf"){
@@ -917,24 +918,24 @@ function buildHistHtml(pos){
         const myKi=ki++;
         const imBestand=lot?lot.stueckeNoch:0;
         const vollVerkauft=imBestand===0;
-        const bColor=vollVerkauft?"#4b5563":imBestand<e.stuecke?"#f59e0b":"#22c55e";
+        const bColor=vollVerkauft?"#4b5563":imBestand<e.stuecke?"#f59e0b":"#4ade80";
         let gwBetrag=null,gwPct=null;
         if(aktKurs!==null&&!vollVerkauft){gwBetrag=(aktKurs-e.kurs)*imBestand;gwPct=((aktKurs-e.kurs)/e.kurs)*100;}
-        const gColor=gwBetrag!==null?(gwBetrag>=0?"#22c55e":"#ef4444"):"#4b5563";
-        return`<div onclick="openHistModal(${pos.id},${myKi},'kauf')" style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;${vollVerkauft?"opacity:0.45":""}cursor:pointer" onmouseenter="this.style.background='#1a2235'" onmouseleave="this.style.background=''">
-          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
-            <span style="background:#1e2d40;color:#60a5fa;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">K</span>
-            <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
+        const gColor=gwBetrag!==null?(gwBetrag>=0?"#4ade80":"#f87171"):"#4b5563";
+        return`<div onclick="openHistModal(${pos.id},${myKi},'kauf')" style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #e8f0f9;${vollVerkauft?"opacity:0.45":""}cursor:pointer" onmouseenter="this.style.background='#0f2240'" onmouseleave="this.style.background=''">
+          <div style="padding:7px 8px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+            <span style="background:#0d1f3c;color:#2563eb;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">K</span>
+            <span style="font-size:11px;color:#6b8fb5;white-space:nowrap">${fdate(e.datum)}</span>
           </div>
-          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+          <div style="padding:7px 8px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="${v1}">${e.stuecke}</span>
             <span style="font-size:13px;color:${bColor};font-weight:700">${imBestand}${imBestand<e.stuecke&&!vollVerkauft?`<span style="color:#4b5563;font-size:10px;font-weight:400"> /${e.stuecke}</span>`:""}</span>
           </div>
-          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+          <div style="padding:7px 8px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="${v1}">${cur(e.kurs)}</span>
             <span style="${v2}">${aktKurs!==null&&!vollVerkauft?cur(aktKurs):"—"}</span>
           </div>
-          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+          <div style="padding:7px 8px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="${v1}">${cur(e.kurs*e.stuecke)}</span>
             <span style="${v2}">${aktKurs!==null&&!vollVerkauft?cur(aktKurs*imBestand):"—"}</span>
           </div>
@@ -947,26 +948,26 @@ function buildHistHtml(pos){
         const myVi=vi++;
         const gJ=e.gewinnJe||0;
         const gP=e.gewinnPct||0;
-        const gColor=gJ>=0?"#22c55e":"#ef4444";
+        const gColor=gJ>=0?"#4ade80":"#f87171";
         const hasFifo=e.fifoDetails&&e.fifoDetails.length>0;
         // FIFO-Tooltip: welche Lots wurden verbraucht
         const fifoTip=hasFifo
           ?e.fifoDetails.map(d=>`${d.stuecke}×${cur(d.kaufKurs)}→${cur(d.gewinn)}`).join(" | ")
           :"";
-        return`<div onclick="openHistModal(${pos.id},${myVi},'vk')" style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #1e2332;background:#150f0a;cursor:pointer" onmouseenter="this.style.background='#1a1410'" onmouseleave="this.style.background='#150f0a'">
-          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+        return`<div onclick="openHistModal(${pos.id},${myVi},'vk')" style="display:grid;grid-template-columns:52px 1fr 1fr 1fr 1fr;border-bottom:1px solid #e8f0f9;background:#fff8f0;cursor:pointer" onmouseenter="this.style.background='#0f1830'" onmouseleave="this.style.background='#0a0f1e'">
+          <div style="padding:7px 8px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="background:#2d1e10;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:2px 6px;display:inline-block;width:fit-content">V</span>
-            <span style="font-size:11px;color:#6b7280;white-space:nowrap">${fdate(e.datum)}</span>
+            <span style="font-size:11px;color:#6b8fb5;white-space:nowrap">${fdate(e.datum)}</span>
           </div>
-          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+          <div style="padding:7px 8px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="${v1}">${e.stuecke}</span>
-            <span style="font-size:10px;color:#6b7280">FIFO</span>
+            <span style="font-size:10px;color:#6b8fb5">FIFO</span>
           </div>
-          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+          <div style="padding:7px 8px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="${v1}">${cur(e.kurs)}</span>
             <span style="${v2}">Verkaufskurs</span>
           </div>
-          <div style="padding:7px 8px;border-right:1px solid #1e2332;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
+          <div style="padding:7px 8px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:4px">
             <span style="${v1}">${cur(e.kurs*e.stuecke)}</span>
             <span style="${v2}">Erlös</span>
           </div>
@@ -974,8 +975,8 @@ function buildHistHtml(pos){
             <span style="font-size:13px;color:${gColor};font-weight:700">${cur(gJ)}</span>
             <span style="font-size:12px;color:${gColor}">${pct(gP)}</span>
           </div>
-        </div>${hasFifo?`<div style="background:#100d08;border-bottom:1px solid #1e2332;padding:4px 8px 6px 52px;display:flex;flex-wrap:wrap;gap:6px">
-          ${e.fifoDetails.map(d=>`<span style="font-size:10px;color:#6b7280;background:#1e1a14;border-radius:4px;padding:2px 6px">${d.stuecke} × ${cur(d.kaufKurs)} <span style="color:${d.gewinn>=0?"#22c55e":"#ef4444"}">${cur(d.gewinn)}</span></span>`).join("")}
+        </div>${hasFifo?`<div style="background:#100d08;border-bottom:1px solid #e8f0f9;padding:4px 8px 6px 52px;display:flex;flex-wrap:wrap;gap:6px">
+          ${e.fifoDetails.map(d=>`<span style="font-size:10px;color:#6b8fb5;background:#1e1a14;border-radius:4px;padding:2px 6px">${d.stuecke} × ${cur(d.kaufKurs)} <span style="color:${d.gewinn>=0?"#4ade80":"#f87171"}">${cur(d.gewinn)}</span></span>`).join("")}
         </div>`:""}`;
       }
     }).join("")}

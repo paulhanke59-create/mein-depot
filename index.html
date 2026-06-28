@@ -169,6 +169,7 @@ let positions=[], sold=[], currentPrices={}, expandedId=null;
 // ---------- helpers ----------
 function num(s){return Number(String(s||0).replace(",","."))}
 function num2(v){return new Intl.NumberFormat("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v)}
+function tsd(v){return new Intl.NumberFormat("de-DE").format(v)}
 function cur(v){return new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(v)}
 function pct(v){return(v>=0?"+":"")+v.toFixed(2).replace(".",",")+"%"}
 function fdate(d){
@@ -935,10 +936,10 @@ function buildHistHtml(pos){
   return`<div style="border:1px solid #bcd0e8;border-radius:8px;overflow:hidden">
     <div style="display:grid;grid-template-columns:52px 18% 18% 26% 26%;background:#f0f7ff;border-bottom:1px solid #bcd0e8">
       <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Datum</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Stück<br>Bestand</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Kurs €<br>Akt. €</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Betrag €<br>Akt. Wert €</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Gewinn €<br>Prozent</div>
+      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Kauf<br>Bestand</div>
+      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Kaufkurs €<br>Akt.Kurs €</div>
+      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Einstand €<br>Akt. Wert €</div>
+      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Gewinn €<br>Prozent %</div>
     </div>
     ${allHist.map(e=>{
       if(e.type==="kauf"){
@@ -951,13 +952,13 @@ function buildHistHtml(pos){
         if(aktKurs!==null&&!vollVerkauft){gwBetrag=(aktKurs-e.kurs)*imBestand;gwPct=((aktKurs-e.kurs)/e.kurs)*100;}
         const gColor=gwBetrag!==null?(gwBetrag>=0?"#16a34a":"#dc2626"):"#9ca3af";
         return`<div onclick="openHistModal(${pos.id},${myKi},'kauf')" style="display:grid;grid-template-columns:52px 18% 18% 26% 26%;border-bottom:1px solid #e8f0f9;${vollVerkauft?"opacity:0.45":""}cursor:pointer" onmouseenter="this.style.background='#dbeafe'" onmouseleave="this.style.background=''">
-          <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
+          <div style="padding:6px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
             <span style="background:#eff6ff;color:#2563eb;font-weight:800;font-size:11px;border-radius:4px;padding:2px 5px;display:inline-block">K</span>
-            <span style="font-size:11px;color:#6b8fb5;white-space:nowrap;overflow:hidden">${fdate(e.datum)}</span>
+            <span style="font-size:10px;color:#6b8fb5;white-space:nowrap;overflow:hidden">${fdate(e.datum)}</span>
           </div>
           <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="${v1}">${e.stuecke}</span>
-            <span style="font-size:13px;color:${bColor};font-weight:700">${imBestand}${imBestand<e.stuecke&&!vollVerkauft?`<span style="color:#9ca3af;font-size:10px;font-weight:400">/${e.stuecke}</span>`:""}</span>
+            <span style="${v1}">${tsd(e.stuecke)}</span>
+            <span style="font-size:13px;color:${bColor};font-weight:700">${tsd(imBestand)}${imBestand<e.stuecke&&!vollVerkauft?`<span style="color:#9ca3af;font-size:10px;font-weight:400">/${tsd(e.stuecke)}</span>`:""}</span>
           </div>
           <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
             <span style="${v1}">${num2(e.kurs)}</span>
@@ -980,12 +981,12 @@ function buildHistHtml(pos){
         const hasFifo=e.fifoDetails&&e.fifoDetails.length>0;
         const fifoTip=hasFifo?e.fifoDetails.map(d=>`${d.stuecke}×${num2(d.kaufKurs)}→${num2(d.gewinn)}`).join(" | "):"";
         return`<div onclick="openHistModal(${pos.id},${myVi},'vk')" style="display:grid;grid-template-columns:52px 18% 18% 26% 26%;border-bottom:1px solid #e8f0f9;background:#fff8f0;cursor:pointer" onmouseenter="this.style.background='#fef3c7'" onmouseleave="this.style.background='#fff8f0'">
-          <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
+          <div style="padding:6px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
             <span style="background:#fff7ed;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:2px 5px;display:inline-block;border:1px solid #fed7aa">V</span>
-            <span style="font-size:11px;color:#6b8fb5;white-space:nowrap;overflow:hidden">${fdate(e.datum)}</span>
+            <span style="font-size:10px;color:#6b8fb5;white-space:nowrap;overflow:hidden">${fdate(e.datum)}</span>
           </div>
           <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="${v1}">${e.stuecke}</span>
+            <span style="${v1}">${tsd(e.stuecke)}</span>
             <span style="font-size:10px;color:#6b8fb5">FIFO</span>
           </div>
           <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">

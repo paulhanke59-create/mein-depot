@@ -994,7 +994,7 @@ function buildHistHtml(pos){
   if(!allHist.length) return `<span class="dim" style="font-size:13px">Keine Einträge</span>`;
 
   const pcts=[5,10,15,-5,-10,-15];
-  const colW="52px 13% 13% 18% 18% 13% 13% 13% 13% 13% 13%";
+  const colW="44px 10% 10% 15% 15% 10% 10% 10% 10% 10% 10%";
 
   return`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
   <div style="border:1px solid #bcd0e8;border-radius:8px;overflow:hidden;min-width:700px">
@@ -1005,7 +1005,10 @@ function buildHistHtml(pos){
       <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4;border-right:1px solid #bcd0e8">Kurs<br>Akt.</div>
       <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4;border-right:1px solid #bcd0e8">Einstand<br>Akt.Wert</div>
       <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4;border-right:2px solid #bcd0e8">Gewinn<br>Prozent</div>
-      ${pcts.map(p=>`<div style="padding:5px 4px;font-size:9px;font-weight:700;text-transform:uppercase;line-height:1.4;border-right:1px solid #bcd0e8;text-align:right;color:${p>0?"#16a34a":"#dc2626"}">${p>0?"+":""}${p}%<br>Wert</div>`).join("")}
+      ${pcts.map(p=>{
+        const kH=aktKurs?aktKurs*(1+p/100):null;
+        return`<div style="padding:4px 3px;font-size:9px;font-weight:700;text-transform:uppercase;line-height:1.4;border-right:1px solid #bcd0e8;text-align:right;color:${p>0?"#16a34a":"#dc2626"}">${p>0?"+":""}${p}%<br>${kH?num2(kH):"—"}</div>`;
+      }).join("")}
     </div>
     ${allHist.map(e=>{
       if(e.type==="kauf"){

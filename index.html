@@ -424,6 +424,8 @@ function saveNameWkn(id){
 // ---------- Kurs aktualisieren ----------
 function updateKurs(id,val){
   const sid=String(id);
+  // Eingabe noch unvollständig (endet auf Komma/Punkt) — nicht verarbeiten
+  if(val.endsWith(",") || val.endsWith(".")) return;
   const parsed=num(val);
   if(val===""||parsed<=0||isNaN(parsed)){
     delete currentPrices[sid];

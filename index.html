@@ -783,11 +783,6 @@ function renderEditPanel(){
           <div class="kurs-date" id="gd-${pos.id}" style="margin-top:4px">${kd?"Stand: "+fdate(kd):""}</div>
           <div class="kurs-results" id="gr-${pos.id}" style="margin-top:10px">${gewinnHtml}</div>
         </div>
-        <div style="padding:12px 16px;border-bottom:1px solid #e8f0f9">
-          <div id="prognose-${pos.id}">
-            ${g ? buildPrognoseHtml(pos,g) : `<div style="font-size:13px;color:#9bb5cc;text-align:center;padding:10px 0">Bitte zuerst aktuellen Kurs eingeben</div>`}
-          </div>
-        </div>
         <div style="padding:12px 16px">
           <div id="hist-${pos.id}">${histHtml}</div>
         </div>`)}

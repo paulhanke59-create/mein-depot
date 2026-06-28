@@ -465,12 +465,10 @@ function buildPrognoseHtml(pos,g){
       const kP=g.kurs*(1+pos2/100), wP=kP*pos.stuecke, dP=(kP-pos.preis)*pos.stuecke, pP=((kP-pos.preis)/pos.preis)*100;
       const kN=g.kurs*(1+neg/100), wN=kN*pos.stuecke, dN=(kN-pos.preis)*pos.stuecke, pN=((kN-pos.preis)/pos.preis)*100;
       const colP=dP>=0?"#16a34a":"#dc2626";
-      const bgP=dP>=0?"#f0fff4":"#fffafa";
       const colN=dN>=0?"#16a34a":"#dc2626";
-      const bgN=dN>=0?"#f0fff4":"#fffafa";
       const fmtDiff=(d)=>(d>=0?"+":"")+cur(d);
       return`<div style="display:grid;grid-template-columns:1fr 56px 1fr;border-top:1px solid #e8f0f9">
-        <div style="padding:7px 8px;border-right:1px solid #e8f0f9;background:${bgP}">
+        <div style="padding:7px 8px;border-right:1px solid #e8f0f9;background:#f0fff4">
           <div style="font-size:12px;font-weight:700;color:${colP}">${cur(wP)}</div>
           <div style="font-size:10px;color:${colP}">${fmtDiff(dP)} / ${pct(pP)}</div>
           <div style="font-size:12px;font-weight:700;color:${colP}">${cur(kP)}</div>
@@ -479,7 +477,7 @@ function buildPrognoseHtml(pos,g){
           <div style="font-size:12px;font-weight:800;color:#16a34a">+${pos2}%</div>
           <div style="font-size:12px;font-weight:800;color:#dc2626">${neg}%</div>
         </div>
-        <div style="padding:7px 8px;background:${bgN}">
+        <div style="padding:7px 8px;background:#fffafa">
           <div style="font-size:12px;font-weight:700;color:${colN}">${cur(wN)}</div>
           <div style="font-size:10px;color:${colN}">${fmtDiff(dN)} / ${pct(pN)}</div>
           <div style="font-size:12px;font-weight:700;color:${colN}">${cur(kN)}</div>

@@ -455,27 +455,33 @@ function buildPrognoseHtml(pos,g){
   const pairs=[[5,-5],[10,-10],[20,-20]];
   return`<div style="border:1px solid #bcd0e8;border-radius:8px;overflow:hidden">
     <div style="display:grid;grid-template-columns:1fr 56px 1fr;background:#f0f7ff;border-bottom:1px solid #bcd0e8">
-      <div style="padding:5px 8px;font-size:9px;color:#16a34a;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">Gewinn</div>
+      <div style="padding:5px 8px;font-size:9px;color:#16a34a;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">+%</div>
       <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">±%</div>
-      <div style="padding:5px 8px;font-size:9px;color:#dc2626;text-transform:uppercase;font-weight:700;text-align:center">Verlust</div>
+      <div style="padding:5px 8px;font-size:9px;color:#dc2626;text-transform:uppercase;font-weight:700;text-align:center">−%</div>
     </div>
     ${pairs.map(([pos2,neg])=>{
       const kP=g.kurs*(1+pos2/100), wP=kP*pos.stuecke, dP=(kP-pos.preis)*pos.stuecke, pP=((kP-pos.preis)/pos.preis)*100;
       const kN=g.kurs*(1+neg/100), wN=kN*pos.stuecke, dN=(kN-pos.preis)*pos.stuecke, pN=((kN-pos.preis)/pos.preis)*100;
+      const colP=dP>=0?"#16a34a":"#dc2626";
+      const bgP=dP>=0?"#f0fff4":"#fffafa";
+      const colN=dN>=0?"#16a34a":"#dc2626";
+      const bgN=dN>=0?"#f0fff4":"#fffafa";
+      const signP=dP>=0?"+":"";
+      const signN=dN>=0?"+":"";
       return`<div style="display:grid;grid-template-columns:1fr 56px 1fr;border-top:1px solid #e8f0f9">
-        <div style="padding:7px 8px;border-right:1px solid #e8f0f9;background:#f0fff4">
-          <div style="font-size:12px;font-weight:700;color:#16a34a">${cur(wP)}</div>
-          <div style="font-size:10px;color:#16a34a">+${cur(Math.abs(dP))} / ${pct(pP)}</div>
-          <div style="font-size:12px;font-weight:700;color:#16a34a">${cur(kP)}</div>
+        <div style="padding:7px 8px;border-right:1px solid #e8f0f9;background:${bgP}">
+          <div style="font-size:12px;font-weight:700;color:${colP}">${cur(wP)}</div>
+          <div style="font-size:10px;color:${colP}">${signP}${cur(Math.abs(dP))} / ${pct(pP)}</div>
+          <div style="font-size:12px;font-weight:700;color:${colP}">${cur(kP)}</div>
         </div>
         <div style="padding:7px 4px;border-right:1px solid #e8f0f9;background:#f0f7ff;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px">
           <div style="font-size:12px;font-weight:800;color:#16a34a">+${pos2}%</div>
           <div style="font-size:12px;font-weight:800;color:#dc2626">${neg}%</div>
         </div>
-        <div style="padding:7px 8px;background:#fffafa">
-          <div style="font-size:12px;font-weight:700;color:#dc2626">${cur(wN)}</div>
-          <div style="font-size:10px;color:#dc2626">${cur(dN)} / ${pct(pN)}</div>
-          <div style="font-size:12px;font-weight:700;color:#dc2626">${cur(kN)}</div>
+        <div style="padding:7px 8px;background:${bgN}">
+          <div style="font-size:12px;font-weight:700;color:${colN}">${cur(wN)}</div>
+          <div style="font-size:10px;color:${colN}">${signN}${cur(Math.abs(dN))} / ${pct(pN)}</div>
+          <div style="font-size:12px;font-weight:700;color:${colN}">${cur(kN)}</div>
         </div>
       </div>`;
     }).join("")}
@@ -1006,7 +1012,7 @@ function buildHistHtml(pos){
         let gwBetrag=null,gwPct=null;
         if(aktKurs!==null&&!vollVerkauft){gwBetrag=(aktKurs-e.kurs)*imBestand;gwPct=((aktKurs-e.kurs)/e.kurs)*100;}
         const gColor=gwBetrag!==null?(gwBetrag>=0?"#16a34a":"#dc2626"):"#9ca3af";
-        return`<div onclick="openHistModal(${pos.id},${myKi},'kauf')" style="display:grid;grid-template-columns:52px 18% 18% 26% 26%;border-bottom:1px solid #e8f0f9;${vollVerkauft?"opacity:0.45":""}cursor:pointer" onmouseenter="this.style.background='#dbeafe'" onmouseleave="this.style.background=''">
+        return`<div onclick="openHistModal(${pos.id},${myKi},'kauf')" style="display:grid;grid-template-columns:52px 18% 18% 26% 26%;border-bottom:1px solid #e8f0f9;${vollVerkauft?"opacity:0.45;background:#fff8f0;":""}cursor:pointer" onmouseenter="this.style.background='#dbeafe'" onmouseleave="this.style.background='${vollVerkauft?"#fff8f0":""}'">
           <div style="padding:6px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
             <span style="background:#eff6ff;color:#2563eb;font-weight:800;font-size:11px;border-radius:4px;padding:2px 5px;display:inline-block">K</span>
             <span style="font-size:10px;color:#6b8fb5;white-space:nowrap;overflow:hidden">${fdate(e.datum)}</span>

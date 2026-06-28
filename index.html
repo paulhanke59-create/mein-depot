@@ -627,11 +627,11 @@ function renderCards(){
     return`<div class="s-card${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
       <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
 
-      <!-- Zeile 1: Anzahl · Ø Kaufkurs · Einstandswert -->
+      <!-- Zeile 1: Bestand · Ø Kaufkurs · Einstandswert -->
       <div class="s-card-row">
         <div class="s-card-item">
-          <span class="sl">Anzahl</span>
-          <span class="sv bold">${pos.stuecke}</span>
+          <span class="sl">Bestand</span>
+          <span class="sv bold">${tsd(pos.stuecke)}</span>
         </div>
         <div class="s-card-item">
           <span class="sl">Ø Kaufkurs</span>

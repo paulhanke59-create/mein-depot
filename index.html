@@ -739,6 +739,51 @@ function renderEditPanel(){
           <div id="hist-${pos.id}">${histHtml}</div>
         </div>`)}
 
+      ${collapsible("sec-prognose-"+pos.id, "📈 Prognose", false, `
+        <div style="padding:12px 16px">
+          ${g ? `
+          <div style="font-size:11px;color:#6b8fb5;margin-bottom:10px">Aktueller Kurs: <strong style="color:#1e3a5f">${cur(g.kurs)}</strong> · Bestand: <strong style="color:#1e3a5f">${tsd(pos.stuecke)} Stk.</strong></div>
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;border:1px solid #bcd0e8;border-radius:8px;overflow:hidden">
+            <!-- Header -->
+            <div style="background:#fef2f2;padding:6px 10px;font-size:9px;color:#dc2626;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">Verlust</div>
+            <div style="background:#f0f7ff;padding:6px 10px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">Änderung</div>
+            <div style="background:#f0fdf4;padding:6px 10px;font-size:9px;color:#16a34a;text-transform:uppercase;font-weight:700;text-align:center">Gewinn</div>
+            ${[-20,-10,-5,5,10,20].map(p=>{
+              const isNeg=p<0;
+              const kursP=g.kurs*(1+p/100);
+              const wertP=kursP*pos.stuecke;
+              const diffP=(kursP-pos.preis)*pos.stuecke;
+              const pctP=((kursP-pos.preis)/pos.preis)*100;
+              return isNeg
+                ?`<div style="padding:8px 10px;border-top:1px solid #e8f0f9;border-right:1px solid #bcd0e8;background:#fffafa">
+                    <div style="font-size:12px;font-weight:700;color:#dc2626">${cur(wertP)}</div>
+                    <div style="font-size:11px;color:#dc2626">${cur(diffP)}</div>
+                    <div style="font-size:10px;color:#dc2626">${pct(pctP)}</div>
+                  </div>
+                  <div style="padding:8px 10px;border-top:1px solid #e8f0f9;border-right:1px solid #bcd0e8;background:#f0f7ff;text-align:center;display:flex;flex-direction:column;justify-content:center">
+                    <div style="font-size:13px;font-weight:800;color:#6b8fb5">${p}%</div>
+                    <div style="font-size:10px;color:#9bb5cc">${cur(kursP)}</div>
+                  </div>
+                  <div style="padding:8px 10px;border-top:1px solid #e8f0f9;background:#f8fafc">
+                    <div style="font-size:11px;color:#9ca3af">—</div>
+                  </div>`
+                :`<div style="padding:8px 10px;border-top:1px solid #e8f0f9;border-right:1px solid #bcd0e8;background:#f8fafc">
+                    <div style="font-size:11px;color:#9ca3af">—</div>
+                  </div>
+                  <div style="padding:8px 10px;border-top:1px solid #e8f0f9;border-right:1px solid #bcd0e8;background:#f0f7ff;text-align:center;display:flex;flex-direction:column;justify-content:center">
+                    <div style="font-size:13px;font-weight:800;color:#6b8fb5">+${p}%</div>
+                    <div style="font-size:10px;color:#9bb5cc">${cur(kursP)}</div>
+                  </div>
+                  <div style="padding:8px 10px;border-top:1px solid #e8f0f9;background:#f0fff4">
+                    <div style="font-size:12px;font-weight:700;color:#16a34a">${cur(wertP)}</div>
+                    <div style="font-size:11px;color:#16a34a">+${cur(diffP).replace('-','')}</div>
+                    <div style="font-size:10px;color:#16a34a">${pct(pctP)}</div>
+                  </div>`;
+            }).join("")}
+          </div>`
+          : `<div style="font-size:13px;color:#9bb5cc;text-align:center;padding:10px 0">Bitte zuerst aktuellen Kurs eingeben</div>`}
+        </div>`)}
+
       ${collapsible("sec-tx-"+pos.id, "💱 Transaktion", false, `
         <div style="display:flex;flex-direction:column;gap:8px;padding:12px 16px">
           <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Stücke</label>

@@ -745,15 +745,23 @@ function renderEditPanel(){
           <div style="font-size:11px;color:#6b8fb5;margin-bottom:10px">Aktueller Kurs: <strong style="color:#1e3a5f">${cur(g.kurs)}</strong> · Bestand: <strong style="color:#1e3a5f">${tsd(pos.stuecke)} Stk.</strong></div>
           <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;border:1px solid #bcd0e8;border-radius:8px;overflow:hidden">
             <!-- Header -->
-            <div style="background:#fef2f2;padding:6px 10px;font-size:9px;color:#dc2626;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">Verlust</div>
-            <div style="background:#f0f7ff;padding:6px 10px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">Änderung</div>
-            <div style="background:#f0fdf4;padding:6px 10px;font-size:9px;color:#16a34a;text-transform:uppercase;font-weight:700;text-align:center">Gewinn</div>
-            ${[-20,-10,-5,5,10,20].map(p=>{
+            <div style="background:#fef2f2;padding:6px 10px;font-size:9px;color:#dc2626;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8;border-bottom:1px solid #bcd0e8">Verlust</div>
+            <div style="background:#f0f7ff;padding:6px 10px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8;border-bottom:1px solid #bcd0e8">Änderung</div>
+            <div style="background:#f0fdf4;padding:6px 10px;font-size:9px;color:#16a34a;text-transform:uppercase;font-weight:700;text-align:center;border-bottom:1px solid #bcd0e8">Gewinn</div>
+            ${[-20,-10,-5,0,5,10,20].map(p=>{
               const isNeg=p<0;
+              const isZero=p===0;
               const kursP=g.kurs*(1+p/100);
               const wertP=kursP*pos.stuecke;
               const diffP=(kursP-pos.preis)*pos.stuecke;
               const pctP=((kursP-pos.preis)/pos.preis)*100;
+              if(isZero) return`
+                  <div style="padding:8px 10px;border-top:2px solid #bcd0e8;border-right:1px solid #bcd0e8;background:#f0f7ff;text-align:center;grid-column:1/-1;display:flex;justify-content:center;align-items:center;gap:12px">
+                    <span style="font-size:11px;color:#6b8fb5;text-transform:uppercase;font-weight:700">Aktuell</span>
+                    <span style="font-size:14px;font-weight:800;color:#1e3a5f">${cur(g.kurs)}</span>
+                    <span style="font-size:12px;color:#6b8fb5">→ ${cur(wertP)}</span>
+                    <span style="font-size:12px;font-weight:700;color:${diffP>=0?"#16a34a":"#dc2626"}">${cur(diffP)}</span>
+                  </div>`;
               return isNeg
                 ?`<div style="padding:8px 10px;border-top:1px solid #e8f0f9;border-right:1px solid #bcd0e8;background:#fffafa">
                     <div style="font-size:12px;font-weight:700;color:#dc2626">${cur(wertP)}</div>

@@ -777,21 +777,17 @@ function renderEditPanel(){
       </div>
 
       ${collapsible("sec-kurs-"+pos.id, "📊 Aktueller Kurs", true, `
-        <div style="padding:12px 16px">
+        <div style="padding:12px 16px;border-bottom:1px solid #e8f0f9">
           <label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
           <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 9,64" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px" oninput="updateKurs(${pos.id},this.value)"/>
           <div class="kurs-date" id="gd-${pos.id}" style="margin-top:4px">${kd?"Stand: "+fdate(kd):""}</div>
           <div class="kurs-results" id="gr-${pos.id}" style="margin-top:10px">${gewinnHtml}</div>
-        </div>`)}
-
-      ${collapsible("sec-prognose-"+pos.id, "📈 Prognose", true, `
-        <div style="padding:12px 16px">
+        </div>
+        <div style="padding:12px 16px;border-bottom:1px solid #e8f0f9">
           <div id="prognose-${pos.id}">
             ${g ? buildPrognoseHtml(pos,g) : `<div style="font-size:13px;color:#9bb5cc;text-align:center;padding:10px 0">Bitte zuerst aktuellen Kurs eingeben</div>`}
           </div>
-        </div>`)}
-
-      ${collapsible("sec-hist-"+pos.id, "📜 Historie", true, `
+        </div>
         <div style="padding:12px 16px">
           <div id="hist-${pos.id}">${histHtml}</div>
         </div>`)}

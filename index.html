@@ -1010,8 +1010,8 @@ function buildHistHtml(pos){
         <th style="position:sticky;left:0;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:left;border-right:1px solid #bcd0e8;white-space:nowrap">Datum</th>
         <th style="position:sticky;left:44px;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:1px solid #bcd0e8">Kauf<br>Bst.</th>
         <th style="position:sticky;left:96px;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:1px solid #bcd0e8">Kurs<br>Akt.</th>
-        <th style="position:sticky;left:148px;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:1px solid #bcd0e8">Einst.<br>A.Wert</th>
-        <th style="position:sticky;left:220px;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:2px solid #bcd0e8">Gew.<br>%</th>
+        <th style="position:sticky;left:148px;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:2px solid #bcd0e8">Einst.<br>A.Wert</th>
+        <th style="padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:1px solid #bcd0e8">Gew.<br>%</th>
         ${pcts.map(p=>{
           const kH=aktKurs?aktKurs*(1+p/100):null;
           return`<th style="padding:4px 3px;font-size:9px;font-weight:700;text-transform:uppercase;text-align:right;border-right:1px solid #bcd0e8;color:${p>0?"#16a34a":"#dc2626"};white-space:nowrap">${p>0?"+":""}${p}%<br>${kH?num2(kH):"—"}</th>`;
@@ -1053,11 +1053,11 @@ function buildHistHtml(pos){
             <div style="font-size:11px;color:#1e3a5f;font-weight:700">${num2(e.kurs)}</div>
             <div style="font-size:11px;color:#3b6ea5">${aktKurs!==null&&!vollVerkauft?num2(aktKurs):"—"}</div>
           </td>
-          <td style="position:sticky;left:148px;z-index:1;background:${bg};padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right">
+          <td style="position:sticky;left:148px;z-index:1;background:${bg};padding:4px 3px;border-right:2px solid #bcd0e8;border-bottom:1px solid #e8f0f9;text-align:right">
             <div style="font-size:11px;color:#1e3a5f;font-weight:700">${num2(e.kurs*e.stuecke)}</div>
             <div style="font-size:11px;color:#3b6ea5">${aktKurs!==null&&!vollVerkauft?num2(aktKurs*imBestand):"—"}</div>
           </td>
-          <td style="position:sticky;left:220px;z-index:1;background:${bg};padding:4px 3px;border-right:2px solid #bcd0e8;border-bottom:1px solid #e8f0f9;text-align:right">
+          <td style="padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right">
             <div style="font-size:11px;color:${gColor};font-weight:700">${gwBetrag!==null?num2(gwBetrag):vollVerkauft?"verk.":"—"}</div>
             <div style="font-size:11px;color:${gColor}">${gwPct!==null?pct(gwPct):"—"}</div>
           </td>
@@ -1076,8 +1076,8 @@ function buildHistHtml(pos){
           </td>
           <td style="position:sticky;left:44px;z-index:1;background:#fff8f0;padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#1e3a5f;font-weight:700">${tsd(e.stuecke)}</td>
           <td style="position:sticky;left:96px;z-index:1;background:#fff8f0;padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#1e3a5f;font-weight:700">${num2(e.kurs)}</td>
-          <td style="position:sticky;left:148px;z-index:1;background:#fff8f0;padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#1e3a5f;font-weight:700">${num2(e.kurs*e.stuecke)}</td>
-          <td style="position:sticky;left:220px;z-index:1;background:#fff8f0;padding:4px 3px;border-right:2px solid #bcd0e8;border-bottom:1px solid #e8f0f9;text-align:right">
+          <td style="position:sticky;left:148px;z-index:1;background:#fff8f0;padding:4px 3px;border-right:2px solid #bcd0e8;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#1e3a5f;font-weight:700">${num2(e.kurs*e.stuecke)}</td>
+          <td style="padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right">
             <div style="font-size:11px;color:${gColor};font-weight:700">${num2(gJ)}</div>
             <div style="font-size:11px;color:${gColor}">${pct(gP2)}</div>
           </td>

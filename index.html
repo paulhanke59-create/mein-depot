@@ -630,7 +630,10 @@ function renderCards(){
     const dpStr=dp!==null?badge(dp,pct(dp)):'<span class="sv">—</span>';
 
     return`<div class="s-card${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
-      <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
+        ${pos.wkn==="FA0047"?`<a href="https://www.finanzen.net/zertifikate/auf-a1j4u4/fa0047" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 7px;white-space:nowrap;text-decoration:none;flex-shrink:0">📊 Kurs</a>`:""}
+      </div>
 
       <!-- Zeile 1: Bestand · Ø Kaufkurs · Einstandswert -->
       <div class="s-card-row">

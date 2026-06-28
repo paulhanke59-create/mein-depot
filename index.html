@@ -993,13 +993,19 @@ function buildHistHtml(pos){
 
   if(!allHist.length) return `<span class="dim" style="font-size:13px">Keine Einträge</span>`;
 
-  return`<div style="border:1px solid #bcd0e8;border-radius:8px;overflow:hidden">
-    <div style="display:grid;grid-template-columns:52px 18% 18% 26% 26%;background:#f0f7ff;border-bottom:1px solid #bcd0e8">
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Datum</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Kauf<br>Bestand</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Kaufkurs<br>Akt.Kurs</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Einstand<br>Akt. Wert</div>
-      <div style="padding:5px 6px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4">Gewinn<br>Prozent</div>
+  const pcts=[5,10,15,-5,-10,-15];
+  const colW="52px 13% 13% 18% 18% 13% 13% 13% 13% 13% 13%";
+
+  return`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <div style="border:1px solid #bcd0e8;border-radius:8px;overflow:hidden;min-width:700px">
+    <!-- Header -->
+    <div style="display:grid;grid-template-columns:${colW};background:#f0f7ff;border-bottom:1px solid #bcd0e8">
+      <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4;border-right:1px solid #bcd0e8">Datum</div>
+      <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4;border-right:1px solid #bcd0e8">Kauf<br>Bestand</div>
+      <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4;border-right:1px solid #bcd0e8">Kurs<br>Akt.</div>
+      <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4;border-right:1px solid #bcd0e8">Einstand<br>Akt.Wert</div>
+      <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;line-height:1.4;border-right:2px solid #bcd0e8">Gewinn<br>Prozent</div>
+      ${pcts.map(p=>`<div style="padding:5px 4px;font-size:9px;font-weight:700;text-transform:uppercase;line-height:1.4;border-right:1px solid #bcd0e8;text-align:right;color:${p>0?"#16a34a":"#dc2626"}">${p>0?"+":""}${p}%<br>Wert</div>`).join("")}
     </div>
     ${allHist.map(e=>{
       if(e.type==="kauf"){
@@ -1011,27 +1017,39 @@ function buildHistHtml(pos){
         let gwBetrag=null,gwPct=null;
         if(aktKurs!==null&&!vollVerkauft){gwBetrag=(aktKurs-e.kurs)*imBestand;gwPct=((aktKurs-e.kurs)/e.kurs)*100;}
         const gColor=gwBetrag!==null?(gwBetrag>=0?"#16a34a":"#dc2626"):"#9ca3af";
-        return`<div onclick="openHistModal(${pos.id},${myKi},'kauf')" style="display:grid;grid-template-columns:52px 18% 18% 26% 26%;border-bottom:1px solid #e8f0f9;${vollVerkauft?"background:#fff8f0;":""}cursor:pointer" onmouseenter="this.style.background='#dbeafe'" onmouseleave="this.style.background='${vollVerkauft?"#fff8f0":""}'">
-          <div style="padding:6px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="background:#eff6ff;color:#2563eb;font-weight:800;font-size:11px;border-radius:4px;padding:2px 5px;display:inline-block">K</span>
-            <span style="font-size:10px;color:#6b8fb5;white-space:nowrap;overflow:hidden">${fdate(e.datum)}</span>
+        // Prognose-Spalten: Gewinn bei hochgerechnetem Kurs, bezogen auf Bestand
+        const prognoseCells=pcts.map(p=>{
+          if(aktKurs===null||vollVerkauft) return`<div style="padding:5px 4px;border-right:1px solid #e8f0f9;text-align:right;font-size:11px;color:#9ca3af">—</div>`;
+          const kP=aktKurs*(1+p/100);
+          const gP=(kP-e.kurs)*imBestand;
+          const col=gP>=0?"#16a34a":"#dc2626";
+          return`<div style="padding:5px 4px;border-right:1px solid #e8f0f9;text-align:right;background:${p>0?"#f0fff4":"#fffafa"}">
+            <div style="font-size:11px;font-weight:700;color:${col}">${num2(gP)}</div>
+            <div style="font-size:10px;color:${col}">${cur(kP*imBestand)}</div>
+          </div>`;
+        }).join("");
+        return`<div onclick="openHistModal(${pos.id},${myKi},'kauf')" style="display:grid;grid-template-columns:${colW};border-bottom:1px solid #e8f0f9;${vollVerkauft?"background:#fff8f0;":""}cursor:pointer" onmouseenter="this.style.background='#dbeafe'" onmouseleave="this.style.background='${vollVerkauft?"#fff8f0":""}'">
+          <div style="padding:5px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:2px">
+            <span style="background:#eff6ff;color:#2563eb;font-weight:800;font-size:10px;border-radius:4px;padding:1px 4px;display:inline-block">K</span>
+            <span style="font-size:10px;color:#6b8fb5;white-space:nowrap">${fdate(e.datum)}</span>
           </div>
-          <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="${v1}">${tsd(e.stuecke)}</span>
-            <span style="font-size:13px;color:${bColor};font-weight:700">${tsd(imBestand)}${imBestand<e.stuecke&&!vollVerkauft?`<span style="color:#9ca3af;font-size:10px;font-weight:400">/${tsd(e.stuecke)}</span>`:""}</span>
+          <div style="padding:5px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:2px">
+            <span style="font-size:12px;color:#1e3a5f;font-weight:700">${tsd(e.stuecke)}</span>
+            <span style="font-size:12px;color:${bColor};font-weight:700">${tsd(imBestand)}</span>
           </div>
-          <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="${v1}">${num2(e.kurs)}</span>
-            <span style="${v2}">${aktKurs!==null&&!vollVerkauft?num2(aktKurs):"—"}</span>
+          <div style="padding:5px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:2px">
+            <span style="font-size:12px;color:#1e3a5f;font-weight:700">${num2(e.kurs)}</span>
+            <span style="font-size:12px;color:#3b6ea5">${aktKurs!==null&&!vollVerkauft?num2(aktKurs):"—"}</span>
           </div>
-          <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="${v1}">${num2(e.kurs*e.stuecke)}</span>
-            <span style="${v2}">${aktKurs!==null&&!vollVerkauft?num2(aktKurs*imBestand):"—"}</span>
+          <div style="padding:5px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:2px">
+            <span style="font-size:12px;color:#1e3a5f;font-weight:700">${num2(e.kurs*e.stuecke)}</span>
+            <span style="font-size:12px;color:#3b6ea5">${aktKurs!==null&&!vollVerkauft?num2(aktKurs*imBestand):"—"}</span>
           </div>
-          <div style="padding:6px 6px;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="font-size:13px;color:${gColor};font-weight:700">${gwBetrag!==null?num2(gwBetrag):vollVerkauft?"verk.":"—"}</span>
-            <span style="font-size:12px;color:${gColor}">${gwPct!==null?pct(gwPct):"—"}</span>
+          <div style="padding:5px 4px;border-right:2px solid #bcd0e8;display:flex;flex-direction:column;justify-content:space-between;gap:2px">
+            <span style="font-size:12px;color:${gColor};font-weight:700">${gwBetrag!==null?num2(gwBetrag):vollVerkauft?"verk.":"—"}</span>
+            <span style="font-size:11px;color:${gColor}">${gwPct!==null?pct(gwPct):"—"}</span>
           </div>
+          ${prognoseCells}
         </div>`;
       } else {
         const myVi=vi++;
@@ -1039,34 +1057,25 @@ function buildHistHtml(pos){
         const gP=e.gewinnPct||0;
         const gColor=gJ>=0?"#16a34a":"#dc2626";
         const hasFifo=e.fifoDetails&&e.fifoDetails.length>0;
-        const fifoTip=hasFifo?e.fifoDetails.map(d=>`${d.stuecke}×${num2(d.kaufKurs)}→${num2(d.gewinn)}`).join(" | "):"";
-        return`<div onclick="openHistModal(${pos.id},${myVi},'vk')" style="display:grid;grid-template-columns:52px 18% 18% 26% 26%;border-bottom:1px solid #e8f0f9;background:#fff8f0;cursor:pointer" onmouseenter="this.style.background='#fef3c7'" onmouseleave="this.style.background='#fff8f0'">
-          <div style="padding:6px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="background:#fff7ed;color:#f97316;font-weight:800;font-size:11px;border-radius:4px;padding:2px 5px;display:inline-block;border:1px solid #fed7aa">V</span>
-            <span style="font-size:10px;color:#6b8fb5;white-space:nowrap;overflow:hidden">${fdate(e.datum)}</span>
+        return`<div onclick="openHistModal(${pos.id},${myVi},'vk')" style="display:grid;grid-template-columns:${colW};border-bottom:1px solid #e8f0f9;background:#fff8f0;cursor:pointer" onmouseenter="this.style.background='#fef3c7'" onmouseleave="this.style.background='#fff8f0'">
+          <div style="padding:5px 4px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:2px">
+            <span style="background:#fff7ed;color:#f97316;font-weight:800;font-size:10px;border-radius:4px;padding:1px 4px;display:inline-block;border:1px solid #fed7aa">V</span>
+            <span style="font-size:10px;color:#6b8fb5;white-space:nowrap">${fdate(e.datum)}</span>
           </div>
-          <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="${v1}">${tsd(e.stuecke)}</span>
-            <span style="font-size:10px;color:#6b8fb5">FIFO</span>
+          <div style="padding:5px 4px;border-right:1px solid #e8f0f9"><span style="font-size:12px;color:#1e3a5f;font-weight:700">${tsd(e.stuecke)}</span></div>
+          <div style="padding:5px 4px;border-right:1px solid #e8f0f9"><span style="font-size:12px;color:#1e3a5f;font-weight:700">${num2(e.kurs)}</span></div>
+          <div style="padding:5px 4px;border-right:1px solid #e8f0f9"><span style="font-size:12px;color:#1e3a5f;font-weight:700">${num2(e.kurs*e.stuecke)}</span></div>
+          <div style="padding:5px 4px;border-right:2px solid #bcd0e8;display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:12px;color:${gColor};font-weight:700">${num2(gJ)}</span>
+            <span style="font-size:11px;color:${gColor}">${pct(gP)}</span>
           </div>
-          <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="${v1}">${num2(e.kurs)}</span>
-            <span style="${v2}">—</span>
-          </div>
-          <div style="padding:6px 6px;border-right:1px solid #e8f0f9;display:flex;flex-direction:column;justify-content:space-between;gap:3px">
-            <span style="${v1}">${num2(e.kurs*e.stuecke)}</span>
-            <span style="${v2}">—</span>
-          </div>
-          <div style="padding:6px 6px;display:flex;flex-direction:column;justify-content:space-between;gap:3px" title="${fifoTip}">
-            <span style="font-size:13px;color:${gColor};font-weight:700">${num2(gJ)}</span>
-            <span style="font-size:12px;color:${gColor}">${pct(gP)}</span>
-          </div>
-        </div>${hasFifo?`<div style="background:#fef9f0;border-bottom:1px solid #e8f0f9;padding:4px 8px 6px 60px;display:flex;flex-wrap:wrap;gap:6px">
-          ${e.fifoDetails.map(d=>`<span style="font-size:10px;color:#6b8fb5;background:#fff;border:1px solid #e8f0f9;border-radius:4px;padding:2px 6px">${d.stuecke}×${num2(d.kaufKurs)} <span style="color:${d.gewinn>=0?"#16a34a":"#dc2626"}">${num2(d.gewinn)}</span></span>`).join("")}
+          ${pcts.map(()=>`<div style="padding:5px 4px;border-right:1px solid #e8f0f9;color:#9ca3af;font-size:11px;text-align:right">—</div>`).join("")}
+        </div>${hasFifo?`<div style="background:#fef9f0;border-bottom:1px solid #e8f0f9;padding:4px 8px 4px 12px;display:flex;flex-wrap:wrap;gap:4px">
+          ${e.fifoDetails.map(d=>`<span style="font-size:10px;color:#6b8fb5;background:#fff;border:1px solid #e8f0f9;border-radius:4px;padding:2px 5px">${tsd(d.stuecke)}×${num2(d.kaufKurs)} <span style="color:${d.gewinn>=0?"#16a34a":"#dc2626"}">${num2(d.gewinn)}</span></span>`).join("")}
         </div>`:""}`;
       }
     }).join("")}
-  </div>`;
+  </div></div>`;
 }
 
 function render(){renderCards();renderEditPanel();}

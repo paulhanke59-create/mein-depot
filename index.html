@@ -250,6 +250,7 @@ function importXlsx(input){
       }
       positions=Object.values(posMap).filter(p=>p.stuecke>0.001).map(p=>({...p,stuecke:Math.round(p.stuecke),preis:Math.round(p.preis*10000)/10000}));
       currentPrices={};
+      normalizeAllDates();
       autoSave();
       toast(`✅ ${positions.length} Positionen importiert`);
       render();
@@ -321,6 +322,7 @@ function lesenAuto(){
       positions=newest.d.positions||[];
       sold=newest.d.sold||[];
       currentPrices=newest.d.currentPrices||{};
+      normalizeAllDates();
       const iso=newest.d.savedAt||new Date().toISOString();
       saveSlotDate('a',iso);
       const btn=document.getElementById("btn-laden");
@@ -389,6 +391,25 @@ function exportJson(){}
 function importJson(){}
 function switchSlot(){}
 function updateSlotButtons(){}
+
+function normalizeDatum(d){
+  if(!d)return d;
+  d=String(d).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);
+  if(/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(d)){const p=d.split(".");return`${p[2]}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;}
+  if(/^\d{1,2}\.\d{1,2}\.\d{2}$/.test(d)){const p=d.split(".");let y=parseInt(p[2]);y=y<50?2000+y:1900+y;return`${y}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;}
+  return d;
+}
+function normalizeAllDates(){
+  positions=positions.map(p=>({...p,
+    datum:normalizeDatum(p.datum),
+    history:(p.history||[]).map(h=>({...h,datum:normalizeDatum(h.datum)}))
+  }));
+  sold=sold.map(s=>({...s,
+    datum:normalizeDatum(s.datum),
+    verkaufDatum:normalizeDatum(s.verkaufDatum)
+  }));
+}
 
 
 
@@ -1015,16 +1036,23 @@ function buildHistHtml(pos){
   }));
   const normDate=d=>{
     if(!d)return"0000-00-00";
-    // Bereits YYYY-MM-DD
+    d=String(d).trim();
+    // YYYY-MM-DD (ISO)
     if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);
-    // DD.MM.YYYY oder DD.MM.YY
-    const p=d.split(".");
-    if(p.length===3){
-      let y=p[2].trim();
-      if(y.length===2)y=(parseInt(y)>=50?"19":"20")+y;
-      return`${y}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;
+    // DD.MM.YYYY
+    if(/^\d{2}\.\d{2}\.\d{4}$/.test(d)){const p=d.split(".");return`${p[2]}-${p[1]}-${p[0]}`;}
+    // DD.MM.YY
+    if(/^\d{2}\.\d{2}\.\d{2}$/.test(d)){const p=d.split(".");let y=parseInt(p[2]);y=y>=50?1900+y:2000+y;return`${y}-${p[1]}-${p[0]}`;}
+    // D.M.YYYY oder ähnlich
+    if(/^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(d)){
+      const p=d.split(".");
+      let y=parseInt(p[2]);if(y<100)y=y>=50?1900+y:2000+y;
+      return`${y}-${String(parseInt(p[1])).padStart(2,"0")}-${String(parseInt(p[0])).padStart(2,"0")}`;
     }
-    return d;
+    // Fallback: versuche JS Date
+    const ms=new Date(d).getTime();
+    if(!isNaN(ms))return new Date(ms).toISOString().slice(0,10);
+    return"0000-00-00";
   };
   const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>normDate(a.datum).localeCompare(normDate(b.datum)));
 

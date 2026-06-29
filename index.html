@@ -175,8 +175,8 @@ function tsd(v){return new Intl.NumberFormat("de-DE").format(v)}
 
 // Berechnet den FIFO-basierten Ø Kaufkurs der noch im Bestand befindlichen Lots
 function fifoAvgKurs(pos){
-  const toMs=d=>{if(!d)return 0;if(/^\d{4}-\d{2}-\d{2}/.test(d))return new Date(d).getTime();const p=d.split(".");if(p.length===3)return new Date(`${p[2]}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`).getTime();return new Date(d).getTime();};
-  const allHist=[...(pos.history||[])].sort((a,b)=>toMs(a.datum)-toMs(b.datum));
+  const normD=d=>{if(!d)return"0000-00-00";if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);const p=d.split(".");if(p.length===3){let y=p[2].trim();if(y.length===2)y=(parseInt(y)>=50?"19":"20")+y;return`${y}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;}return d;};
+  const allHist=[...(pos.history||[])].sort((a,b)=>normD(a.datum).localeCompare(normD(b.datum)));
   const soldOfPos=sold.filter(e=>e.wkn===pos.wkn);
   // FIFO-Lots aufbauen
   const lots=[];
@@ -1013,18 +1013,20 @@ function buildHistHtml(pos){
     gewinnPct:v.gewinnPct,
     fifoDetails:v.fifoDetails||null
   }));
-  const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>{
-    const toMs=d=>{
-      if(!d)return 0;
-      // YYYY-MM-DD
-      if(/^\d{4}-\d{2}-\d{2}/.test(d)) return new Date(d).getTime();
-      // DD.MM.YYYY
-      const p=d.split(".");
-      if(p.length===3) return new Date(`${p[2]}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`).getTime();
-      return new Date(d).getTime();
-    };
-    return toMs(a.datum)-toMs(b.datum);
-  });
+  const normDate=d=>{
+    if(!d)return"0000-00-00";
+    // Bereits YYYY-MM-DD
+    if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);
+    // DD.MM.YYYY oder DD.MM.YY
+    const p=d.split(".");
+    if(p.length===3){
+      let y=p[2].trim();
+      if(y.length===2)y=(parseInt(y)>=50?"19":"20")+y;
+      return`${y}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;
+    }
+    return d;
+  };
+  const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>normDate(a.datum).localeCompare(normDate(b.datum)));
 
   const fifoLots=[];
   let kaufIdx=0;

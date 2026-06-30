@@ -1070,6 +1070,8 @@ function buildHistHtml(pos){
   if(!allHist.length) return `<span class="dim" style="font-size:13px">Keine Einträge</span>`;
 
   const pcts=[5,10,15,-5,-10,-15];
+  // Summen pro Prognose-Spalte sammeln
+  const colSums=pcts.map(()=>({all:0,pos:0}));
   // Sticky: Datum + K/V Badge (44px), Kauf/Bestand (52px), Kurs/Akt (52px), Einstand/AktWert (72px), Gewinn (64px) = 284px sticky
   const stickyBase="44px 52px 52px 72px 64px";
   const progW="60px 60px 60px 60px 60px 60px";
@@ -1106,10 +1108,12 @@ function buildHistHtml(pos){
         if(aktKurs!==null&&!vollVerkauft){gwBetrag=(aktKurs-e.kurs)*imBestand;gwPct=((aktKurs-e.kurs)/e.kurs)*100;}
         const gColor=gwBetrag!==null?(gwBetrag>=0?"#16a34a":"#dc2626"):"#9ca3af";
         const bg=vollVerkauft?"#fff8f0":"#fff";
-        const prognoseCells=pcts.map(p=>{
+        const prognoseCells=pcts.map((p,pi)=>{
           if(aktKurs===null||vollVerkauft) return`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#9ca3af">—</td>`;
           const kP=aktKurs*(1+p/100);
           const gP=(kP-e.kurs)*imBestand;
+          colSums[pi].all+=gP;
+          if(gP>0)colSums[pi].pos+=gP;
           const col=gP>=0?"#16a34a":"#dc2626";
           return`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;background:${p>0?"#f0fff4":"#fffafa"}">
             <div style="font-size:11px;font-weight:700;color:${col}">${num2(gP)}</div>
@@ -1164,6 +1168,16 @@ function buildHistHtml(pos){
       }
     }).join("")}
     </tbody>
+    <tfoot>
+      <tr style="background:#f0f7ff;border-top:2px solid #bcd0e8">
+        <td colspan="5" style="position:sticky;left:0;z-index:1;background:#f0f7ff;padding:4px 6px;font-size:10px;color:#6b8fb5;text-transform:uppercase;font-weight:700;border-right:1px solid #bcd0e8;text-align:right">Σ Summe</td>
+        ${colSums.map(s=>`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right;font-size:11px;font-weight:700;color:${s.all>=0?"#16a34a":"#dc2626"}">${num2(s.all)}</td>`).join("")}
+      </tr>
+      <tr style="background:#f0fff4;border-top:1px solid #bcd0e8">
+        <td colspan="5" style="position:sticky;left:0;z-index:1;background:#f0fff4;padding:4px 6px;font-size:10px;color:#16a34a;text-transform:uppercase;font-weight:700;border-right:1px solid #bcd0e8;text-align:right">Σ nur +</td>
+        ${colSums.map(s=>`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right;font-size:11px;font-weight:700;color:#16a34a">${num2(s.pos)}</td>`).join("")}
+      </tr>
+    </tfoot>
   </table></div>`;
 }
 

@@ -1170,11 +1170,13 @@ function buildHistHtml(pos){
     </tbody>
     <tfoot>
       <tr style="background:#f0f7ff;border-top:2px solid #bcd0e8">
-        <td colspan="5" style="position:sticky;left:0;z-index:1;background:#f0f7ff;padding:4px 6px;font-size:10px;color:#6b8fb5;text-transform:uppercase;font-weight:700;border-right:1px solid #bcd0e8;text-align:right">Σ Summe</td>
+        <td colspan="4" style="position:sticky;left:0;z-index:1;background:#f0f7ff;padding:4px 6px;font-size:10px;color:#6b8fb5;text-transform:uppercase;font-weight:700;border-right:2px solid #bcd0e8;text-align:right">Σ Summe</td>
+        <td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right"></td>
         ${colSums.map(s=>`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right;font-size:11px;font-weight:700;color:${s.all>=0?"#16a34a":"#dc2626"}">${num2(s.all)}</td>`).join("")}
       </tr>
       <tr style="background:#f0fff4;border-top:1px solid #bcd0e8">
-        <td colspan="5" style="position:sticky;left:0;z-index:1;background:#f0fff4;padding:4px 6px;font-size:10px;color:#16a34a;text-transform:uppercase;font-weight:700;border-right:1px solid #bcd0e8;text-align:right">Σ nur +</td>
+        <td colspan="4" style="position:sticky;left:0;z-index:1;background:#f0fff4;padding:4px 6px;font-size:10px;color:#16a34a;text-transform:uppercase;font-weight:700;border-right:2px solid #bcd0e8;text-align:right">Σ nur +</td>
+        <td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right"></td>
         ${colSums.map(s=>`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right;font-size:11px;font-weight:700;color:#16a34a">${num2(s.pos)}</td>`).join("")}
       </tr>
     </tfoot>

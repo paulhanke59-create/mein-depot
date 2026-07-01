@@ -674,16 +674,19 @@ function renderCards(){
     const diffStr=diff!==null?badge(diff,cur(diff)):'<span class="sv">—</span>';
     const dpStr=dp!==null?badge(dp,pct(dp)):'<span class="sv">—</span>';
 
-    return`<div class="s-card${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
-        ${pos.link
-          ?`<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
-              <a href="${esc(pos.link)}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 7px;white-space:nowrap;text-decoration:none">📊 Kurs</a>
-              <button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 6px;color:#2563eb;font-size:13px;cursor:pointer">✏️</button>
-            </div>`
-          :`<button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:5px;padding:3px 6px;color:#6b8fb5;font-size:13px;cursor:pointer;flex-shrink:0" title="Link hinzufügen">🔗</button>`
-        }
+    return`<div class="s-card${isSel?" sel":""}" data-id="${pos.id}" draggable="true">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="drag-handle" style="color:#bcd0e8;font-size:18px;cursor:grab;padding:0 4px;flex-shrink:0;touch-action:none">☰</span>
+        <div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="openFromSummary(${pos.id})">
+          <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
+          ${pos.link
+            ?`<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+                <a href="${esc(pos.link)}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 7px;white-space:nowrap;text-decoration:none">📊 Kurs</a>
+                <button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 6px;color:#2563eb;font-size:13px;cursor:pointer">✏️</button>
+              </div>`
+            :`<button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:5px;padding:3px 6px;color:#6b8fb5;font-size:13px;cursor:pointer;flex-shrink:0" title="Link hinzufügen">🔗</button>`
+          }
+        </div>
       </div>
 
       <!-- Zeile 1: Bestand · Ø Kaufkurs · Einstandswert -->
@@ -735,7 +738,7 @@ function renderCards(){
         </tr>
       </tbody>
     </table>
-    <div class="s-cards">
+    <div class="s-cards" id="s-cards-container">
       ${mCards}
       <div class="s-total">
         <div class="s-total-label">Gesamtdepot</div>
@@ -783,7 +786,87 @@ function editLink(id){
   autoSave();
 }
 
-// ---------- render edit panel ----------
+// ---------- Drag & Drop Reihenfolge ----------
+let dragSrcId=null;
+
+function initDragDrop(){
+  const container=document.getElementById("s-cards-container");
+  if(!container)return;
+  const cards=container.querySelectorAll(".s-card[data-id]");
+
+  cards.forEach(card=>{
+    const handle=card.querySelector(".drag-handle");
+    if(!handle)return;
+
+    // Desktop drag
+    card.addEventListener("dragstart",e=>{
+      dragSrcId=card.dataset.id;
+      card.style.opacity="0.5";
+      e.dataTransfer.effectAllowed="move";
+    });
+    card.addEventListener("dragend",()=>{card.style.opacity="";});
+    card.addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect="move";card.style.background="#dbeafe";});
+    card.addEventListener("dragleave",()=>{card.style.background="";});
+    card.addEventListener("drop",e=>{
+      e.preventDefault();
+      card.style.background="";
+      if(dragSrcId&&dragSrcId!==card.dataset.id){
+        reorderPositions(dragSrcId, card.dataset.id);
+      }
+    });
+
+    // Touch drag
+    let touchDragging=false, ghost=null, lastOver=null;
+    handle.addEventListener("touchstart",e=>{
+      touchDragging=true;
+      dragSrcId=card.dataset.id;
+      card.style.opacity="0.5";
+      // Ghost
+      ghost=card.cloneNode(true);
+      ghost.style.cssText="position:fixed;pointer-events:none;opacity:0.7;z-index:9999;width:"+card.offsetWidth+"px;background:#fff;border:2px solid #2563eb;border-radius:10px;";
+      document.body.appendChild(ghost);
+      const t=e.touches[0];
+      ghost.style.left=(t.clientX-20)+"px";
+      ghost.style.top=(t.clientY-30)+"px";
+    },{passive:true});
+
+    handle.addEventListener("touchmove",e=>{
+      if(!touchDragging)return;
+      e.preventDefault();
+      const t=e.touches[0];
+      if(ghost){ghost.style.left=(t.clientX-20)+"px";ghost.style.top=(t.clientY-30)+"px";}
+      // Finde Karte unter dem Finger
+      ghost.style.display="none";
+      const el=document.elementFromPoint(t.clientX,t.clientY);
+      ghost.style.display="";
+      const over=el&&el.closest(".s-card[data-id]");
+      if(lastOver&&lastOver!==card)lastOver.style.background="";
+      if(over&&over!==card){over.style.background="#dbeafe";lastOver=over;}
+    },{passive:false});
+
+    handle.addEventListener("touchend",e=>{
+      if(!touchDragging)return;
+      touchDragging=false;
+      card.style.opacity="";
+      if(ghost){document.body.removeChild(ghost);ghost=null;}
+      if(lastOver){lastOver.style.background="";if(lastOver.dataset.id!==dragSrcId)reorderPositions(dragSrcId,lastOver.dataset.id);lastOver=null;}
+    });
+  });
+}
+
+function reorderPositions(fromId, toId){
+  fromId=Number(fromId)||fromId;
+  toId=Number(toId)||toId;
+  const fromIdx=positions.findIndex(p=>String(p.id)===String(fromId));
+  const toIdx=positions.findIndex(p=>String(p.id)===String(toId));
+  if(fromIdx<0||toIdx<0)return;
+  const [moved]=positions.splice(fromIdx,1);
+  positions.splice(toIdx,0,moved);
+  renderCards();
+  autoSave();
+}
+
+
 function renderEditPanel(){
   const panel=document.getElementById("edit-panel");
   if(!expandedId){panel.innerHTML="";return;}
@@ -1187,7 +1270,7 @@ function buildHistHtml(pos){
   </table></div>`;
 }
 
-function render(){renderCards();renderEditPanel();}
+function render(){renderCards();renderEditPanel();setTimeout(initDragDrop,50);}
 
 function refreshHistorie(id){
   const el=document.getElementById("hist-"+id);

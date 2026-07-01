@@ -1149,7 +1149,8 @@ function buildHistHtml(pos){
         const myVi=vi++;
         const gJ=e.gewinnJe||0;
         const gP2=e.gewinnPct||0;
-        gewinnSum.all+=gJ;if(gJ>0)gewinnSum.pos+=gJ;
+        gewinnSum.all+=gJ; // Realisierte Gewinne fließen in Σ Summe ein
+        // Σ nur+ bei Verkäufen NICHT mitzählen
         const gColor=gJ>=0?"#16a34a":"#dc2626";
         const hasFifo=e.fifoDetails&&e.fifoDetails.length>0;
         return`<tr onclick="openHistModal(${pos.id},${myVi},'vk')" style="cursor:pointer;background:#fff8f0" onmouseenter="this.style.background='#fef3c7'" onmouseleave="this.style.background='#fff8f0'">

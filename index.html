@@ -677,7 +677,7 @@ function renderCards(){
     return`<div class="s-card${isSel?" sel":""}" data-id="${pos.id}" draggable="true">
       <div style="display:flex;align-items:center;gap:6px">
         <span class="drag-handle" style="color:#bcd0e8;font-size:18px;cursor:grab;padding:0 4px;flex-shrink:0;touch-action:none">☰</span>
-        <div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="openFromSummary(${pos.id})">
+        <div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="if(!isDragging)openFromSummary(${pos.id})">
           <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
           ${pos.link
             ?`<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
@@ -788,6 +788,7 @@ function editLink(id){
 
 // ---------- Drag & Drop Reihenfolge ----------
 let dragSrcId=null;
+let isDragging=false; // globales Flag damit onclick weiß ob gerade gezogen wird
 
 function initDragDrop(){
   const container=document.getElementById("s-cards-container");
@@ -798,13 +799,21 @@ function initDragDrop(){
     const handle=card.querySelector(".drag-handle");
     if(!handle)return;
 
-    // Desktop drag
+    // Desktop drag — nur vom Handle aus starten
+    handle.addEventListener("mousedown",()=>{card.setAttribute("draggable","true");});
+    handle.addEventListener("mouseup",()=>{card.setAttribute("draggable","false");});
     card.addEventListener("dragstart",e=>{
+      if(!card.getAttribute("draggable")||card.getAttribute("draggable")==="false"){e.preventDefault();return;}
+      isDragging=true;
       dragSrcId=card.dataset.id;
       card.style.opacity="0.5";
       e.dataTransfer.effectAllowed="move";
     });
-    card.addEventListener("dragend",()=>{card.style.opacity="";});
+    card.addEventListener("dragend",()=>{
+      card.style.opacity="";
+      card.setAttribute("draggable","false");
+      setTimeout(()=>{isDragging=false;},50);
+    });
     card.addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect="move";card.style.background="#dbeafe";});
     card.addEventListener("dragleave",()=>{card.style.background="";});
     card.addEventListener("drop",e=>{
@@ -815,41 +824,52 @@ function initDragDrop(){
       }
     });
 
-    // Touch drag
-    let touchDragging=false, ghost=null, lastOver=null;
+    // Touch drag — vom Handle aus
+    let touchDragging=false, ghost=null, lastOver=null, startY=0, moved=false;
     handle.addEventListener("touchstart",e=>{
       touchDragging=true;
+      moved=false;
       dragSrcId=card.dataset.id;
-      card.style.opacity="0.5";
-      // Ghost
-      ghost=card.cloneNode(true);
-      ghost.style.cssText="position:fixed;pointer-events:none;opacity:0.7;z-index:9999;width:"+card.offsetWidth+"px;background:#fff;border:2px solid #2563eb;border-radius:10px;";
-      document.body.appendChild(ghost);
       const t=e.touches[0];
-      ghost.style.left=(t.clientX-20)+"px";
-      ghost.style.top=(t.clientY-30)+"px";
+      startY=t.clientY;
     },{passive:true});
 
     handle.addEventListener("touchmove",e=>{
       if(!touchDragging)return;
-      e.preventDefault();
       const t=e.touches[0];
-      if(ghost){ghost.style.left=(t.clientX-20)+"px";ghost.style.top=(t.clientY-30)+"px";}
-      // Finde Karte unter dem Finger
+      // Erst nach 8px Bewegung als Drag werten
+      if(!moved&&Math.abs(t.clientY-startY)<8)return;
+      if(!moved){
+        moved=true;
+        isDragging=true;
+        card.style.opacity="0.5";
+        ghost=card.cloneNode(true);
+        ghost.style.cssText="position:fixed;pointer-events:none;opacity:0.75;z-index:9999;width:"+card.offsetWidth+"px;background:#fff;border:2px solid #2563eb;border-radius:10px;box-shadow:0 4px 16px rgba(37,99,235,0.2);";
+        document.body.appendChild(ghost);
+      }
+      e.preventDefault();
+      if(ghost){ghost.style.left=(t.clientX-card.offsetWidth/2)+"px";ghost.style.top=(t.clientY-40)+"px";}
+      // Karte unter Finger finden
       ghost.style.display="none";
       const el=document.elementFromPoint(t.clientX,t.clientY);
       ghost.style.display="";
       const over=el&&el.closest(".s-card[data-id]");
       if(lastOver&&lastOver!==card)lastOver.style.background="";
       if(over&&over!==card){over.style.background="#dbeafe";lastOver=over;}
+      else if(!over&&lastOver){lastOver.style.background="";lastOver=null;}
     },{passive:false});
 
-    handle.addEventListener("touchend",e=>{
+    handle.addEventListener("touchend",()=>{
       if(!touchDragging)return;
       touchDragging=false;
       card.style.opacity="";
       if(ghost){document.body.removeChild(ghost);ghost=null;}
-      if(lastOver){lastOver.style.background="";if(lastOver.dataset.id!==dragSrcId)reorderPositions(dragSrcId,lastOver.dataset.id);lastOver=null;}
+      if(lastOver){
+        lastOver.style.background="";
+        if(lastOver.dataset.id!==dragSrcId) reorderPositions(dragSrcId,lastOver.dataset.id);
+        lastOver=null;
+      }
+      setTimeout(()=>{isDragging=false;},100);
     });
   });
 }

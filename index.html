@@ -625,13 +625,9 @@ function removePos(id){
 // ---------- Summary öffnet Edit ----------
 function openFromSummary(id){
   expandedId=(expandedId===id)?null:id;
-  renderCards();renderEditPanel();
-  if(expandedId===id){
-    setTimeout(()=>{
-      document.getElementById("edit-panel").scrollIntoView({behavior:"smooth",block:"start"});
-      setTimeout(()=>{const el=document.getElementById("ki-"+id);if(el)el.focus();},200);
-    },30);
-  }
+  renderCards();
+  renderEditPanel();
+  setTimeout(initDragDrop,50);
 }
 
 // ---------- render summary ----------

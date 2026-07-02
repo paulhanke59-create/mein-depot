@@ -878,12 +878,14 @@ function reorderPositions(fromId, toId){
   if(fromIdx<0||toIdx<0)return;
   const [moved]=positions.splice(fromIdx,1);
   positions.splice(toIdx,0,moved);
-  renderCards();
+  renderCards(); // nur Karten, kein Edit-Panel
+  setTimeout(initDragDrop,50);
   autoSave();
 }
 
 
 function renderEditPanel(){
+  const scrollY=window.scrollY; // Scrollposition merken
   const panel=document.getElementById("edit-panel");
   if(!expandedId){panel.innerHTML="";return;}
   const pos=positions.find(p=>p.id===expandedId);
@@ -943,7 +945,7 @@ function renderEditPanel(){
       ${collapsible("sec-kurs-"+pos.id, "📊 Aktueller Kurs", true, `
         <div style="padding:12px 16px;border-bottom:1px solid #e8f0f9">
           <label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
-          <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 9,64" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px" oninput="updateKurs(${pos.id},this.value)"/>
+          <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 9,64" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px" oninput="updateKurs(${pos.id},this.value)" tabindex="-1" onfocus="this.removeAttribute('tabindex')"/>
           <div class="kurs-date" id="gd-${pos.id}" style="margin-top:4px">${kd?"Stand: "+fdate(kd):""}</div>
           <div class="kurs-results" id="gr-${pos.id}" style="margin-top:10px">${gewinnHtml}</div>
         </div>
@@ -967,6 +969,8 @@ function renderEditPanel(){
         </div>`)}
     </div>
   </div>`;
+  // Scrollposition wiederherstellen damit das Panel-Rendering nicht scrollt
+  requestAnimationFrame(()=>window.scrollTo(0,scrollY));
 }
 
 // ---------- Historie Eintrag bearbeiten ----------

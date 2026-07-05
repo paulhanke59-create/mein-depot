@@ -138,7 +138,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
 <body>
 
 <div class="header">
-  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v2</span></div>
+  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v3</span></div>
 </div>
 
 <div class="wrap">
@@ -622,12 +622,27 @@ function removePos(id){
   render();autoSave();toast("Position entfernt");
 }
 
+// ---------- Position verschieben ----------
+function movePos(id,dir){
+  const idx=positions.findIndex(p=>p.id===id);
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=positions.length)return;
+  const [moved]=positions.splice(idx,1);
+  positions.splice(newIdx,0,moved);
+  renderCards();
+  autoSave();
+}
+
 // ---------- Summary öffnet Edit ----------
 function openFromSummary(id){
   expandedId=(expandedId===id)?null:id;
   renderCards();
   renderEditPanel();
-  setTimeout(initDragDrop,50);
+  if(expandedId===id){
+    setTimeout(()=>{
+      document.getElementById("edit-panel").scrollIntoView({behavior:"smooth",block:"start"});
+    },50);
+  }
 }
 
 // ---------- render summary ----------
@@ -672,7 +687,13 @@ function renderCards(){
 
     return`<div class="s-card${isSel?" sel":""}" data-id="${pos.id}" onclick="openFromSummary(${pos.id})">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <button onclick="event.stopPropagation();movePos(${pos.id},-1)" style="background:none;border:none;color:#bcd0e8;font-size:14px;cursor:pointer;padding:0;line-height:1" title="Nach oben">▲</button>
+            <button onclick="event.stopPropagation();movePos(${pos.id},1)" style="background:none;border:none;color:#bcd0e8;font-size:14px;cursor:pointer;padding:0;line-height:1" title="Nach unten">▼</button>
+          </div>
+          <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
+        </div>
         ${pos.link
           ?`<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
               <a href="${esc(pos.link)}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 7px;white-space:nowrap;text-decoration:none">📊 Kurs</a>
@@ -1149,7 +1170,7 @@ function buildHistHtml(pos){
         gewinnSum.all+=gJ; // Realisierte Gewinne fließen in Σ Summe ein
         // Σ nur+ bei Verkäufen NICHT mitzählen
         const gColor=gJ>=0?"#16a34a":"#dc2626";
-        const hasFifo=e.fifoDetails&&e.fifoDetails.length>0;
+        const hasFifo=false; // FIFO-Details nicht anzeigen
         return`<tr onclick="openHistModal(${pos.id},${myVi},'vk')" style="cursor:pointer;background:#fff8f0" onmouseenter="this.style.background='#fef3c7'" onmouseleave="this.style.background='#fff8f0'">
           <td style="position:sticky;left:0;z-index:1;background:#fff8f0;padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;white-space:nowrap">
             <span style="background:#fff7ed;color:#f97316;font-weight:800;font-size:10px;border-radius:4px;padding:1px 4px;border:1px solid #fed7aa">V</span>
@@ -1186,15 +1207,6 @@ function buildHistHtml(pos){
 
 function render(){renderCards();renderEditPanel();}
 
-function openFromSummary(id){
-  expandedId=(expandedId===id)?null:id;
-  renderCards();renderEditPanel();
-  if(expandedId===id){
-    setTimeout(()=>{
-      document.getElementById("edit-panel").scrollIntoView({behavior:"smooth",block:"start"});
-    },50);
-  }
-}
 function refreshHistorie(id){
   const el=document.getElementById("hist-"+id);
   if(!el)return;

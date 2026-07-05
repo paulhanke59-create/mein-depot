@@ -138,7 +138,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
 <body>
 
 <div class="header">
-  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v1</span></div>
+  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v2</span></div>
 </div>
 
 <div class="wrap">
@@ -670,19 +670,16 @@ function renderCards(){
     const diffStr=diff!==null?badge(diff,cur(diff)):'<span class="sv">—</span>';
     const dpStr=dp!==null?badge(dp,pct(dp)):'<span class="sv">—</span>';
 
-    return`<div class="s-card${isSel?" sel":""}" data-id="${pos.id}" draggable="true">
-      <div style="display:flex;align-items:center;gap:6px">
-        <span class="drag-handle" style="color:#bcd0e8;font-size:18px;cursor:grab;padding:0 4px;flex-shrink:0;touch-action:none">☰</span>
-        <div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="if(!isDragging){openFromSummary(${pos.id})}">
-          <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
-          ${pos.link
-            ?`<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
-                <a href="${esc(pos.link)}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 7px;white-space:nowrap;text-decoration:none">📊 Kurs</a>
-                <button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 6px;color:#2563eb;font-size:13px;cursor:pointer">✏️</button>
-              </div>`
-            :`<button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:5px;padding:3px 6px;color:#6b8fb5;font-size:13px;cursor:pointer;flex-shrink:0" title="Link hinzufügen">🔗</button>`
-          }
-        </div>
+    return`<div class="s-card${isSel?" sel":""}" data-id="${pos.id}" onclick="openFromSummary(${pos.id})">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
+        ${pos.link
+          ?`<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+              <a href="${esc(pos.link)}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 7px;white-space:nowrap;text-decoration:none">📊 Kurs</a>
+              <button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 6px;color:#2563eb;font-size:13px;cursor:pointer">✏️</button>
+            </div>`
+          :`<button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:5px;padding:3px 6px;color:#6b8fb5;font-size:13px;cursor:pointer;flex-shrink:0" title="Link hinzufügen">🔗</button>`
+        }
       </div>
 
       <!-- Zeile 1: Bestand · Ø Kaufkurs · Einstandswert -->
@@ -782,99 +779,9 @@ function editLink(id){
   autoSave();
 }
 
-// ---------- Drag & Drop Reihenfolge ----------
-let dragSrcId=null;
-let isDragging=false;
-
-function initDragDrop(){
-  const container=document.getElementById("s-cards-container");
-  if(!container)return;
-  const cards=[...container.querySelectorAll(".s-card[data-id]")];
-  if(!cards.length)return;
-
-  cards.forEach(card=>{
-    const handle=card.querySelector(".drag-handle");
-    if(!handle)return;
-
-    let startY=0, startX=0, dragging=false, lastOver=null;
-
-    const onTouchStart=e=>{
-      startY=e.touches[0].clientY;
-      startX=e.touches[0].clientX;
-      dragging=false;
-      dragSrcId=card.dataset.id;
-    };
-
-    const onTouchMove=e=>{
-      const dy=Math.abs(e.touches[0].clientY-startY);
-      const dx=Math.abs(e.touches[0].clientX-startX);
-      if(!dragging&&dy<8&&dx<8)return;
-      dragging=true;
-      isDragging=true;
-      e.preventDefault();
-      card.style.opacity="0.4";
-
-      const ty=e.touches[0].clientY;
-      let found=null;
-      cards.forEach(c=>{
-        if(String(c.dataset.id)===String(dragSrcId))return;
-        const r=c.getBoundingClientRect();
-        if(ty>r.top&&ty<r.bottom)found=c;
-      });
-      if(lastOver&&lastOver!==found){
-        lastOver.style.background="";
-        lastOver.style.borderTop="";
-      }
-      if(found){
-        found.style.background="#dbeafe";
-        found.style.borderTop="3px solid #2563eb";
-      }
-      lastOver=found||null;
-    };
-
-    const onTouchEnd=()=>{
-      card.style.opacity="";
-      if(lastOver){
-        lastOver.style.background="";
-        lastOver.style.borderTop="";
-        if(String(lastOver.dataset.id)!==String(dragSrcId)){
-          reorderPositions(dragSrcId,lastOver.dataset.id);
-        }
-        lastOver=null;
-      }
-      dragging=false;
-      setTimeout(()=>{isDragging=false;},150);
-    };
-
-    // Alte Listener entfernen falls vorhanden
-    handle.removeEventListener("touchstart",handle._ts);
-    handle.removeEventListener("touchmove",handle._tm);
-    handle.removeEventListener("touchend",handle._te);
-    handle._ts=onTouchStart;
-    handle._tm=onTouchMove;
-    handle._te=onTouchEnd;
-    handle.addEventListener("touchstart",onTouchStart,{passive:true});
-    handle.addEventListener("touchmove",onTouchMove,{passive:false});
-    handle.addEventListener("touchend",onTouchEnd);
-  });
-}
-
-function reorderPositions(fromId, toId){
-  fromId=Number(fromId)||fromId;
-  toId=Number(toId)||toId;
-  const fromIdx=positions.findIndex(p=>String(p.id)===String(fromId));
-  const toIdx=positions.findIndex(p=>String(p.id)===String(toId));
-  if(fromIdx<0||toIdx<0)return;
-  const [moved]=positions.splice(fromIdx,1);
-  positions.splice(toIdx,0,moved);
-  renderCards(); // nur Karten, kein Edit-Panel
-  setTimeout(initDragDrop,50);
-  autoSave();
-}
 
 
 function renderEditPanel(){
-  const scrollY=window.scrollY; // Scrollposition merken
   const panel=document.getElementById("edit-panel");
   if(!expandedId){panel.innerHTML="";return;}
   const pos=positions.find(p=>p.id===expandedId);
@@ -958,8 +865,6 @@ function renderEditPanel(){
         </div>`)}
     </div>
   </div>`;
-  // Scrollposition wiederherstellen damit das Panel-Rendering nicht scrollt
-  requestAnimationFrame(()=>window.scrollTo(0,scrollY));
 }
 
 // ---------- Historie Eintrag bearbeiten ----------
@@ -1279,8 +1184,17 @@ function buildHistHtml(pos){
   </table></div>`;
 }
 
-function render(){renderCards();renderEditPanel();setTimeout(initDragDrop,50);}
+function render(){renderCards();renderEditPanel();}
 
+function openFromSummary(id){
+  expandedId=(expandedId===id)?null:id;
+  renderCards();renderEditPanel();
+  if(expandedId===id){
+    setTimeout(()=>{
+      document.getElementById("edit-panel").scrollIntoView({behavior:"smooth",block:"start"});
+    },50);
+  }
+}
 function refreshHistorie(id){
   const el=document.getElementById("hist-"+id);
   if(!el)return;

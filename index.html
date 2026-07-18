@@ -1,1223 +1,869 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
-<meta http-equiv="Pragma" content="no-cache"/>
-<meta http-equiv="Expires" content="0"/>
-<title>Mein Depot</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:#f0f4f8;color:#1e3a5f;font-family:'Inter','Segoe UI',sans-serif;padding-bottom:60px}
-input[type=text],input[type=date]{background:#fff;border:1px solid #bcd0e8;border-radius:8px;padding:9px 12px;color:#1e3a5f;font-size:14px;outline:none;color-scheme:light;width:100%}
-input[type=text]:focus,input[type=date]:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,0.15)}
-input.error{border-color:#ef4444!important}
-.header{background:linear-gradient(135deg,#1e3a5f,#1d4ed8);border-bottom:1px solid #bcd0e8;padding:20px 16px 14px}
-.title-row{display:flex;align-items:center;gap:10px;margin-bottom:2px}
-h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
-.subtitle{margin:0;color:#93c5fd;font-size:12px}
-.wrap{max-width:1100px;margin:0 auto;padding:16px}
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <title>Oli's Language Teacher</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: Georgia, serif; background: linear-gradient(160deg, #0a1520 0%, #162535 60%, #0a1520 100%); min-height: 100vh; color: #e8dcc8; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
+    #apikey-screen { position: fixed; inset: 0; background: linear-gradient(160deg, #0a1520 0%, #162535 60%, #0a1520 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 24px; z-index: 999; text-align: center; }
+    #apikey-screen.hidden { display: none; }
+    #ak-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg,#d4a03c,#e8c060); display: flex; align-items: center; justify-content: center; font-size: 38px; margin-bottom: 20px; box-shadow: 0 0 40px rgba(212,160,60,0.3); }
+    #ak-title { font-style: italic; font-size: 28px; color: #d4a03c; margin-bottom: 6px; }
+    #ak-sub { font-size: 11px; color: #5a7a90; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 28px; }
+    #ak-desc { font-size: 14px; color: #8aadba; line-height: 1.9; margin-bottom: 24px; }
+    #ak-input { width: 100%; padding: 14px 16px; border-radius: 12px; background: rgba(255,255,255,0.07); border: 1px solid rgba(212,160,60,0.35); color: #e8dcc8; font-size: 13px; font-family: monospace; outline: none; margin-bottom: 12px; }
+    #ak-input::placeholder { color: #3a5a70; }
+    #ak-error { color: #e07060; font-size: 13px; margin-bottom: 10px; min-height: 18px; }
+    #ak-btn { width: 100%; padding: 15px; border-radius: 12px; background: linear-gradient(135deg,#d4a03c,#c8902a); border: none; color: #0a1520; font-size: 16px; font-family: Georgia, serif; font-weight: bold; cursor: pointer; margin-bottom: 22px; box-shadow: 0 4px 20px rgba(212,160,60,0.35); }
+    #ak-hint { font-size: 12px; color: #3a5870; line-height: 1.8; }
 
-/* Toolbar */
-.toolbar{margin-bottom:16px;background:#fff;border:1px solid #bcd0e8;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(30,58,95,0.08)}
-.toolbar-row{display:flex;align-items:center;gap:0;border-bottom:1px solid #dbeafe}
-.toolbar-row:last-child{border-bottom:none}
-.toolbar-group{display:flex;align-items:center;gap:8px;padding:10px 14px;flex:1;flex-wrap:wrap}
-.toolbar-group-label{font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:0 14px;min-width:52px;border-right:1px solid #dbeafe;align-self:stretch;display:flex;align-items:center}
-.btn-tool{border:none;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:normal;line-height:1.3;text-align:left}
-.btn-xlsx{background:#f0fdf4;color:#16a34a;border:1px solid #86efac}
-.btn-json-imp{background:#eff6ff;color:#2563eb;border:1px solid #93c5fd}
-.btn-json-exp{background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd}
-.btn-primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;border-radius:8px;padding:9px 18px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,0.25)}
-.btn-sm-confirm{background:linear-gradient(135deg,#16a34a,#15803d);border:none;border-radius:6px;padding:8px 14px;color:#fff;font-weight:700;font-size:13px;cursor:pointer}
-.btn-sm-confirm.blue{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff}
-.btn-red{background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:6px 12px;color:#dc2626;font-size:12px;cursor:pointer;font-weight:600}
+    #header { padding: 14px 18px 10px; border-bottom: 1px solid rgba(212,160,60,0.15); background: rgba(10,21,32,0.95); position: sticky; top: 0; z-index: 100; }
+    #header-top { display: flex; align-items: center; gap: 10px; }
+    #leo-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg,#d4a03c,#e8c060); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    #leo-name { font-style: italic; font-size: 18px; color: #d4a03c; }
+    #leo-subtitle { font-size: 10px; color: #5a7a90; letter-spacing: 2px; text-transform: uppercase; }
+    .header-btn { border-radius: 10px; padding: 6px 10px; font-size: 12px; cursor: pointer; border: 1px solid; font-family: Georgia, serif; }
+    #vocab-btn { background: rgba(212,160,60,0.1); border-color: rgba(212,160,60,0.25); color: #d4a03c; }
+    #new-btn { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: #8aadba; }
+    #key-btn { background: rgba(220,80,60,0.1); border-color: rgba(220,80,60,0.2); color: #e07060; }
+    #history-btn { background: rgba(100,160,220,0.1); border-color: rgba(100,160,220,0.25); color: #7ab5d4; }
 
-/* Summary */
-.summary{background:#fff;border:1px solid #bcd0e8;border-radius:14px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 4px rgba(30,58,95,0.08)}
-.summary table{width:100%;border-collapse:collapse}
-.summary thead tr{background:#f0f7ff;border-bottom:1px solid #bcd0e8}
-.summary th{padding:9px 12px;text-align:left;font-size:10px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
-.summary th.r{text-align:right}
-.summary td{padding:10px 12px;font-size:13px;border-bottom:1px solid #e8f0f9;color:#1e3a5f}
-.summary td.r{text-align:right}
-.summary tr:last-child td{border-bottom:none}
-.summary .total-row td{border-top:2px solid #bcd0e8;font-weight:700;font-size:14px;background:#f0f7ff}
-.summary tr.clickable{cursor:pointer}
-.summary tr.clickable:hover td,.summary tr.clickable.sel td{background:#dbeafe}
+    /* HISTORY OVERLAY */
+    #history-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.82); z-index: 500; flex-direction: column; overflow: hidden; }
+    #history-overlay.visible { display: flex; }
+    #history-inner { background: linear-gradient(160deg,#0a1520,#162535); display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; width: 100%; height: 100%; overflow: hidden; }
+    #history-header { padding: 12px 14px; border-bottom: 1px solid rgba(212,160,60,0.15); display: flex; align-items: center; justify-content: space-between; background: rgba(10,21,32,0.95); flex-shrink: 0; }
+    #history-title { font-style: italic; font-size: 17px; color: #d4a03c; }
+    #history-close { background: rgba(220,80,60,0.15); border: 1px solid rgba(220,80,60,0.3); border-radius: 20px; padding: 5px 14px; color: #e07060; font-size: 13px; cursor: pointer; font-family: Georgia,serif; }
+    #history-list { flex: 1; overflow-y: scroll; -webkit-overflow-scrolling: touch; padding: 14px 14px 20px 14px; min-height: 0; }
 
-/* Mobile cards */
-.s-cards{display:none}
-.s-card{padding:13px 14px;border-bottom:1px solid #e8f0f9;cursor:pointer}
-.s-card.sel{background:#dbeafe}
-.s-card-name{font-weight:700;font-size:15px;color:#1e3a5f}
-.s-card-wkn{font-size:11px;color:#6b8fb5;margin-left:6px}
+    /* VOCAB LOOKUP */
+    #vocab-lookup-box { flex-shrink: 0; background: rgba(0,0,0,0.5); border-top: 1px solid rgba(212,160,60,0.2); padding: 10px 14px; }
+    #vocab-lookup-title { font-size: 10px; color: #d4a83c; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    #vocab-lookup-row { display: flex; gap: 8px; }
+    #vocab-lookup-input { flex: 1; padding: 9px 12px; border-radius: 10px; background: rgba(255,255,255,0.07); border: 1px solid rgba(212,160,60,0.25); color: #e8dcc8; font-size: 14px; font-family: Georgia, serif; outline: none; }
+    #vocab-lookup-input::placeholder { color: #3a5a70; }
+    #vocab-lookup-btn { padding: 9px 14px; border-radius: 10px; background: linear-gradient(135deg,#d4a03c,#c8902a); border: none; color: #0a1520; font-size: 14px; cursor: pointer; }
+    #vocab-lookup-result { margin-top: 8px; font-size: 13px; color: #90c090; min-height: 20px; line-height: 1.6; font-style: italic; }
+    #vocab-panel { display: none; background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(70,140,200,0.2); padding: 12px 16px; max-height: 220px; overflow-y: auto; }
+    #vocab-panel.open { display: block; }
+    .vocab-title { font-size: 11px; color: #7a9bb5; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+    .vocab-item { margin-bottom: 8px; background: rgba(70,140,200,0.08); border-radius: 8px; padding: 8px 10px; }
+    .vocab-word { color: #d4a03c; font-style: italic; }
+    .vocab-def { color: #7ab5d4; font-size: 12px; margin-left: 8px; }
+    .vocab-ex { color: #4a6880; font-size: 11px; font-style: italic; margin-top: 2px; }
+    #lang-select-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    #lang-select { flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(212,160,60,0.25); border-radius: 8px; padding: 5px 8px; color: #e8dcc8; font-size: 12px; font-family: Georgia, serif; outline: none; }
 
-/* Beide Datenzeilen */
-.s-card-row{display:flex;gap:0;margin-top:9px;border:1px solid #bcd0e8;border-radius:8px;overflow:hidden}
-.s-card-row.row2{margin-top:6px;border-color:#dbeafe}
+    #main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px 18px 30px; gap: 14px; }
+    .translation-area { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(212,160,60,0.15); color: #90c090; font-style: italic; display: none; }
+    .tap-to-translate { font-size: 10px; color: #3a5a50; letter-spacing: 1px; margin-top: 6px; text-align: right; }
 
-/* Einzelne Felder */
-.s-card-item{flex:1;display:flex;flex-direction:column;gap:3px;padding:8px 10px;border-right:1px solid #e8f0f9}
-.s-card-item:last-child{border-right:none}
-.s-card-row .s-card-item{background:#f0f7ff}
-.s-card-row.row2 .s-card-item{background:#f8fafc}
-.s-card-item .sl{font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
-.s-card-item .sv{font-size:13px;color:#3b6ea5;font-weight:500}
-.s-card-item .sv.bold{color:#1e3a5f;font-weight:700}
-.s-card-row.row2 .s-card-item .sv{font-size:11px}
-.s-card-row.row2 .s-card-item .sl{font-size:8px}
+    /* LEO BUBBLE */
+    #leo-bubble { width: 100%; min-height: 90px; background: rgba(255,255,255,0.05); border: 1px solid rgba(212,160,60,0.2); border-radius: 16px; padding: 18px 16px 14px; line-height: 1.7; position: relative; display: none; cursor: pointer; }
+    #leo-bubble.visible { display: block; }
+    #leo-label { position: absolute; top: -12px; left: 16px; background: #d4a03c; border-radius: 20px; padding: 2px 10px; font-size: 11px; color: #0a1520; letter-spacing: 1px; text-transform: uppercase; }
+    #wave-container { display: none; gap: 4px; margin-top: 10px; align-items: flex-end; height: 24px; }
+    #wave-container.visible { display: flex; }
+    .wave-bar { width: 3px; background: #d4a03c; border-radius: 2px; animation: wave 0.8s ease-in-out infinite; }
+    .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.30s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.45s; }
 
-.s-total{padding:12px 14px;background:#f0f7ff;border-top:2px solid #bcd0e8}
-.s-total-label{font-size:10px;color:#6b8fb5;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700}
-.s-total-row{display:flex;flex-wrap:wrap;gap:10px}
+    /* PLAYBACK CONTROLS */
+    #playback-btns { display: flex; gap: 8px; margin-top: 12px; }
+    .pb-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid; font-family: Georgia, serif; }
+    #repeat-btn { background: rgba(212,160,60,0.1); border-color: rgba(212,160,60,0.3); color: #d4a03c; }
+    #stop-speak-btn { background: rgba(220,80,60,0.15); border-color: rgba(220,80,60,0.35); color: #e07060; }
 
-@media(max-width:600px){
-  .summary table,.summary thead,.summary tbody{display:none}
-  .s-cards{display:block}
-  .inline-form{flex-direction:column}
-  .ifield input{width:100%!important}
-  .kurs-input-wrap input{width:100%!important}
-  .kurs-row{flex-direction:column}
-  .form-grid{grid-template-columns:1fr 1fr}
-}
-@media(min-width:601px){
-  .form-grid{grid-template-columns:2fr 1fr 1fr 1.3fr 1.3fr auto}
-}
+    /* CORRECTIONS */
+    #corrections-box { display: none; width: 100%; background: rgba(220,80,60,0.1); border: 1px solid rgba(220,80,60,0.25); border-radius: 12px; padding: 12px 14px; }
+    #corrections-box.visible { display: block; }
+    .corr-title { font-size: 11px; color: #e07060; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+    .corr-item { margin-bottom: 8px; }
+    .corr-original { color: #e07060; text-decoration: line-through; }
+    .corr-fixed { color: #7ab87a; margin-left: 8px; }
+    .corr-explain { color: #8aaa88; font-size: 12px; margin-top: 2px; }
 
-/* Add form */
-.add-panel{background:#fff;border:1px solid #bcd0e8;border-radius:14px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 4px rgba(30,58,95,0.08)}
-.form-grid{display:grid;gap:10px;align-items:end}
-.field label{display:block;font-size:11px;color:#6b8fb5;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.8px}
-.err{color:#dc2626;font-size:11px;margin-top:2px;min-height:14px}
+    /* NEW WORD */
+    #new-word-box { display: none; width: 100%; background: rgba(70,140,200,0.1); border: 1px solid rgba(70,140,200,0.25); border-radius: 12px; padding: 10px 14px; align-items: center; gap: 10px; cursor: pointer; }
+    #new-word-box.visible { display: flex; }
 
-/* Edit panel */
-.edit-panel{background:#fff;border:1px solid #bcd0e8;border-radius:14px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 4px rgba(30,58,95,0.08)}
-.expand-inner{padding:0}
-.expand-section{margin-bottom:0;border-bottom:1px solid #e8f0f9;padding:14px 16px}
-.expand-section:last-child{border-bottom:none}
-.section-label{font-size:10px;color:#6b8fb5;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600;border-bottom:1px solid #dbeafe;padding-bottom:5px}
-.kurs-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
-.kurs-input-wrap{flex:0 0 140px}
-.kurs-input-wrap label{display:block;font-size:11px;color:#6b8fb5;margin-bottom:4px;text-transform:uppercase}
-.kurs-input-wrap input{width:140px}
-.kurs-results{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
-.kurs-result-item{display:flex;flex-direction:column;gap:2px}
-.kurs-result-item .rl{font-size:10px;color:#6b8fb5;text-transform:uppercase}
-.kurs-date{font-size:10px;color:#6b8fb5;margin-top:3px}
-.inline-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
-.ifield{display:flex;flex-direction:column;gap:4px}
-.ifield label{font-size:10px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.8px}
-.ifield input{width:110px}
+    .spacer { flex: 1; }
+    #status { font-size: 13px; color: #4a6a80; letter-spacing: 1px; text-align: center; min-height: 20px; }
 
-/* Badges */
-.badge{border-radius:6px;padding:2px 7px;font-weight:700;font-size:12px;display:inline-block;border:1px solid}
-.badge.pos{color:#15803d;background:rgba(21,128,61,0.08);border-color:#86efac}
-.badge.neg{color:#dc2626;background:rgba(220,38,38,0.08);border-color:#fca5a5}
-.dim{color:#9bb5cc}
-.muted{color:#3b6ea5;font-size:13px}
+    /* TRANSCRIPT */
+    #transcript-box { display: none; width: 100%; background: rgba(70,140,200,0.08); border: 1px solid rgba(70,140,200,0.2); border-radius: 12px; padding: 10px 14px; }
+    #transcript-box.visible { display: block; }
+    .transcript-label { font-size: 11px; color: #5a8aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    #transcript-text { color: #c0d8e8; }
+    #german-words-box { margin-top: 8px; display: none; }
+    #transcript-translate-hint { font-size: 10px; color: #3a5a70; margin-top: 6px; cursor: pointer; }
 
-/* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(30,58,95,0.5);z-index:990;display:flex;align-items:flex-end;justify-content:center}
-.modal-box{background:#fff;border:1px solid #bcd0e8;border-radius:16px 16px 0 0;padding:20px 16px;width:100%;max-width:500px;box-shadow:0 -4px 20px rgba(30,58,95,0.15)}
-.modal-title{font-size:13px;font-weight:700;color:#6b8fb5;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
-.modal-info{background:#f0f7ff;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#1e3a5f}
-.modal-info .mi-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
-.modal-info .mi-row:last-child{margin-bottom:0}
-.modal-info .ml{font-size:10px;color:#6b8fb5;text-transform:uppercase}
-.modal-info .mv{color:#1e3a5f;font-weight:600}
-.modal-btns{display:flex;gap:8px;flex-wrap:wrap}
-.modal-btns button{flex:1;min-width:80px}
+    /* MIC AREA */
+    #mic-area { position: relative; display: flex; align-items: center; justify-content: center; width: 140px; height: 140px; }
+    .ripple { position: absolute; border-radius: 50%; border: 2px solid rgba(212,160,60,0.25); animation: ripple 3s ease-out infinite; pointer-events: none; }
+    #mic-btn { width: 96px; height: 96px; border-radius: 50%; background: radial-gradient(circle, #e8b848, #d4a03c); border: none; font-size: 38px; cursor: pointer; transition: all 0.3s; z-index: 1; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(212,160,60,0.4); }
+    #stop-btn { margin-top: 8px; background: rgba(220,80,60,0.15); border: 1px solid rgba(220,80,60,0.3); border-radius: 20px; padding: 6px 18px; color: #e07060; font-size: 12px; cursor: pointer; font-family: Georgia,serif; display: none; }
+    #placeholder-msg { text-align: center; color: #3a5a70; font-style: italic; font-size: 15px; padding: 20px 0; width: 100%; }
 
-/* Toast */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#4ade80;color:#fff;padding:10px 20px;border-radius:10px;font-weight:600;font-size:14px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
-.toast.show{opacity:1}
-</style>
+    @keyframes ripple { 0% { transform: scale(0.8); opacity: 0.6; } 100% { transform: scale(1.6); opacity: 0; } }
+    @keyframes wave { 0%, 100% { height: 6px; } 50% { height: 20px; } }
+  </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v3</span></div>
+<div id="apikey-screen">
+  <div id="ak-avatar">🎓</div>
+  <div id="ak-title">Oli's</div>
+  <div id="ak-sub">Language Teacher</div>
+  <div id="ak-desc">
+    Füge deinen <b style="color:#d4a03c">Google Gemini API-Key</b> ein.<br><br>
+    Falls du noch keinen hast:<br>
+    1. Öffne <b style="color:#7ab5d4">aistudio.google.com</b><br>
+    2. Anmelden → <b style="color:#7ab5d4">API Keys</b> → <b style="color:#7ab5d4">Schlüssel erstellen</b><br>
+    3. Key kopieren und hier einfügen:
+  </div>
+  <input id="ak-input" type="text" placeholder="AIza..." autocomplete="off" spellcheck="false"/>
+  <div id="ak-error"></div>
+  <button id="ak-btn" onclick="startWithKey()">🚀 Oli's Teacher starten</button>
+  <div id="ak-hint">✅ Kostenlos · Kein Guthaben nötig<br>Der Key wird nur auf deinem Gerät gespeichert.</div>
 </div>
 
-<div class="wrap">
+<div id="header">
+  <div id="header-top">
+    <div id="leo-avatar">🎓</div>
+    <div style="flex:1">
+      <div id="leo-name">Oli's</div>
+      <div id="leo-subtitle">Language Teacher</div>
+    </div>
+    <button class="header-btn" id="vocab-btn">📖 <span id="vocab-count">0</span></button>
+    <button class="header-btn" id="history-btn">💬</button>
+    <button class="header-btn" id="font-down-btn">A-</button>
+    <button class="header-btn" id="font-up-btn">A+</button>
+    <button class="header-btn" id="new-btn">↺ New</button>
+    <button class="header-btn" id="key-btn">🔑</button>
+  </div>
+  <div id="lang-select-row">
+    <span style="font-size:11px;color:#5a7a90;letter-spacing:1px">🌍</span>
+    <select id="lang-select">
+      <option value="en">🇬🇧 Englisch</option>
+      <option value="fr">🇫🇷 Französisch</option>
+      <option value="it">🇮🇹 Italienisch</option>
+      <option value="es">🇪🇸 Spanisch</option>
+      <option value="zh">🇨🇳 Chinesisch</option>
+    </select>
+  </div>
+  <div id="vocab-panel">
+    <div class="vocab-title">Word Collection</div>
+    <div id="vocab-list"><em style="color:#4a6a80;font-size:13px">No words yet. Start chatting!</em></div>
+  </div>
+</div>
 
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <div class="toolbar-row" style="border-bottom:none">
-      <div class="toolbar-group">
-        <button class="btn-tool btn-xlsx" onclick="document.getElementById('xlsx-input').click()">📥 Excel</button>
-        <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)"/>
-        <input type="file" id="json-input" accept=".json" style="display:none" multiple/>
-        <button id="btn-laden" class="btn-tool btn-json-imp" onclick="lesenAuto()">📂 Laden</button>
-        <button id="btn-sichern" class="btn-tool btn-json-exp" onclick="sichern()">💾 Sichern</button>
+<!-- HISTORY OVERLAY -->
+<div id="history-overlay">
+  <div id="history-inner">
+    <div id="history-header">
+      <div id="history-title">💬 Konversationsverlauf</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button id="hist-font-down" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 9px;color:#8aadba;font-size:12px;cursor:pointer;font-family:Georgia,serif;">A-</button>
+        <button id="hist-font-up" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 9px;color:#8aadba;font-size:12px;cursor:pointer;font-family:Georgia,serif;">A+</button>
+        <button id="history-close">✕</button>
       </div>
+    </div>
+    <div id="history-list"></div>
+    <div id="vocab-lookup-box">
+      <div id="vocab-lookup-title">🔍 Vokabel nachschlagen</div>
+      <div id="vocab-lookup-row">
+        <input id="vocab-lookup-input" type="text" placeholder="Deutsches Wort eingeben..."/>
+        <button id="vocab-lookup-btn">➤</button>
+      </div>
+      <div id="vocab-lookup-result"></div>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="placeholder-msg">Sprache wählen &amp; "↺ New" tippen</div>
+
+  <div id="leo-bubble">
+    <div id="leo-label">Oli's Teacher</div>
+    <span id="leo-text"></span>
+    <div id="leo-translation" class="translation-area">🇩🇪 <span id="leo-translation-text"></span></div>
+    <div class="tap-to-translate">Tippen zum Übersetzen</div>
+    <div id="wave-container">
+      <div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div>
+    </div>
+    <div id="playback-btns">
+      <button class="pb-btn" id="repeat-btn">🔁 Wiederholen</button>
+      <button class="pb-btn" id="stop-speak-btn">⏹ Abbrechen</button>
     </div>
   </div>
 
-  <div id="summary"></div>
-  <div id="add-form"></div>
-  <div id="edit-panel"></div>
+  <div id="corrections-box">
+    <div class="corr-title">✏️ Oli's Teacher corrected you</div>
+    <div id="corrections-list"></div>
+    <div id="corrections-translation" class="translation-area">🇩🇪 <span id="corrections-translation-text"></span></div>
+    <div style="font-size:10px;color:#3a5a50;margin-top:6px;cursor:pointer" id="corrections-translate-hint">Tippen zum Übersetzen</div>
+  </div>
+
+  <div id="new-word-box">
+    <span style="font-size:20px">📚</span>
+    <div style="flex:1">
+      <div><span id="new-word-word" style="color:#d4a03c;font-style:italic"></span><span id="new-word-def" style="color:#7ab5d4;margin-left:8px"></span></div>
+      <div id="new-word-translation" class="translation-area">🇩🇪 <span id="new-word-translation-text"></span></div>
+      <div style="font-size:10px;color:#3a5a70;margin-top:4px">Tippen zum Übersetzen</div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <div id="transcript-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="transcript-label">You said</div>
+      <button id="delete-input-btn" style="background:rgba(220,80,60,0.15);border:1px solid rgba(220,80,60,0.3);border-radius:16px;padding:4px 12px;color:#e07060;font-size:12px;cursor:pointer;font-family:Georgia,serif;z-index:10;position:relative;">✕ Löschen</button>
+    </div>
+    <div id="transcript-text"></div>
+    <div id="german-words-box">
+      <div style="font-size:10px;color:#7ab5d4;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:8px">🔤 Deutsche Wörter übersetzt</div>
+      <div id="german-words-text" style="color:#c0d8e8;font-style:italic"></div>
+    </div>
+    <div id="transcript-translation" class="translation-area" style="text-align:left">🇩🇪 <span id="transcript-translation-text"></span></div>
+    <div id="transcript-translate-hint">Tippen zum Übersetzen</div>
+  </div>
+
+  <div id="status">Sprache wählen &amp; "↺ New" tippen</div>
+
+  <!-- VOCAB LOOKUP ON MAIN PAGE -->
+  <div id="main-vocab-box" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(212,160,60,0.2);border-radius:12px;padding:10px 12px;">
+    <div style="font-size:9px;color:#d4a83c;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;">🔍 Wort nachschlagen</div>
+    <div style="display:flex;gap:8px;">
+      <input id="main-vocab-input" type="text" placeholder="Deutsches Wort..." style="flex:1;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(212,160,60,0.25);color:#e8dcc8;font-size:14px;font-family:Georgia,serif;outline:none;"/>
+      <button id="main-vocab-btn" style="padding:8px 13px;border-radius:10px;background:linear-gradient(135deg,#d4a03c,#c8902a);border:none;color:#0a1520;font-size:15px;cursor:pointer;">➤</button>
+    </div>
+    <div id="main-vocab-result" style="margin-top:8px;font-size:13px;color:#90c090;line-height:1.6;font-style:italic;min-height:0;"></div>
+  </div>
+
+  <div id="mic-area">
+    <div class="ripple" id="ripple1" style="width:130px;height:130px"></div>
+    <div class="ripple" id="ripple2" style="width:108px;height:108px;display:none"></div>
+    <button id="mic-btn">🎤</button>
+  </div>
+  <button id="stop-btn">■ Stop</button>
+  <div style="font-size:10px;color:#3a5a50;margin-top:6px;text-align:center">🎤 Antippen zum Starten · Nochmal tippen zum Senden</div>
 </div>
 
-<div class="toast" id="toast"></div>
-<div id="hist-modal" style="display:none"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-let positions=[], sold=[], currentPrices={}, expandedId=null;
+var API_KEY = localStorage.getItem("leo_gemini_key") || "AIzaSyCQBsMFl84a2oi-uHBx-wIgaRQ8hLU-6w0";
+var fontSize = parseInt(localStorage.getItem("leo_fontsize") || "15");
 
-// ---------- helpers ----------
-function num(s){return Number(String(s||0).replace(",","."))}
-function num2(v){return new Intl.NumberFormat("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v)}
-function tsd(v){return new Intl.NumberFormat("de-DE").format(v)}
+var LANGUAGES = {
+  en: { name: "Englisch",    target: "English",          speechLang: "en-US", voiceLang: "en", flag: "🇬🇧" },
+  fr: { name: "Französisch", target: "French",           speechLang: "fr-FR", voiceLang: "fr", flag: "🇫🇷" },
+  it: { name: "Italienisch", target: "Italian",          speechLang: "it-IT", voiceLang: "it", flag: "🇮🇹" },
+  es: { name: "Spanisch",    target: "Spanish",          speechLang: "es-ES", voiceLang: "es", flag: "🇪🇸" },
+  zh: { name: "Chinesisch",  target: "Mandarin Chinese", speechLang: "zh-CN", voiceLang: "zh", flag: "🇨🇳" }
+};
 
-// Berechnet den FIFO-basierten Ø Kaufkurs der noch im Bestand befindlichen Lots
-function fifoAvgKurs(pos){
-  const normD=d=>{if(!d)return"0000-00-00";if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);const p=d.split(".");if(p.length===3){let y=p[2].trim();if(y.length===2)y=(parseInt(y)>=50?"19":"20")+y;return`${y}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;}return d;};
-  const allHist=[...(pos.history||[])].sort((a,b)=>normD(a.datum).localeCompare(normD(b.datum)));
-  const soldOfPos=sold.filter(e=>e.wkn===pos.wkn);
-  // FIFO-Lots aufbauen
-  const lots=[];
-  for(const e of allHist){
-    if(e.type==="kauf") lots.push({stuecke:e.stuecke,kurs:e.kurs,rest:e.stuecke});
-    else{
-      let r=e.stuecke;
-      for(const l of lots){if(r<=0)break;const a=Math.min(l.rest,r);l.rest-=a;r-=a;}
+var currentLang = localStorage.getItem("oli_lang") || "en";
+document.getElementById("lang-select").value = currentLang;
+function getLang() { return LANGUAGES[currentLang] || LANGUAGES["en"]; }
+
+function updateSubtitle() {
+  document.getElementById("leo-subtitle").textContent = getLang().flag + " " + getLang().name + " Teacher";
+}
+updateSubtitle();
+
+document.getElementById("lang-select").addEventListener("change", function() {
+  currentLang = this.value;
+  try { localStorage.setItem("oli_lang", currentLang); } catch(e) {}
+  updateSubtitle();
+});
+
+function buildSystemPrompt() {
+  var lang = getLang();
+  return "You are an enthusiastic and encouraging " + lang.target + " teacher named \"Oli's Teacher\". Your job is to help German speakers learn " + lang.target + " through natural spoken conversation.\n\nRULES:\n1. At the very start of a new conversation, ALWAYS begin by choosing an interesting topic and introducing it warmly.\n2. Conduct the ENTIRE conversation in " + lang.target + ". Keep your language level appropriate (B1-B2).\n3. Keep your replies SHORT and conversational (2-4 sentences max) since this is a voice conversation.\n4. Ask ONE engaging question at the end of each reply to keep the student talking.\n5. The student may mix " + lang.target + " and German in the same sentence. This is fine! Understand the full meaning, use the " + lang.target + " word in your reply, and show the translation in germanWords.\n6. After EVERY student message, respond in this EXACT JSON FORMAT:\n\n{\n  \"reply\": \"Your short conversational response (2-4 sentences, ending with a question).\",\n  \"corrections\": [{\"original\": \"incorrect phrase\", \"corrected\": \"correct version\", \"explanation\": \"brief explanation\"}],\n  \"germanWords\": [{\"german\": \"deutsches Wort\", \"english\": \"" + lang.target + " word\"}],\n  \"newWords\": [{\"word\": \"useful word\", \"definition\": \"simple definition\", \"example\": \"short example\"}]\n}\n\n7. corrections: Only real " + lang.target + " grammar errors. Empty array [] if none.\n8. germanWords: List any German words the student used with their " + lang.target + " translation. Empty array [] if none.\n9. newWords: 0-1 words max. Only truly useful vocabulary.\n\nIMPORTANT: Respond ONLY with valid JSON. No text outside the JSON.";
+}
+
+var INITIAL_PROMPT = "Start the conversation now. Choose an interesting topic and greet the student warmly in 2-3 sentences, then ask your first question. Return your response in the exact JSON format specified.";
+
+function startWithKey() {
+  var val = document.getElementById("ak-input").value.trim();
+  if (!val || val.length < 5) { document.getElementById("ak-error").textContent = "Bitte einen gültigen API-Key eingeben."; return; }
+  API_KEY = val;
+  try { localStorage.setItem("leo_gemini_key", val); } catch(e) {}
+  document.getElementById("apikey-screen").classList.add("hidden");
+}
+if (API_KEY && API_KEY.length > 5) { document.getElementById("apikey-screen").classList.add("hidden"); }
+
+document.getElementById("key-btn").addEventListener("click", function() {
+  document.getElementById("ak-input").value = "";
+  document.getElementById("ak-error").textContent = "";
+  document.getElementById("apikey-screen").classList.remove("hidden");
+});
+
+var phase = "idle";
+var conversationHistory = [];
+var vocabulary = [];
+var recognition = null;
+var showVocab = false;
+var lastSpokenText = "";
+
+// DOM refs
+var leoBubble       = document.getElementById("leo-bubble");
+var leoTextEl       = document.getElementById("leo-text");
+var leoTranslation  = document.getElementById("leo-translation");
+var leoTranslTxt    = document.getElementById("leo-translation-text");
+var waveContainer   = document.getElementById("wave-container");
+var playbackBtns    = document.getElementById("playback-btns");
+var correctionsBox  = document.getElementById("corrections-box");
+var correctionsList = document.getElementById("corrections-list");
+var newWordBox      = document.getElementById("new-word-box");
+var newWordWord     = document.getElementById("new-word-word");
+var newWordDef      = document.getElementById("new-word-def");
+var newWordTrans    = document.getElementById("new-word-translation");
+var newWordTransTxt = document.getElementById("new-word-translation-text");
+var transcriptBox   = document.getElementById("transcript-box");
+var transcriptText  = document.getElementById("transcript-text");
+var transcriptTrans = document.getElementById("transcript-translation");
+var transcriptTransTxt = document.getElementById("transcript-translation-text");
+var germanWordsBox  = document.getElementById("german-words-box");
+var germanWordsTxt  = document.getElementById("german-words-text");
+var statusEl        = document.getElementById("status");
+var micBtn          = document.getElementById("mic-btn");
+var micArea         = document.getElementById("mic-area");
+var ripple1         = document.getElementById("ripple1");
+var ripple2         = document.getElementById("ripple2");
+var vocabPanel      = document.getElementById("vocab-panel");
+var vocabList       = document.getElementById("vocab-list");
+var vocabCount      = document.getElementById("vocab-count");
+var placeholder     = document.getElementById("placeholder-msg");
+var stopBtn         = document.getElementById("stop-btn");
+var transcriptHint  = document.getElementById("transcript-translate-hint");
+
+// Font size
+function applyFontSize() {
+  var px = fontSize + "px"; var spx = Math.max(10, fontSize - 2) + "px";
+  leoTextEl.style.fontSize = px; transcriptText.style.fontSize = px;
+  correctionsList.style.fontSize = px;
+  newWordWord.style.fontSize = px; newWordDef.style.fontSize = spx;
+  germanWordsTxt.style.fontSize = spx;
+  leoTranslTxt.style.fontSize = spx; transcriptTransTxt.style.fontSize = spx;
+  newWordTransTxt.style.fontSize = spx;
+  document.getElementById("corrections-translation-text").style.fontSize = spx;
+  localStorage.setItem("leo_fontsize", fontSize);
+}
+applyFontSize();
+document.getElementById("font-up-btn").addEventListener("click", function() { if (fontSize < 26) { fontSize += 2; applyFontSize(); } });
+document.getElementById("font-down-btn").addEventListener("click", function() { if (fontSize > 10) { fontSize -= 2; applyFontSize(); } });
+
+// Speech synthesis
+var synth = window.speechSynthesis || null;
+
+function speak(text, onEnd) {
+  if (!synth) { if (onEnd) setTimeout(onEnd, 0); return; }
+  synth.cancel();
+  setTimeout(function() {
+    var u = new SpeechSynthesisUtterance(text);
+    var lang = getLang();
+    u.lang = lang.speechLang; u.rate = 0.92; u.pitch = 1.05;
+    var v = synth.getVoices().find(function(v) { return v.lang.startsWith(lang.voiceLang); });
+    if (v) u.voice = v;
+    if (onEnd) u.onend = onEnd;
+    synth.speak(u);
+  }, 400);
+}
+
+document.getElementById("repeat-btn").addEventListener("click", function(e) {
+  e.stopPropagation();
+  if (!lastSpokenText) return;
+  if (synth) synth.cancel();
+  setPhase("speaking");
+  speak(lastSpokenText, function() {
+    setPhase("idle"); setStatus("Your turn! Tap 🎤 to speak.");
+  });
+});
+
+document.getElementById("stop-speak-btn").addEventListener("click", function(e) {
+  e.stopPropagation();
+  if (synth) synth.cancel();
+  waveContainer.classList.remove("visible");
+  setPhase("idle");
+  setStatus("Your turn! Tap 🎤 to speak.");
+});
+
+// Speech recognition – restarts automatically, no continuous mode (fixes Android double-word bug)
+function createRecognition(onError) {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  var rec = new SR();
+  rec.lang = getLang().speechLang;
+  rec.interimResults = false; // only final results, avoids duplicates
+  rec.maxAlternatives = 1;
+  rec.continuous = false; // non-continuous avoids Android double-word bug
+
+  var fullTranscript = "";
+  var restarting = false;
+
+  rec.onresult = function(e) {
+    var result = e.results[e.results.length - 1][0].transcript.trim();
+    if (result) {
+      fullTranscript = fullTranscript ? fullTranscript + " " + result : result;
+      transcriptText.textContent = fullTranscript;
+      transcriptText.style.fontSize = fontSize + "px";
+      transcriptBox.classList.add("visible");
+      placeholder.style.display = "none";
     }
-  }
-  // Noch vorhandene Lots
-  const remaining=lots.filter(l=>l.rest>0);
-  const totalSt=remaining.reduce((s,l)=>s+l.rest,0);
-  const totalCost=remaining.reduce((s,l)=>s+l.rest*l.kurs,0);
-  return totalSt>0?totalCost/totalSt:pos.preis;
-}
-function cur(v){return new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(v)}
-function pct(v){
-  const formatted=new Intl.NumberFormat("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Math.abs(v));
-  return(v>=0?"+":"-")+formatted+"%";
-}
-function fdate(d){
-  if(!d)return"—";
-  const dt=new Date(d);
-  const dd=String(dt.getDate()).padStart(2,"0");
-  const mm=String(dt.getMonth()+1).padStart(2,"0");
-  const jj=String(dt.getFullYear()).slice(2);
-  return`${dd}.${mm}.${jj}`;
-}
-function esc(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML}
-function badge(v,t){return`<span class="badge ${v>=0?"pos":"neg"}">${t}</span>`}
-function toast(msg,ok=true){const el=document.getElementById("toast");el.textContent=msg;el.style.background=ok?"#4ade80":"#f87171";el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2500)}
-
-function getGewinn(pos){
-  const e=currentPrices[String(pos.id)];
-  if(!e)return null;
-  const k=typeof e.kurs==="number"?e.kurs:num(e.kurs);
-  if(!k||isNaN(k)||k<=0)return null;
-  return{kurs:k,diff:(k-fifoAvgKurs(pos))*pos.stuecke,pct:((k-fifoAvgKurs(pos))/fifoAvgKurs(pos))*100,updatedAt:e.updatedAt};
-}
-
-// ---------- Excel Import ----------
-function importXlsx(input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:"yyyy-mm-dd"});
-      const posMap={};
-      for(const row of rows){
-        if(!row[0]||!row[1]||!row[3]||!row[4])continue;
-        let datum=row[0];
-        if(typeof datum==="number"){const d=new Date(Math.round((datum-25569)*86400*1000));datum=d.toISOString().slice(0,10);}
-        else if(typeof datum==="string"){const parts=datum.split(".");if(parts.length===3)datum=`${parts[2]}-${parts[1].padStart(2,"0")}-${parts[0].padStart(2,"0")}`;else datum=datum.slice(0,10);}
-        else if(datum instanceof Date){datum=datum.toISOString().slice(0,10);}
-        const name=String(row[1]).trim();
-        const wkn=String(row[2]||"").trim().toUpperCase();
-        const anzahl=parseFloat(String(row[3]).replace(",","."));
-        const kursRaw=parseFloat(String(row[4]).replace(",","."));
-        const kurs=Math.abs(kursRaw);
-        if(!wkn||wkn==="#N/A"||isNaN(anzahl)||isNaN(kurs))continue;
-        if(!posMap[wkn]){posMap[wkn]={id:Date.now()+Math.random(),name,wkn,stuecke:0,totalCost:0,preis:0,datum,history:[]};}
-        const p=posMap[wkn];
-        p.name=name;
-        if(anzahl>0){p.totalCost+=kurs*anzahl;p.stuecke+=anzahl;p.history.push({type:"kauf",stuecke:Math.round(anzahl),kurs,datum});}
-        else{const vkStuecke=Math.abs(anzahl);const gewinnJe=(kurs-p.preis)*vkStuecke;const gewinnPct=p.preis>0?((kurs-p.preis)/p.preis)*100:0;sold.push({id:p.id,name:p.name,wkn:p.wkn,preis:p.preis,datum:p.datum,stueckeVerkauft:Math.round(vkStuecke),verkaufspreis:kurs,verkaufDatum:datum,gewinnJe,gewinnPct});p.stuecke-=vkStuecke;p.history.push({type:"vk",stuecke:Math.round(vkStuecke),kurs,datum,gewinnJe,gewinnPct});}
-        if(p.stuecke>0)p.preis=p.totalCost/p.stuecke;
-      }
-      positions=Object.values(posMap).filter(p=>p.stuecke>0.001).map(p=>({...p,stuecke:Math.round(p.stuecke),preis:Math.round(p.preis*10000)/10000}));
-      currentPrices={};
-      normalizeAllDates();
-      autoSave();
-      toast(`✅ ${positions.length} Positionen importiert`);
-      render();
-    }catch(err){console.error(err);toast("❌ Import fehlgeschlagen: "+err.message,false);}
-    input.value="";
   };
-  reader.readAsArrayBuffer(file);
-}
 
-// ---------- Lesen / Speichern A & B ----------
-let loadedSlot=null;
-
-function slotDateKey(slot){return"depot_slot_date_"+slot;}
-
-function saveSlotDate(slot,isoDate){
-  localStorage.setItem(slotDateKey(slot),isoDate);
-}
-
-function getSlotDate(slot){
-  return localStorage.getItem(slotDateKey(slot))||null;
-}
-
-function formatDate(iso){
-  if(!iso)return null;
-  return new Date(iso).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});
-}
-
-function updateLesenButton(slot, isoDate){
-  const btn=document.getElementById("btn-lesen-"+slot);
-  if(!btn)return;
-  const d=formatDate(isoDate);
-  btn.innerHTML=d
-    ?`📂 Lesen ${slot.toUpperCase()}<br><span style="font-size:10px;color:#15803d;font-weight:400">✓ ${d}</span>`
-    :`📂 Lesen ${slot.toUpperCase()}`;
-}
-
-function updateSpeichernButton(slot, isoDate){
-  const btn=document.getElementById("btn-speichern-"+slot);
-  if(!btn)return;
-  const d=formatDate(isoDate);
-  btn.innerHTML=d
-    ?`💾 Speichern ${slot.toUpperCase()}<br><span style="font-size:10px;color:#a78bfa;font-weight:400">${d}</span>`
-    :`💾 Speichern ${slot.toUpperCase()}`;
-}
-
-function restoreButtonDates(){
-  ['a','b'].forEach(slot=>{
-    const d=getSlotDate(slot);
-    if(d) updateLesenButton(slot, d);
-  });
-}
-
-function lesenAuto(){
-  const input=document.getElementById("json-input");
-  input.onchange=function(){
-    const files=Array.from(input.files);
-    if(!files.length)return;
-    const reads=files.map(file=>new Promise((resolve,reject)=>{
-      const reader=new FileReader();
-      reader.onload=e=>{
-        try{const d=JSON.parse(e.target.result);resolve({file,d,savedAt:d.savedAt?new Date(d.savedAt):new Date(0)});}
-        catch(err){reject(err);}
-      };
-      reader.readAsText(file);
-    }));
-    Promise.all(reads).then(results=>{
-      results.sort((a,b)=>b.savedAt-a.savedAt);
-      const newest=results[0];
-      positions=newest.d.positions||[];
-      sold=newest.d.sold||[];
-      currentPrices=newest.d.currentPrices||{};
-      normalizeAllDates();
-      const iso=newest.d.savedAt||new Date().toISOString();
-      saveSlotDate('a',iso);
-      const btn=document.getElementById("btn-laden");
-      if(btn)btn.innerHTML=`📂 Laden<br><span style="font-size:10px;color:#15803d;font-weight:400">✓ ${newest.file.name}</span>`;
-      render();
-      let msg=`✅ ${newest.file.name} geladen`;
-      if(results.length>1)msg+=` · ${results.slice(1).map(r=>r.file.name).join(", ")} ignoriert`;
-      toast(msg);
-    }).catch(err=>toast("❌ Fehler: "+err.message,false));
-    input.value="";
-  };
-  input.click();
-}
-
-function sichern(){
-  if(!positions.length){toast("Keine Daten zum Speichern",false);return;}
-  const now=new Date();
-  const iso=now.toISOString();
-  // Dateiname: JJJJ.MM.TT.json
-  const name=`Uebst-${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")}.json`;
-  const data=JSON.stringify({positions,sold,currentPrices,savedAt:iso},null,2);
-  const blob=new Blob([data],{type:"application/json"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=name;
-  a.click();
-  saveSlotDate('a',iso);
-  const btn=document.getElementById("btn-sichern");
-  const d=formatDate(iso);
-  if(btn)btn.innerHTML=`💾 Sichern<br><span style="font-size:10px;color:#a78bfa;font-weight:400">${d}</span>`;
-  toast(`💾 ${name} gespeichert`);
-}
-
-// Alte Funktionen — nicht mehr benötigt
-function speichernSlot(slot){sichern();}
-function lesenSlot(slot){lesenAuto();}
-
-function tryOpenFileManager(){
-  // Verschiedene URL-Schemes probieren — eines davon klappt je nach Gerät/App
-  const schemes=[
-    "intent://com.android.documentsui/.files.FilesActivity#Intent;scheme=android-app;end",
-    "content://com.android.externalstorage.documents/root/primary",
-    "com.google.android.apps.nbu.files",
-    "file:///sdcard/Download/",
-    "downloads:",
-  ];
-  // Versuche nacheinander über <a href>
-  let tried=0;
-  function tryNext(){
-    if(tried>=schemes.length)return;
-    const a=document.createElement("a");
-    a.href=schemes[tried++];
-    a.target="_blank";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-  tryNext();
-  // Als Fallback: direkt navigieren
-  setTimeout(()=>{ try{window.location.href="file:///sdcard/Download/";}catch(e){} },300);
-  toast("📁 Versuche Datei-Manager zu öffnen...");
-}
-
-function openDownloads(){tryOpenFileManager();}
-function exportJson(){}
-function importJson(){}
-function switchSlot(){}
-function updateSlotButtons(){}
-
-function normalizeDatum(d){
-  if(!d)return d;
-  d=String(d).trim();
-  if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);
-  if(/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(d)){const p=d.split(".");return`${p[2]}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;}
-  if(/^\d{1,2}\.\d{1,2}\.\d{2}$/.test(d)){const p=d.split(".");let y=parseInt(p[2]);y=y<50?2000+y:1900+y;return`${y}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;}
-  return d;
-}
-function normalizeAllDates(){
-  positions=positions.map(p=>({...p,
-    datum:normalizeDatum(p.datum),
-    history:(p.history||[]).map(h=>({...h,datum:normalizeDatum(h.datum)}))
-  }));
-  sold=sold.map(s=>({...s,
-    datum:normalizeDatum(s.datum),
-    verkaufDatum:normalizeDatum(s.verkaufDatum)
-  }));
-}
-
-
-
-// ---------- Position hinzufügen ----------
-function toggleAddForm(open){
-  const el=document.getElementById("add-form");
-  if(!open){el.innerHTML="";return;}
-  el.innerHTML=`<div class="add-panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-weight:700;font-size:13px;color:#3b6ea5;text-transform:uppercase;letter-spacing:1px">Neue Aktie</span>
-      <button onclick="toggleAddForm(false)" style="background:none;border:none;color:#6b8fb5;font-size:20px;cursor:pointer">×</button>
-    </div>
-    <div class="form-grid">
-      <div class="field"><label>Name</label><input type="text" id="f-name" placeholder="Apple Inc."/><div class="err" id="e-name"></div></div>
-      <div class="field"><label>WKN</label><input type="text" id="f-wkn" placeholder="865985"/><div class="err" id="e-wkn"></div></div>
-      <div class="field"><label>Stücke</label><input type="text" id="f-stuecke" placeholder="10"/><div class="err" id="e-stuecke"></div></div>
-      <div class="field"><label>Kaufpreis (€)</label><input type="text" id="f-preis" placeholder="150,00"/><div class="err" id="e-preis"></div></div>
-      <div class="field"><label>Kaufdatum</label><input type="date" id="f-datum"/><div class="err" id="e-datum"></div></div>
-      <button class="btn-primary" onclick="addPosition()">Hinzufügen</button>
-    </div>
-  </div>`;
-  setTimeout(()=>document.getElementById("f-name").focus(),50);
-}
-
-function addPosition(){
-  const n=document.getElementById("f-name").value.trim();
-  const w=document.getElementById("f-wkn").value.trim();
-  const st=document.getElementById("f-stuecke").value.trim();
-  const pr=document.getElementById("f-preis").value.trim();
-  const da=document.getElementById("f-datum").value;
-  const errs={};
-  if(!n)errs.name="Pflichtfeld";
-  if(!w)errs.wkn="Pflichtfeld";
-  if(!st||isNaN(num(st))||num(st)<=0)errs.stuecke="Positive Zahl";
-  if(!pr||isNaN(num(pr))||num(pr)<=0)errs.preis="Positiver Betrag";
-  if(!da)errs.datum="Pflichtfeld";
-  ["name","wkn","stuecke","preis","datum"].forEach(k=>{
-    document.getElementById("f-"+k).classList.toggle("error",!!errs[k]);
-    document.getElementById("e-"+k).textContent=errs[k]||"";
-  });
-  if(Object.keys(errs).length)return;
-  const stuecke=num(st),preis=num(pr);
-  positions.push({id:Date.now(),name:n,wkn:w.toUpperCase(),stuecke,preis,datum:da,history:[{type:"kauf",stuecke,kurs:preis,datum:da}]});
-  toggleAddForm(false);render();autoSave();toast("✅ Position hinzugefügt");
-}
-
-// ---------- Name/WKN speichern ----------
-function saveNameWkn(id){
-  const name=document.getElementById("edit-name-"+id).value.trim();
-  const wkn=document.getElementById("edit-wkn-"+id).value.trim();
-  if(!name)return;
-  positions=positions.map(p=>p.id===id?{...p,name,wkn:wkn.toUpperCase()}:p);
-  renderCards();renderEditPanel();autoSave();toast("✅ Gespeichert");
-}
-
-// ---------- Kurs aktualisieren ----------
-function updateKurs(id,val){
-  const sid=String(id);
-  // Eingabe noch unvollständig (endet auf Komma/Punkt) — nicht verarbeiten
-  if(val.endsWith(",") || val.endsWith(".")) return;
-  const parsed=num(val);
-  if(val===""||parsed<=0||isNaN(parsed)){
-    delete currentPrices[sid];
-  } else {
-    currentPrices[sid]={kurs:parsed,updatedAt:new Date().toISOString().slice(0,10)};
-  }
-  renderCards();
-  refreshGewinnDisplay(id);
-  refreshHistorie(id);
-  refreshPrognose(id);
-  clearTimeout(window._saveTimer);
-  window._saveTimer=setTimeout(autoSave, 2000);
-}
-
-function refreshPrognose(id){
-  const el=document.getElementById("prognose-"+id);
-  if(!el)return;
-  const pos=positions.find(p=>p.id===id);
-  if(!pos)return;
-  const g=getGewinn(pos);
-  if(!g){
-    el.innerHTML=`<div style="font-size:13px;color:#9bb5cc;text-align:center;padding:10px 0">Bitte zuerst aktuellen Kurs eingeben</div>`;
-    return;
-  }
-  el.innerHTML=buildPrognoseHtml(pos,g);
-}
-
-function buildPrognoseHtml(pos,g){
-  const pairs=[[5,-5],[10,-10],[20,-20]];
-  return`<div style="border:1px solid #bcd0e8;border-radius:8px;overflow:hidden">
-    <div style="display:grid;grid-template-columns:1fr 56px 1fr;background:#f0f7ff;border-bottom:1px solid #bcd0e8">
-      <div style="padding:5px 8px;font-size:9px;color:#16a34a;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">+%</div>
-      <div style="padding:5px 4px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:700;text-align:center;border-right:1px solid #bcd0e8">±%</div>
-      <div style="padding:5px 8px;font-size:9px;color:#dc2626;text-transform:uppercase;font-weight:700;text-align:center">−%</div>
-    </div>
-    ${pairs.map(([pos2,neg])=>{
-      const kP=g.kurs*(1+pos2/100), wP=kP*pos.stuecke, dP=(kP-fifoAvgKurs(pos))*pos.stuecke, pP=((kP-fifoAvgKurs(pos))/fifoAvgKurs(pos))*100;
-      const kN=g.kurs*(1+neg/100), wN=kN*pos.stuecke, dN=(kN-fifoAvgKurs(pos))*pos.stuecke, pN=((kN-fifoAvgKurs(pos))/fifoAvgKurs(pos))*100;
-      const colP=dP>=0?"#16a34a":"#dc2626";
-      const colN=dN>=0?"#16a34a":"#dc2626";
-      const fmtDiff=(d)=>(d>=0?"+":"")+cur(d);
-      return`<div style="display:grid;grid-template-columns:1fr 56px 1fr;border-top:1px solid #e8f0f9">
-        <div style="padding:7px 8px;border-right:1px solid #e8f0f9;background:#f0fff4">
-          <div style="font-size:12px;font-weight:700;color:${colP}">${cur(wP)}</div>
-          <div style="font-size:12px;font-weight:700;color:${colP}">${fmtDiff(dP)} / ${pct(pP)}</div>
-          <div style="font-size:12px;font-weight:700;color:${colP}">${cur(kP)}</div>
-        </div>
-        <div style="padding:7px 4px;border-right:1px solid #e8f0f9;background:#f0f7ff;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px">
-          <div style="font-size:12px;font-weight:800;color:#16a34a">+${pos2}%</div>
-          <div style="font-size:12px;font-weight:800;color:#dc2626">${neg}%</div>
-        </div>
-        <div style="padding:7px 8px;background:#fffafa">
-          <div style="font-size:12px;font-weight:700;color:${colN}">${cur(wN)}</div>
-          <div style="font-size:12px;font-weight:700;color:${colN}">${fmtDiff(dN)} / ${pct(pN)}</div>
-          <div style="font-size:12px;font-weight:700;color:${colN}">${cur(kN)}</div>
-        </div>
-      </div>`;
-    }).join("")}
-  </div>`;
-}
-
-function refreshGewinnDisplay(id){
-  const pos=positions.find(p=>p.id===id);
-  if(!pos)return;
-  const g=getGewinn(pos);
-  const el=document.getElementById("gr-"+id);
-  const del=document.getElementById("gd-"+id);
-  if(!el)return;
-  el.innerHTML=g
-    ?`<div class="kurs-result-item"><span class="rl">Gewinn €</span>${badge(g.diff,cur(g.diff))}</div>
-      <div class="kurs-result-item"><span class="rl">Gewinn %</span>${badge(g.pct,pct(g.pct))}</div>
-      <div class="kurs-result-item"><span class="rl">Akt. Wert</span><span class="muted">${cur(g.kurs*pos.stuecke)}</span></div>`
-    :`<span class="dim" style="font-size:13px">Kurs eingeben →</span>`;
-  if(del)del.textContent=g&&g.updatedAt?"Stand: "+fdate(g.updatedAt):"";
-}
-
-// ---------- Transaktion ----------
-function doTx(id,type){
-  const pos=positions.find(p=>p.id===id);
-  const st=num(document.getElementById("tx-stuecke-"+id).value);
-  const pr=num(document.getElementById("tx-preis-"+id).value);
-  const da=document.getElementById("tx-datum-"+id).value;
-  const stEl=document.getElementById("tx-stuecke-"+id);
-  const prEl=document.getElementById("tx-preis-"+id);
-  const daEl=document.getElementById("tx-datum-"+id);
-  let ok=true;
-  if(!st||st<=0||(type==="vk"&&st>pos.stuecke)){stEl.classList.add("error");ok=false;}else stEl.classList.remove("error");
-  if(!pr||pr<=0){prEl.classList.add("error");ok=false;}else prEl.classList.remove("error");
-  if(!da){daEl.classList.add("error");ok=false;}else daEl.classList.remove("error");
-  if(!ok)return;
-  if(type==="kauf"){
-    const total=pos.stuecke+st;
-    const avg=(pos.preis*pos.stuecke+pr*st)/total;
-    positions=positions.map(p=>p.id===id?{...p,stuecke:total,preis:Math.round(avg*10000)/10000,history:[...(p.history||[]),{type:"kauf",stuecke:st,kurs:pr,datum:da}]}:p);
-    toast("✅ Zukauf gebucht");
-  }else{
-    // FIFO: älteste Kaufchargen zuerst aufbrauchen
-    const kaufLots=(pos.history||[])
-      .filter(e=>e.type==="kauf")
-      .map(e=>({...e})); // Kopie damit Original nicht verändert wird
-
-    // Bereits verbrauchte Stücke durch frühere Verkäufe abziehen
-    const bereitsVerkauft=sold
-      .filter(e=>e.wkn===pos.wkn)
-      .reduce((sum,e)=>sum+(e.stueckeVerkauft||0),0);
-    let skip=bereitsVerkauft;
-    for(const lot of kaufLots){
-      const abzug=Math.min(lot.stuecke, skip);
-      lot.stuecke-=abzug;
-      skip-=abzug;
-      if(skip<=0)break;
-    }
-
-    // Jetzt FIFO für diesen Verkauf berechnen
-    let restVk=st;
-    let fifoGewinn=0;
-    const fifoDetails=[];
-    for(const lot of kaufLots){
-      if(restVk<=0||lot.stuecke<=0)continue;
-      const verbraucht=Math.min(lot.stuecke, restVk);
-      const gewinnLot=(pr-lot.kurs)*verbraucht;
-      fifoGewinn+=gewinnLot;
-      fifoDetails.push({kaufKurs:lot.kurs, stuecke:verbraucht, gewinn:gewinnLot, datum:lot.datum});
-      restVk-=verbraucht;
-    }
-    const fifoGewinnPct=fifoGewinn/((fifoDetails.reduce((s,d)=>s+d.kaufKurs*d.stuecke,0)||1))*100;
-
-    sold.push({
-      ...pos,
-      stueckeVerkauft:st,
-      verkaufspreis:pr,
-      verkaufDatum:da,
-      gewinnJe:fifoGewinn,
-      gewinnPct:fifoGewinnPct,
-      fifoDetails
-    });
-    if(st>=pos.stuecke){positions=positions.filter(p=>p.id!==id);expandedId=null;}
-    else positions=positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st}:p);
-    toast("✅ Verkauf gebucht");
-  }
-  render();autoSave();
-}
-
-// ---------- Position entfernen ----------
-function removePos(id){
-  if(!confirm("Position wirklich entfernen?"))return;
-  positions=positions.filter(p=>p.id!==id);
-  delete currentPrices[String(id)];
-  if(expandedId===id)expandedId=null;
-  render();autoSave();toast("Position entfernt");
-}
-
-// ---------- Position verschieben ----------
-function movePos(id,dir){
-  const idx=positions.findIndex(p=>p.id===id);
-  const newIdx=idx+dir;
-  if(newIdx<0||newIdx>=positions.length)return;
-  const [moved]=positions.splice(idx,1);
-  positions.splice(newIdx,0,moved);
-  renderCards();
-  autoSave();
-}
-
-// ---------- Summary öffnet Edit ----------
-function openFromSummary(id){
-  expandedId=(expandedId===id)?null:id;
-  renderCards();
-  renderEditPanel();
-  if(expandedId===id){
-    setTimeout(()=>{
-      document.getElementById("edit-panel").scrollIntoView({behavior:"smooth",block:"start"});
-    },50);
-  }
-}
-
-// ---------- render summary ----------
-function renderCards(){
-  const el=document.getElementById("summary");
-  if(!positions.length){
-    el.innerHTML=`<div class="summary" style="padding:14px">
-      <button class="btn-primary" onclick="toggleAddForm(true)">+ Neue Aktie aufnehmen</button>
-    </div>`;
-    return;
-  }
-  let totalInv=0,totalAkt=0;
-  const posData=positions.map(pos=>{
-    const avgKurs=fifoAvgKurs(pos);
-    const einstand=avgKurs*pos.stuecke;
-    const g=getGewinn(pos);
-    const aktWert=g?g.kurs*pos.stuecke:null;
-    const diff=aktWert!==null?aktWert-einstand:null;
-    const dp=diff!==null?(diff/einstand)*100:null;
-    totalInv+=einstand;
-    totalAkt+=aktWert!==null?aktWert:einstand;
-    return{pos,einstand,aktWert,diff,dp,g,isSel:expandedId===pos.id};
-  });
-  const totalDiff=totalAkt-totalInv;
-  const totalDp=totalInv>0?(totalDiff/totalInv)*100:0;
-
-  const tRows=posData.map(({pos,einstand,aktWert,diff,dp,isSel})=>`
-    <tr class="clickable${isSel?" sel":""}" onclick="openFromSummary(${pos.id})">
-      <td><span style="font-weight:600;color:#1e3a5f">${esc(pos.name)}</span><span style="color:#6b8fb5;font-size:11px;margin-left:6px">${esc(pos.wkn)}</span></td>
-      <td class="r">${cur(einstand)}</td>
-      <td class="r">${aktWert!==null?cur(aktWert):'<span style="color:#4b5563">—</span>'}</td>
-      <td class="r">${diff!==null?badge(diff,cur(diff)):'<span style="color:#4b5563">—</span>'}</td>
-      <td class="r">${dp!==null?badge(dp,pct(dp)):'<span style="color:#4b5563">—</span>'}</td>
-    </tr>`).join("");
-
-  // Mobile cards — neues Layout
-  const mCards=posData.map(({pos,einstand,aktWert,diff,dp,g,isSel})=>{
-    const aktKursStr=g?cur(g.kurs):"—";
-    const aktWertStr=aktWert!==null?cur(aktWert):"—";
-    const diffStr=diff!==null?badge(diff,cur(diff)):'<span class="sv">—</span>';
-    const dpStr=dp!==null?badge(dp,pct(dp)):'<span class="sv">—</span>';
-
-    return`<div class="s-card${isSel?" sel":""}" data-id="${pos.id}" onclick="openFromSummary(${pos.id})">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-          <div style="display:flex;flex-direction:column;gap:1px">
-            <button onclick="event.stopPropagation();movePos(${pos.id},-1)" style="background:none;border:none;color:#bcd0e8;font-size:14px;cursor:pointer;padding:0;line-height:1" title="Nach oben">▲</button>
-            <button onclick="event.stopPropagation();movePos(${pos.id},1)" style="background:none;border:none;color:#bcd0e8;font-size:14px;cursor:pointer;padding:0;line-height:1" title="Nach unten">▼</button>
-          </div>
-          <div><span class="s-card-name">${esc(pos.name)}</span><span class="s-card-wkn">${esc(pos.wkn)}</span></div>
-        </div>
-        ${pos.link
-          ?`<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
-              <a href="${esc(pos.link)}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#2563eb;background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 7px;white-space:nowrap;text-decoration:none">📊 Kurs</a>
-              <button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:5px;padding:3px 6px;color:#2563eb;font-size:13px;cursor:pointer">✏️</button>
-            </div>`
-          :`<button onclick="event.stopPropagation();editLink(${pos.id})" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:5px;padding:3px 6px;color:#6b8fb5;font-size:13px;cursor:pointer;flex-shrink:0" title="Link hinzufügen">🔗</button>`
+  rec.onend = function() {
+    if (phase === "listening" && !restarting) {
+      restarting = true;
+      setTimeout(function() {
+        restarting = false;
+        if (phase === "listening") {
+          try { rec.start(); } catch(e) {}
         }
-      </div>
-
-      <!-- Zeile 1: Bestand · Ø Kaufkurs · Einstandswert -->
-      <div class="s-card-row">
-        <div class="s-card-item">
-          <span class="sl">Bestand</span>
-          <span class="sv bold">${tsd(pos.stuecke)}</span>
-        </div>
-        <div class="s-card-item">
-          <span class="sl">Ø Kaufkurs</span>
-          <span class="sv bold">${cur(fifoAvgKurs(pos))}</span>
-        </div>
-        <div class="s-card-item">
-          <span class="sl">Einstandswert</span>
-          <span class="sv bold">${cur(einstand)}</span>
-        </div>
-      </div>
-
-      <!-- Zeile 2: Akt. Kurs · Akt. Wert · Gewinn € · Gewinn % -->
-      <div class="s-card-row row2">
-        <div class="s-card-item">
-          <span class="sl">Akt. Kurs</span>
-          <span class="sv">${aktKursStr}</span>
-        </div>
-        <div class="s-card-item">
-          <span class="sl">Akt. Wert</span>
-          <span class="sv">${aktWertStr}</span>
-        </div>
-        <div class="s-card-item">
-          <span class="sl">Gewinn €</span>
-          ${diffStr}
-        </div>
-        <div class="s-card-item">
-          <span class="sl">Gewinn %</span>
-          ${dpStr}
-        </div>
-      </div>
-    </div>`;
-  }).join("");
-
-  el.innerHTML=`<div class="summary">
-    <table>
-      <thead><tr><th>Position</th><th class="r">Einstand</th><th class="r">Akt. Wert</th><th class="r">Gewinn €</th><th class="r">Gewinn %</th></tr></thead>
-      <tbody>${tRows}
-        <tr class="total-row">
-          <td>Gesamtdepot</td>
-          <td class="r">${cur(totalInv)}</td><td class="r">${cur(totalAkt)}</td>
-          <td class="r">${badge(totalDiff,cur(totalDiff))}</td><td class="r">${badge(totalDp,pct(totalDp))}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="s-cards" id="s-cards-container">
-      ${mCards}
-      <div class="s-total">
-        <div class="s-total-label">Gesamtdepot</div>
-        <div class="s-total-row">
-          <div class="s-card-item" style="flex:none"><span class="sl">Einstand</span><span style="font-weight:700;color:#1e3a5f">${cur(totalInv)}</span></div>
-          <div class="s-card-item" style="flex:none"><span class="sl">Akt. Wert</span><span style="font-weight:700;color:#1e3a5f">${cur(totalAkt)}</span></div>
-          <div class="s-card-item" style="flex:none"><span class="sl">Gewinn €</span>${badge(totalDiff,cur(totalDiff))}</div>
-          <div class="s-card-item" style="flex:none"><span class="sl">Gewinn %</span>${badge(totalDp,pct(totalDp))}</div>
-        </div>
-      </div>
-    </div>
-    <div style="padding:12px 14px;border-top:1px solid #1e3a5f">
-      <button class="btn-primary" onclick="toggleAddForm(true)" style="font-size:13px;padding:8px 14px">+ Neue Aktie aufnehmen</button>
-    </div>
-  </div>`;
-}
-
-// ---------- Collapsible helper ----------
-function collapsible(id, label, open, content){
-  const isOpen=open;
-  return`<div style="border-bottom:1px solid #e8f0f9">
-    <button onclick="toggleSection('${id}')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:left">
-      <span style="font-size:11px;font-weight:700;color:#6b8fb5;text-transform:uppercase;letter-spacing:1px">${label}</span>
-      <span id="${id}-arrow" style="color:#6b8fb5;font-size:14px;transition:transform 0.2s;display:inline-block;transform:${isOpen?"rotate(180deg)":"rotate(0deg)"}"">▾</span>
-    </button>
-    <div id="${id}" style="display:${isOpen?"block":"none"}">${content}</div>
-  </div>`;
-}
-function toggleSection(id){
-  const el=document.getElementById(id);
-  const arrow=document.getElementById(id+"-arrow");
-  if(!el)return;
-  const open=el.style.display==="none";
-  el.style.display=open?"block":"none";
-  if(arrow)arrow.style.transform=open?"rotate(180deg)":"rotate(0deg)";
-}
-
-function editLink(id){
-  const pos=positions.find(p=>p.id===id);
-  if(!pos)return;
-  const url=prompt("Link für "+pos.name+":", pos.link||"https://");
-  if(url===null)return; // Abbrechen
-  positions=positions.map(p=>p.id===id?{...p,link:url.trim()||null}:p);
-  renderCards();
-  autoSave();
-}
-
-
-
-function renderEditPanel(){
-  const panel=document.getElementById("edit-panel");
-  if(!expandedId){panel.innerHTML="";return;}
-  const pos=positions.find(p=>p.id===expandedId);
-  if(!pos){panel.innerHTML="";return;}
-  const g=getGewinn(pos);
-  const kv=(currentPrices[String(pos.id)]||{}).kurs||"";
-  const kd=(currentPrices[String(pos.id)]||{}).updatedAt;
-  const today=new Date().toISOString().slice(0,10);
-  const gewinnHtml=g
-    ?`<div class="kurs-result-item"><span class="rl">Gewinn €</span>${badge(g.diff,cur(g.diff))}</div>
-       <div class="kurs-result-item"><span class="rl">Gewinn %</span>${badge(g.pct,pct(g.pct))}</div>
-       <div class="kurs-result-item"><span class="rl">Akt. Wert</span><span class="muted">${cur(g.kurs*pos.stuecke)}</span></div>`
-    :`<span class="dim" style="font-size:13px">Kurs eingeben →</span>`;
-
-  const histHtml=buildHistHtml(pos);
-
-  panel.innerHTML=`<div class="edit-panel">
-    <div class="expand-inner">
-      <div style="padding:12px 16px;border-bottom:1px solid #e8f0f9">
-        <!-- Name + Buttons -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
-          <div style="font-weight:700;font-size:15px;color:#1e3a5f;line-height:1.3">${esc(pos.name)} <span style="font-size:12px;color:#6b8fb5;font-weight:400">${esc(pos.wkn)}</span></div>
-          <div style="display:flex;gap:6px;flex-shrink:0">
-            ${pos.link?`<a href="${esc(pos.link)}" target="_blank" title="Kurslink öffnen" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;padding:5px 9px;color:#2563eb;font-size:15px;cursor:pointer;text-decoration:none;display:flex;align-items:center">📊</a>`:""}
-            <button onclick="toggleSection('sec-namewkn-${pos.id}')" title="Name/WKN bearbeiten" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;padding:5px 9px;color:#2563eb;font-size:15px;cursor:pointer">✏️</button>
-            <button onclick="removePos(${pos.id})" title="Position entfernen" style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:5px 9px;color:#dc2626;font-size:15px;cursor:pointer">🗑</button>
-            <button onclick="openFromSummary(${pos.id})" style="background:none;border:none;color:#6b8fb5;font-size:22px;cursor:pointer;line-height:1;padding:2px 4px">×</button>
-          </div>
-        </div>
-        <!-- Edit-Block (zugeklappt) -->
-        <div id="sec-namewkn-${pos.id}" style="display:none;margin-bottom:10px">
-          <div style="display:flex;flex-direction:column;gap:8px;padding:10px 0">
-            <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px">Name</label>
-              <input type="text" id="edit-name-${pos.id}" value="${esc(pos.name)}" style="width:100%;font-size:16px;font-weight:600;padding:9px 12px"/></div>
-            <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px">WKN</label>
-              <input type="text" id="edit-wkn-${pos.id}" value="${esc(pos.wkn)}" style="width:100%;font-size:16px;font-weight:600;padding:9px 12px"/></div>
-            <button class="btn-sm-confirm" onclick="saveNameWkn(${pos.id})" style="align-self:flex-start">Speichern</button>
-          </div>
-        </div>
-        <!-- Bestand in einer Zeile -->
-        <div style="display:flex;gap:0;border:1px solid #e8f0f9;border-radius:8px;overflow:hidden">
-          <div style="flex:1;padding:7px 10px;border-right:1px solid #e8f0f9;background:#f8fafc">
-            <div style="font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.5px">Bestand</div>
-            <div style="font-size:15px;font-weight:700;color:#1e3a5f">${tsd(pos.stuecke)}</div>
-          </div>
-          <div style="flex:1;padding:7px 10px;border-right:1px solid #e8f0f9;background:#f8fafc">
-            <div style="font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.5px">Ø Kaufkurs</div>
-            <div style="font-size:15px;font-weight:700;color:#1e3a5f">${cur(fifoAvgKurs(pos))}</div>
-          </div>
-          <div style="flex:1;padding:7px 10px;background:#f8fafc">
-            <div style="font-size:9px;color:#6b8fb5;text-transform:uppercase;letter-spacing:0.5px">Einstandswert</div>
-            <div style="font-size:15px;font-weight:700;color:#1e3a5f">${cur(fifoAvgKurs(pos)*pos.stuecke)}</div>
-          </div>
-        </div>
-      </div>
-
-      ${collapsible("sec-kurs-"+pos.id, "📊 Aktueller Kurs", true, `
-        <div style="padding:12px 16px;border-bottom:1px solid #e8f0f9">
-          <label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
-          <input type="text" id="ki-${pos.id}" value="${esc(kv)}" placeholder="z.B. 9,64" style="width:100%;font-size:18px;font-weight:600;padding:10px 12px" oninput="updateKurs(${pos.id},this.value)" tabindex="-1" onfocus="this.removeAttribute('tabindex')"/>
-          <div class="kurs-date" id="gd-${pos.id}" style="margin-top:4px">${kd?"Stand: "+fdate(kd):""}</div>
-          <div class="kurs-results" id="gr-${pos.id}" style="margin-top:10px">${gewinnHtml}</div>
-        </div>
-        <div style="padding:12px 16px">
-          <div id="hist-${pos.id}">${histHtml}</div>
-        </div>`)}
-
-      ${collapsible("sec-tx-"+pos.id, "💱 Transaktion", false, `
-        <div style="display:flex;flex-direction:column;gap:8px;padding:12px 16px">
-          <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Stücke</label>
-            <input type="text" id="tx-stuecke-${pos.id}" placeholder="5" style="width:100%;font-size:16px;padding:10px 12px"/></div>
-          <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
-            <input type="text" id="tx-preis-${pos.id}" placeholder="150,00" style="width:100%;font-size:16px;padding:10px 12px"/></div>
-          <div><label style="font-size:11px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Datum</label>
-            <input type="date" id="tx-datum-${pos.id}" value="${today}" style="width:100%;font-size:16px;padding:10px 12px"/></div>
-          <div style="display:flex;gap:8px">
-            <button class="btn-sm-confirm blue" onclick="doTx(${pos.id},'kauf')" style="flex:1;padding:12px">➕ Zukauf</button>
-            <button class="btn-sm-confirm" onclick="doTx(${pos.id},'vk')" style="flex:1;padding:12px">📤 Verkauf</button>
-          </div>
-          <div style="font-size:11px;color:#6b8fb5">max. ${pos.stuecke} Stück bei Verkauf</div>
-        </div>`)}
-    </div>
-  </div>`;
-}
-
-// ---------- Historie Eintrag bearbeiten ----------
-function openHistModal(posId, entryIdx, entryType){
-  const pos=positions.find(p=>p.id===posId);
-  if(!pos)return;
-
-  let entry, isSold=false, soldIdx=-1;
-  if(entryType==='kauf'){
-    const kaufEntries=(pos.history||[]).filter(e=>e.type==="kauf");
-    entry=kaufEntries[entryIdx];
-  } else {
-    const vkEntries=sold.filter(e=>e.wkn===pos.wkn);
-    soldIdx=sold.findIndex((e,i)=>e.wkn===pos.wkn && sold.filter(s=>s.wkn===pos.wkn).indexOf(e)===entryIdx);
-    entry=vkEntries[entryIdx];
-    isSold=true;
-  }
-  if(!entry)return;
-
-  const modal=document.getElementById("hist-modal");
-  modal.style.display="";
-  modal.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeHistModal()">
-    <div class="modal-box">
-      <div class="modal-title">${entryType==='kauf'?'Kauf':'Verkauf'} bearbeiten</div>
-      <div class="modal-info">
-        <div class="mi-row">
-          <span><span class="ml">Datum </span><span class="mv">${fdate(entry.datum)}</span></span>
-          <span><span class="ml">Stücke </span><span class="mv">${entry.stuecke}</span></span>
-          <span><span class="ml">Kurs </span><span class="mv">${cur(entry.kurs)}</span></span>
-          <span><span class="ml">Betrag </span><span class="mv">${cur(entry.kurs*entry.stuecke)}</span></span>
-        </div>
-      </div>
-      <div style="font-size:12px;color:#6b8fb5;margin-bottom:14px">Was möchtest du tun?</div>
-      <div class="modal-btns">
-        <button class="btn-red" style="padding:10px" onclick="deleteHistEntry(${posId},${entryIdx},'${entryType}')">🗑 Löschen</button>
-        <button class="btn-sm-confirm blue" style="padding:10px" onclick="openEditHistEntry(${posId},${entryIdx},'${entryType}')">✏️ Ändern</button>
-        <button onclick="closeHistModal()" style="background:#e8f0f9;border:1px solid #bcd0e8;border-radius:6px;padding:10px;color:#6b8fb5;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function closeHistModal(){
-  const m=document.getElementById("hist-modal");
-  m.style.display="none";
-  m.innerHTML="";
-}
-
-function deleteHistEntry(posId, entryIdx, entryType){
-  if(!confirm("Eintrag wirklich löschen?"))return;
-  closeHistModal();
-  const pos=positions.find(p=>p.id===posId);
-  if(!pos)return;
-
-  if(entryType==='kauf'){
-    const kaufEntries=pos.history.filter(e=>e.type==="kauf");
-    const toDelete=kaufEntries[entryIdx];
-    // Aus history entfernen
-    let ki=0;
-    pos.history=pos.history.filter(e=>{
-      if(e.type!=='kauf')return true;
-      return ki++!==entryIdx;
-    });
-    // Stücke und Durchschnittskurs neu berechnen
-    let total=0,cost=0;
-    pos.history.filter(e=>e.type==='kauf').forEach(e=>{total+=e.stuecke;cost+=e.kurs*e.stuecke;});
-    pos.stuecke=Math.round(total);
-    pos.preis=total>0?Math.round(cost/total*10000)/10000:0;
-    if(pos.stuecke<=0)positions=positions.filter(p=>p.id!==posId);
-  } else {
-    // Verkauf aus sold entfernen
-    const vkOfPos=sold.filter(e=>e.wkn===pos.wkn);
-    const toRemove=vkOfPos[entryIdx];
-    const globalIdx=sold.indexOf(toRemove);
-    if(globalIdx>=0)sold.splice(globalIdx,1);
-    // Stücke zurückbuchen
-    pos.stuecke+=toRemove.stueckeVerkauft||0;
-  }
-  render();
-  toast("🗑 Eintrag gelöscht");
-}
-
-function openEditHistEntry(posId, entryIdx, entryType){
-  closeHistModal();
-  const pos=positions.find(p=>p.id===posId);
-  if(!pos)return;
-  let entry;
-  if(entryType==='kauf'){
-    entry=(pos.history||[]).filter(e=>e.type==="kauf")[entryIdx];
-  } else {
-    entry=sold.filter(e=>e.wkn===pos.wkn)[entryIdx];
-  }
-  if(!entry)return;
-
-  const modal=document.getElementById("hist-modal");
-  modal.style.display="";
-  modal.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeHistModal()">
-    <div class="modal-box">
-      <div class="modal-title">${entryType==='kauf'?'Kauf':'Verkauf'} ändern</div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
-        <div><label style="font-size:10px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Datum</label>
-          <input type="date" id="edit-h-datum" value="${entry.datum}" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:8px;padding:9px 12px;color:#1e3a5f;font-size:14px;width:100%;color-scheme:dark"/></div>
-        <div><label style="font-size:10px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Stücke</label>
-          <input type="text" id="edit-h-stuecke" value="${entry.stuecke}" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:8px;padding:9px 12px;color:#1e3a5f;font-size:14px;width:100%"/></div>
-        <div><label style="font-size:10px;color:#6b8fb5;text-transform:uppercase;display:block;margin-bottom:4px">Kurs (€)</label>
-          <input type="text" id="edit-h-kurs" value="${String(entry.kurs).replace('.',',')}" style="background:#f8fafc;border:1px solid #bcd0e8;border-radius:8px;padding:9px 12px;color:#1e3a5f;font-size:14px;width:100%"/></div>
-      </div>
-      <div class="modal-btns">
-        <button class="btn-sm-confirm" onclick="saveEditHistEntry(${posId},${entryIdx},'${entryType}')">✅ Speichern</button>
-        <button onclick="closeHistModal()" style="background:#e8f0f9;border:1px solid #bcd0e8;border-radius:6px;padding:10px;color:#6b8fb5;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function saveEditHistEntry(posId, entryIdx, entryType){
-  const datum=document.getElementById("edit-h-datum").value;
-  const stuecke=num(document.getElementById("edit-h-stuecke").value);
-  const kurs=num(document.getElementById("edit-h-kurs").value);
-  if(!datum||!stuecke||!kurs){toast("Bitte alle Felder ausfüllen",false);return;}
-  closeHistModal();
-  const pos=positions.find(p=>p.id===posId);
-  if(!pos)return;
-
-  if(entryType==='kauf'){
-    let ki=0;
-    pos.history=pos.history.map(e=>{
-      if(e.type!=='kauf')return e;
-      if(ki++===entryIdx)return{...e,datum,stuecke,kurs};
-      return e;
-    });
-    // Durchschnitt neu berechnen
-    let total=0,cost=0;
-    pos.history.filter(e=>e.type==='kauf').forEach(e=>{total+=e.stuecke;cost+=e.kurs*e.stuecke;});
-    pos.stuecke=Math.round(total);
-    pos.preis=total>0?Math.round(cost/total*10000)/10000:0;
-  } else {
-    const vkOfPos=sold.filter(e=>e.wkn===pos.wkn);
-    const toEdit=vkOfPos[entryIdx];
-    const globalIdx=sold.indexOf(toEdit);
-    if(globalIdx>=0){
-      sold[globalIdx]={...sold[globalIdx],datum,stuecke:stuecke,verkaufspreis:kurs,
-        gewinnJe:(kurs-pos.preis)*stuecke,
-        gewinnPct:((kurs-pos.preis)/pos.preis)*100};
+      }, 100);
     }
-  }
-  render();
-  toast("✅ Eintrag geändert");
-}
-
-
-
-function buildHistHtml(pos){
-  const g=getGewinn(pos);
-  const aktKurs=g?g.kurs:null;
-
-  const kaufEntries=(pos.history||[]).filter(e=>e.type==="kauf");
-  const vkEntries=sold.filter(e=>e.wkn===pos.wkn).map(v=>({
-    type:"vk",
-    stuecke:v.stueckeVerkauft,
-    kurs:v.verkaufspreis,
-    datum:v.verkaufDatum,
-    gewinnJe:v.gewinnJe,
-    gewinnPct:v.gewinnPct,
-    fifoDetails:v.fifoDetails||null
-  }));
-  const normDate=d=>{
-    if(!d)return"0000-00-00";
-    d=String(d).trim();
-    // YYYY-MM-DD (ISO)
-    if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);
-    // DD.MM.YYYY
-    if(/^\d{2}\.\d{2}\.\d{4}$/.test(d)){const p=d.split(".");return`${p[2]}-${p[1]}-${p[0]}`;}
-    // DD.MM.YY
-    if(/^\d{2}\.\d{2}\.\d{2}$/.test(d)){const p=d.split(".");let y=parseInt(p[2]);y=y>=50?1900+y:2000+y;return`${y}-${p[1]}-${p[0]}`;}
-    // D.M.YYYY oder ähnlich
-    if(/^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(d)){
-      const p=d.split(".");
-      let y=parseInt(p[2]);if(y<100)y=y>=50?1900+y:2000+y;
-      return`${y}-${String(parseInt(p[1])).padStart(2,"0")}-${String(parseInt(p[0])).padStart(2,"0")}`;
-    }
-    // Fallback: versuche JS Date
-    const ms=new Date(d).getTime();
-    if(!isNaN(ms))return new Date(ms).toISOString().slice(0,10);
-    return"0000-00-00";
   };
-  const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>normDate(a.datum).localeCompare(normDate(b.datum)));
 
-  const fifoLots=[];
-  let kaufIdx=0;
-  for(const e of allHist){
-    if(e.type==="kauf"){fifoLots.push({idx:kaufIdx++,stueckeGekauft:e.stuecke,stueckeNoch:e.stuecke});}
-    else{let r=e.stuecke;for(const l of fifoLots){if(r<=0)break;const a=Math.min(l.stueckeNoch,r);l.stueckeNoch-=a;r-=a;}}
+  rec.onerror = function(e) {
+    if (e.error === "no-speech") {
+      // restart silently
+      setTimeout(function() {
+        if (phase === "listening") try { rec.start(); } catch(e) {}
+      }, 100);
+      return;
+    }
+    if (onError) onError();
+  };
+
+  rec._getTranscript = function() { return fullTranscript; };
+
+  return rec;
+}
+
+function stopListeningAndSubmit() {
+  if (!recognition) return;
+  var text = recognition._getTranscript();
+  try { recognition.stop(); } catch(e) {}
+  recognition = null;
+  if (text) {
+    transcriptText.textContent = text;
+    processUserSpeech(text);
+  } else {
+    setPhase("idle");
+    setStatus("Nichts erkannt. Nochmal tippen.");
+    transcriptBox.classList.remove("visible");
   }
+}
 
-  const v1='font-size:13px;color:#1e3a5f;font-weight:700';
-  const v2='font-size:12px;color:#3b6ea5';
-  let fi=0, ki=0, vi=0;
+function startListening() {
+  if (phase !== "idle") return;
+  transcriptText.textContent = "";
+  transcriptBox.classList.remove("visible");
+  recognition = createRecognition(function() {
+    recognition = null; setPhase("idle"); setStatus("Couldn't hear you. Try again.");
+  });
+  if (!recognition) { setStatus("Bitte erlaube den Mikrofon-Zugriff im Browser."); return; }
+  recognition.start();
+  setPhase("listening");
+  setStatus("🎤 Sprich jetzt... Mikrofon nochmal tippen zum Senden");
+}
 
-  if(!allHist.length) return `<span class="dim" style="font-size:13px">Keine Einträge</span>`;
+// Translations
+function makeTranslatable(element, getText, showEl, showTxtEl, toGerman) {
+  var translated = false; var loading = false;
+  element.addEventListener("click", async function() {
+    if (loading) return;
+    if (translated) { showEl.style.display = "none"; translated = false; return; }
+    if (!getText()) return;
+    loading = true; showTxtEl.textContent = "⏳ Übersetze...";
+    showTxtEl.style.fontSize = Math.max(10, fontSize - 2) + "px"; showEl.style.display = "block";
+    try { var result = await translateText(getText(), toGerman); showTxtEl.textContent = result; translated = true; }
+    catch(e) { showTxtEl.textContent = "Fehler: " + e.message; }
+    loading = false;
+  });
+  element._resetTranslation = function() { translated = false; showEl.style.display = "none"; };
+}
 
-  const pcts=[5,10,15,-5,-10,-15];
-  // Summen pro Prognose-Spalte sammeln
-  const colSums=pcts.map(()=>({all:0,pos:0}));
-  const gewinnSum={all:0,pos:0};
-  // Sticky: Datum + K/V Badge (44px), Kauf/Bestand (52px), Kurs/Akt (52px), Einstand/AktWert (72px), Gewinn (64px) = 284px sticky
-  const stickyBase="44px 52px 52px 72px 64px";
-  const progW="60px 60px 60px 60px 60px 60px";
-  const colW=`${stickyBase} ${progW}`;
+makeTranslatable(leoBubble, function() { return leoTextEl.textContent; }, leoTranslation, leoTranslTxt, true);
+makeTranslatable(document.getElementById("transcript-translate-hint"), function() { return transcriptText.textContent; }, transcriptTrans, transcriptTransTxt, false);
+makeTranslatable(newWordBox, function() { return newWordWord.textContent + ": " + newWordDef.textContent; }, newWordTrans, newWordTransTxt, true);
 
-  return`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #bcd0e8;border-radius:8px">
-  <table style="border-collapse:collapse;min-width:100%;table-layout:fixed;width:${44+52+52+72+64+6*60}px">
-    <colgroup>
-      <col style="width:44px"><col style="width:52px"><col style="width:52px"><col style="width:72px"><col style="width:64px">
-      ${pcts.map(()=>`<col style="width:60px">`).join("")}
-    </colgroup>
-    <thead>
-      <tr style="background:#f0f7ff;border-bottom:1px solid #bcd0e8">
-        <th style="position:sticky;left:0;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:left;border-right:1px solid #bcd0e8;white-space:nowrap">Datum</th>
-        <th style="position:sticky;left:44px;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:1px solid #bcd0e8">Kauf<br>Bst.</th>
-        <th style="position:sticky;left:96px;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:1px solid #bcd0e8">Kurs<br>Akt.</th>
-        <th style="position:sticky;left:148px;z-index:2;background:#f0f7ff;padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:2px solid #bcd0e8">Einst.<br>A.Wert</th>
-        <th style="padding:4px 3px;font-size:9px;color:#6b8fb5;text-transform:uppercase;font-weight:600;text-align:right;border-right:1px solid #bcd0e8">Gew.<br>%</th>
-        ${pcts.map(p=>{
-          const kH=aktKurs?aktKurs*(1+p/100):null;
-          return`<th style="padding:4px 3px;font-size:9px;font-weight:700;text-transform:uppercase;text-align:right;border-right:1px solid #bcd0e8;color:${p>0?"#16a34a":"#dc2626"};white-space:nowrap">${p>0?"+":""}${p}%<br>${kH?num2(kH):"—"}</th>`;
-        }).join("")}
-      </tr>
-    </thead>
-    <tbody>
-    ${allHist.map(e=>{
-      if(e.type==="kauf"){
-        const lot=fifoLots[fi++];
-        const myKi=ki++;
-        const imBestand=lot?lot.stueckeNoch:0;
-        const vollVerkauft=imBestand===0;
-        const bColor=vollVerkauft?"#9ca3af":imBestand<e.stuecke?"#d97706":"#16a34a";
-        let gwBetrag=null,gwPct=null;
-        if(aktKurs!==null&&!vollVerkauft){gwBetrag=(aktKurs-e.kurs)*imBestand;gwPct=((aktKurs-e.kurs)/e.kurs)*100;}
-        if(gwBetrag!==null){gewinnSum.all+=gwBetrag;if(gwBetrag>0)gewinnSum.pos+=gwBetrag;}
-        const gColor=gwBetrag!==null?(gwBetrag>=0?"#16a34a":"#dc2626"):"#9ca3af";
-        const bg=vollVerkauft?"#fff8f0":"#fff";
-        const prognoseCells=pcts.map((p,pi)=>{
-          if(aktKurs===null||vollVerkauft) return`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#9ca3af">—</td>`;
-          const kP=aktKurs*(1+p/100);
-          const gP=(kP-e.kurs)*imBestand;
-          colSums[pi].all+=gP;
-          if(gP>0)colSums[pi].pos+=gP;
-          const col=gP>=0?"#16a34a":"#dc2626";
-          return`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;background:${p>0?"#f0fff4":"#fffafa"}">
-            <div style="font-size:11px;font-weight:700;color:${col}">${num2(gP)}</div>
-            <div style="font-size:10px;color:${col}">${num2(kP*imBestand)}</div>
-          </td>`;
-        }).join("");
-        return`<tr onclick="openHistModal(${pos.id},${myKi},'kauf')" style="cursor:pointer;background:${bg}" onmouseenter="this.style.background='#dbeafe'" onmouseleave="this.style.background='${bg}'">
-          <td style="position:sticky;left:0;z-index:1;background:${bg};padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;white-space:nowrap">
-            <span style="background:#eff6ff;color:#2563eb;font-weight:800;font-size:10px;border-radius:4px;padding:1px 4px">K</span>
-            <div style="font-size:10px;color:#6b8fb5;margin-top:2px">${fdate(e.datum)}</div>
-          </td>
-          <td style="position:sticky;left:44px;z-index:1;background:${bg};padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right">
-            <div style="font-size:11px;color:#1e3a5f;font-weight:700">${tsd(e.stuecke)}</div>
-            <div style="font-size:11px;color:${bColor};font-weight:700">${tsd(imBestand)}</div>
-          </td>
-          <td style="position:sticky;left:96px;z-index:1;background:${bg};padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right">
-            <div style="font-size:11px;color:#1e3a5f;font-weight:700">${num2(e.kurs)}</div>
-            <div style="font-size:11px;color:#3b6ea5">${aktKurs!==null&&!vollVerkauft?num2(aktKurs):"—"}</div>
-          </td>
-          <td style="position:sticky;left:148px;z-index:1;background:${bg};padding:4px 3px;border-right:2px solid #bcd0e8;border-bottom:1px solid #e8f0f9;text-align:right">
-            <div style="font-size:11px;color:#1e3a5f;font-weight:700">${num2(e.kurs*e.stuecke)}</div>
-            <div style="font-size:11px;color:#3b6ea5">${aktKurs!==null&&!vollVerkauft?num2(aktKurs*imBestand):"—"}</div>
-          </td>
-          <td style="padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right">
-            <div style="font-size:11px;color:${gColor};font-weight:700">${gwBetrag!==null?num2(gwBetrag):vollVerkauft?"verk.":"—"}</div>
-            <div style="font-size:11px;color:${gColor}">${gwPct!==null?pct(gwPct):"—"}</div>
-          </td>
-          ${prognoseCells}
-        </tr>`;
-      } else {
-        const myVi=vi++;
-        const gJ=e.gewinnJe||0;
-        const gP2=e.gewinnPct||0;
-        gewinnSum.all+=gJ; // Realisierte Gewinne fließen in Σ Summe ein
-        // Σ nur+ bei Verkäufen NICHT mitzählen
-        const gColor=gJ>=0?"#16a34a":"#dc2626";
-        const hasFifo=false; // FIFO-Details nicht anzeigen
-        return`<tr onclick="openHistModal(${pos.id},${myVi},'vk')" style="cursor:pointer;background:#fff8f0" onmouseenter="this.style.background='#fef3c7'" onmouseleave="this.style.background='#fff8f0'">
-          <td style="position:sticky;left:0;z-index:1;background:#fff8f0;padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;white-space:nowrap">
-            <span style="background:#fff7ed;color:#f97316;font-weight:800;font-size:10px;border-radius:4px;padding:1px 4px;border:1px solid #fed7aa">V</span>
-            <div style="font-size:10px;color:#6b8fb5;margin-top:2px">${fdate(e.datum)}</div>
-          </td>
-          <td style="position:sticky;left:44px;z-index:1;background:#fff8f0;padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#1e3a5f;font-weight:700">${tsd(e.stuecke)}</td>
-          <td style="position:sticky;left:96px;z-index:1;background:#fff8f0;padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#1e3a5f;font-weight:700">${num2(e.kurs)}</td>
-          <td style="position:sticky;left:148px;z-index:1;background:#fff8f0;padding:4px 3px;border-right:2px solid #bcd0e8;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#1e3a5f;font-weight:700">${num2(e.kurs*e.stuecke)}</td>
-          <td style="padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right">
-            <div style="font-size:11px;color:${gColor};font-weight:700">${num2(gJ)}</div>
-            <div style="font-size:11px;color:${gColor}">${pct(gP2)}</div>
-          </td>
-          ${pcts.map(()=>`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;border-bottom:1px solid #e8f0f9;text-align:right;font-size:11px;color:#9ca3af">—</td>`).join("")}
-        </tr>${hasFifo?`<tr><td colspan="${5+pcts.length}" style="padding:3px 6px;background:#fef9f0;border-bottom:1px solid #e8f0f9">
-          ${e.fifoDetails.map(d=>`<span style="font-size:10px;color:#6b8fb5;background:#fff;border:1px solid #e8f0f9;border-radius:4px;padding:1px 5px;margin-right:4px">${tsd(d.stuecke)}×${num2(d.kaufKurs)} <span style="color:${d.gewinn>=0?"#16a34a":"#dc2626"}">${num2(d.gewinn)}</span></span>`).join("")}
-        </td></tr>`:""}`;
+var corrTranslated = false; var corrLoading = false;
+document.getElementById("corrections-translate-hint").addEventListener("click", async function() {
+  if (corrLoading) return;
+  if (corrTranslated) { document.getElementById("corrections-translation").style.display = "none"; corrTranslated = false; return; }
+  var text = correctionsList.innerText; if (!text.trim()) return;
+  corrLoading = true;
+  var el = document.getElementById("corrections-translation-text");
+  el.textContent = "⏳ Übersetze..."; el.style.fontSize = Math.max(10, fontSize-2) + "px";
+  document.getElementById("corrections-translation").style.display = "block";
+  try { el.textContent = await translateText(text, true); corrTranslated = true; } catch(e) { el.textContent = "Fehler: " + e.message; }
+  corrLoading = false;
+});
+
+function setPhase(p) {
+  phase = p; ripple2.style.display = "none";
+  stopBtn.style.display = (p === "listening") ? "block" : "none";
+  if (p === "idle") {
+    micBtn.textContent = "🎤"; micBtn.style.background = "radial-gradient(circle, #e8b848, #d4a03c)";
+    micBtn.style.boxShadow = "0 0 30px rgba(212,160,60,0.4)"; micBtn.style.cursor = "pointer";
+    ripple1.style.borderColor = "rgba(212,160,60,0.25)"; ripple1.style.animationDuration = "3s";
+    waveContainer.classList.remove("visible");
+  } else if (p === "listening") {
+    micBtn.textContent = "✅"; micBtn.style.background = "radial-gradient(circle, #e06060, #c04040)";
+    micBtn.style.boxShadow = "0 0 40px rgba(220,80,80,0.6)"; micBtn.style.cursor = "pointer";
+    ripple1.style.borderColor = "rgba(220,80,80,0.3)"; ripple1.style.animationDuration = "1.5s";
+    ripple2.style.display = "block"; ripple2.style.borderColor = "rgba(220,80,80,0.2)";
+    waveContainer.classList.remove("visible");
+  } else if (p === "thinking") {
+    micBtn.textContent = "⏳"; micBtn.style.background = "radial-gradient(circle, #2a3a4a, #1a2a38)";
+    micBtn.style.boxShadow = "none"; micBtn.style.cursor = "default";
+    waveContainer.classList.remove("visible");
+  } else if (p === "speaking") {
+    micBtn.textContent = "🔊"; micBtn.style.background = "radial-gradient(circle, #2a3a4a, #1a2a38)";
+    micBtn.style.boxShadow = "none"; micBtn.style.cursor = "default";
+    waveContainer.classList.add("visible");
+  }
+}
+
+function setStatus(msg) { statusEl.textContent = msg; }
+
+function showLeo(text) {
+  leoTextEl.textContent = text; leoTextEl.style.fontSize = fontSize + "px";
+  lastSpokenText = text;
+  if (leoBubble._resetTranslation) leoBubble._resetTranslation();
+  leoBubble.classList.add("visible"); placeholder.style.display = "none";
+}
+
+function showCorrections(corrections) {
+  if (!corrections || !corrections.length) { correctionsBox.classList.remove("visible"); return; }
+  correctionsList.innerHTML = corrections.map(function(c) {
+    return '<div class="corr-item"><span class="corr-original">' + c.original + '</span><span class="corr-fixed">→ ' + c.corrected + '</span><div class="corr-explain">' + c.explanation + '</div></div>';
+  }).join("");
+  corrTranslated = false; document.getElementById("corrections-translation").style.display = "none";
+  correctionsBox.classList.add("visible");
+}
+
+function showNewWord(w) {
+  if (!w) { newWordBox.classList.remove("visible"); return; }
+  newWordWord.textContent = w.word; newWordDef.textContent = "— " + w.definition;
+  newWordWord.style.fontSize = fontSize + "px"; newWordDef.style.fontSize = Math.max(10,fontSize-2) + "px";
+  if (newWordBox._resetTranslation) newWordBox._resetTranslation();
+  newWordBox.classList.add("visible");
+}
+
+function updateVocabPanel() {
+  vocabCount.textContent = vocabulary.length;
+  vocabList.innerHTML = vocabulary.length === 0
+    ? '<em style="color:#4a6a80;font-size:13px">No words yet. Start chatting!</em>'
+    : vocabulary.map(function(w) { return '<div class="vocab-item"><span class="vocab-word">' + w.word + '</span><span class="vocab-def">— ' + w.definition + '</span>' + (w.example ? '<div class="vocab-ex">"' + w.example + '"</div>' : '') + '</div>'; }).join("");
+}
+
+function resetMic() {
+  if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+  if (synth) synth.cancel();
+  setPhase("idle"); setStatus("Your turn! Tap 🎤 to speak.");
+}
+
+async function callGemini(history) {
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+  var contents = history.map(function(m) { return { role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }; });
+  var resp = await fetch(url, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ system_instruction: { parts: [{ text: buildSystemPrompt() }] }, contents: contents, generationConfig: { maxOutputTokens: 600, temperature: 0.8, thinkingConfig: { thinkingBudget: 0 } } })
+  });
+  var data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  var text = data.candidates[0].content.parts[0].text || "";
+  return JSON.parse(text.replace(/```json|```/g, "").trim());
+}
+
+async function translateText(text, toGerman) {
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+  var prompt = toGerman ? "Übersetze ins Deutsche, NUR die Übersetzung zurückgeben:\n\n" + text : "Translate to " + getLang().target + ", return ONLY the translation:\n\n" + text;
+  var resp = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 1000, temperature: 0.2, thinkingConfig: { thinkingBudget: 0 } } }) });
+  var data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.candidates[0].content.parts[0].text.trim();
+}
+
+async function startConversation() {
+  if (!API_KEY) { document.getElementById("apikey-screen").classList.remove("hidden"); return; }
+  // Force reset everything first
+  phase = "idle";
+  if (synth) synth.cancel();
+  if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+  conversationHistory = []; vocabulary = [];
+  correctionsBox.classList.remove("visible"); newWordBox.classList.remove("visible");
+  transcriptBox.classList.remove("visible");
+  leoBubble.classList.remove("visible"); placeholder.style.display = "block";
+  germanWordsBox.style.display = "none";
+  updateVocabPanel(); setPhase("thinking"); setStatus("Oli's Teacher is preparing...");
+  var history = [{ role: "user", content: INITIAL_PROMPT }];
+  try {
+    var parsed = await callGemini(history);
+    conversationHistory = history.concat([{ role: "assistant", content: JSON.stringify(parsed) }]);
+    if (parsed.newWords && parsed.newWords.length) { vocabulary.push(parsed.newWords[0]); updateVocabPanel(); }
+    showLeo(parsed.reply); setPhase("speaking"); setStatus("Oli's Teacher is speaking...");
+    speak(parsed.reply, function() {
+      setPhase("idle"); setStatus("Your turn! Tap 🎤 to speak.");
+    });
+  } catch(e) { setPhase("idle"); setStatus("Fehler: " + (e.message || "Bitte API-Key prüfen.")); }
+}
+
+async function processUserSpeech(spokenText) {
+  if (transcriptHint && transcriptHint._resetTranslation) transcriptHint._resetTranslation();
+  germanWordsBox.style.display = "none";
+  setPhase("thinking"); setStatus("Oli's Teacher is thinking...");
+  correctionsBox.classList.remove("visible"); newWordBox.classList.remove("visible");
+  var newHistory = conversationHistory.concat([{ role: "user", content: spokenText }]);
+  try {
+    var parsed = await callGemini(newHistory);
+    conversationHistory = newHistory.concat([{ role: "assistant", content: JSON.stringify(parsed) }]);
+    showCorrections(parsed.corrections);
+    if (parsed.germanWords && parsed.germanWords.length) {
+      germanWordsTxt.textContent = parsed.germanWords.map(function(w) { return '"' + w.german + '" = ' + w.english; }).join(" · ");
+      germanWordsTxt.style.fontSize = Math.max(10, fontSize-2) + "px"; germanWordsBox.style.display = "block";
+    } else { germanWordsBox.style.display = "none"; }
+    if (parsed.newWords && parsed.newWords.length) {
+      var w = parsed.newWords[0];
+      if (!vocabulary.find(function(x) { return x.word === w.word; })) { vocabulary.push(w); updateVocabPanel(); }
+      showNewWord(w);
+    } else { showNewWord(null); }
+    showLeo(parsed.reply); setPhase("speaking"); setStatus("Oli's Teacher is speaking...");
+    speak(parsed.reply, function() {
+      setPhase("idle"); setStatus("Your turn! Tap 🎤 to speak.");
+    });
+  } catch(e) { setPhase("idle"); setStatus("Error. Tap 🎤 to try again."); }
+}
+
+function startListening() {
+  if (phase !== "idle") return;
+  transcriptText.textContent = "";
+  transcriptBox.classList.remove("visible");
+  recognition = createRecognition(function() {
+    recognition = null; setPhase("idle"); setStatus("Couldn't hear you. Try again.");
+  });
+  if (!recognition) { setStatus("Bitte erlaube den Mikrofon-Zugriff im Browser."); return; }
+  recognition.start();
+  setPhase("listening");
+  setStatus("🎤 Sprich jetzt... Nochmal tippen zum Senden");
+}
+
+// Mic button: start listening OR stop & submit
+micBtn.addEventListener("click", function() {
+  if (phase === "listening") {
+    stopListeningAndSubmit();
+  } else if (phase === "idle") {
+    startListening();
+  }
+});
+micBtn.addEventListener("touchstart", function(e) {
+  e.preventDefault();
+  if (phase === "listening") {
+    stopListeningAndSubmit();
+  } else if (phase === "idle") {
+    startListening();
+  }
+});
+
+// Stop button also submits
+stopBtn.addEventListener("click", stopListeningAndSubmit);
+
+document.getElementById("delete-input-btn").addEventListener("click", function(e) {
+  e.stopPropagation();
+  // Stop mic if running
+  if (recognition) { try { recognition.stop(); } catch(err) {} recognition = null; }
+  transcriptText.textContent = "";
+  transcriptBox.classList.remove("visible");
+  germanWordsBox.style.display = "none";
+  if (transcriptHint && transcriptHint._resetTranslation) transcriptHint._resetTranslation();
+  if (phase === "listening" || phase === "idle") {
+    setPhase("idle");
+    setStatus("Gelöscht – nochmal tippen zum Einsprechen");
+  }
+});
+
+document.getElementById("new-btn").addEventListener("click", function(e) {
+  e.stopPropagation();
+  startConversation();
+});
+document.getElementById("vocab-btn").addEventListener("click", function() { showVocab = !showVocab; vocabPanel.classList.toggle("open", showVocab); });
+
+// ── CONVERSATION HISTORY ──
+var histFontSize = fontSize;
+
+function buildHistoryList() {
+  var list = document.getElementById("history-list");
+  list.innerHTML = "";
+  if (conversationHistory.length <= 1) {
+    list.innerHTML = '<p style="color:#4a6a80;font-style:italic;text-align:center;padding:20px">Noch keine Konversation.</p>';
+    return;
+  }
+  conversationHistory.forEach(function(msg, idx) {
+    if (msg.role === "user" && msg.content === INITIAL_PROMPT) return;
+
+    var isUser = msg.role === "user";
+    var text = "";
+    if (isUser) {
+      text = msg.content;
+    } else {
+      try { text = JSON.parse(msg.content).reply || ""; } catch(e) { return; }
+    }
+
+    var div = document.createElement("div");
+    div.style.cssText = "margin-bottom:14px;padding:10px 12px;border-radius:10px;position:relative;";
+    div.style.background = isUser ? "rgba(70,140,200,0.12)" : "rgba(212,160,60,0.08)";
+    div.style.borderLeft = isUser ? "3px solid #5a8aaa" : "3px solid #d4a83c";
+
+    var label = document.createElement("div");
+    label.style.cssText = "font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;";
+    label.style.color = isUser ? "#5a8aaa" : "#d4a83c";
+    label.textContent = isUser ? "Du" : "Oli's Teacher";
+
+    var textDiv = document.createElement("div");
+    textDiv.style.cssText = "color:" + (isUser ? "#c0d8e8" : "#e8dcc8") + ";line-height:1.7;";
+    textDiv.style.fontSize = histFontSize + "px";
+    textDiv.textContent = text;
+
+    // Translate button + translation area
+    var transArea = document.createElement("div");
+    transArea.style.cssText = "margin-top:8px;padding-top:8px;border-top:1px solid rgba(212,160,60,0.15);color:#90c090;font-style:italic;display:none;font-size:" + Math.max(10, histFontSize-2) + "px;";
+
+    var transHint = document.createElement("div");
+    transHint.style.cssText = "font-size:10px;color:#3a5a50;margin-top:6px;cursor:pointer;text-align:right;";
+    transHint.textContent = "🇩🇪 Übersetzen";
+
+    var translated = false;
+    var loading = false;
+    transHint.addEventListener("click", async function(e) {
+      e.stopPropagation();
+      if (loading) return;
+      if (translated) { transArea.style.display = "none"; transHint.textContent = "🇩🇪 Übersetzen"; translated = false; return; }
+      loading = true;
+      transHint.textContent = "⏳ Übersetze...";
+      transArea.style.display = "block";
+      transArea.textContent = "⏳ Übersetze...";
+      try {
+        var result = await translateText(text, true);
+        transArea.textContent = "🇩🇪 " + result;
+        transHint.textContent = "🇩🇪 Ausblenden";
+        translated = true;
+      } catch(e2) {
+        transArea.textContent = "Fehler: " + e2.message;
       }
-    }).join("")}
-    </tbody>
-    <tfoot>
-      <tr style="background:#f0f7ff;border-top:2px solid #bcd0e8">
-        <td colspan="4" style="position:sticky;left:0;z-index:1;background:#f0f7ff;padding:4px 6px;font-size:10px;color:#6b8fb5;text-transform:uppercase;font-weight:700;border-right:2px solid #bcd0e8;text-align:right">Σ Summe</td>
-        <td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right;font-size:11px;font-weight:700;color:${gewinnSum.all>=0?"#16a34a":"#dc2626"}">${num2(gewinnSum.all)}</td>
-        ${colSums.map(s=>`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right;font-size:11px;font-weight:700;color:${s.all>=0?"#16a34a":"#dc2626"}">${num2(s.all)}</td>`).join("")}
-      </tr>
-      <tr style="background:#f0fff4;border-top:1px solid #bcd0e8">
-        <td colspan="4" style="position:sticky;left:0;z-index:1;background:#f0fff4;padding:4px 6px;font-size:10px;color:#16a34a;text-transform:uppercase;font-weight:700;border-right:2px solid #bcd0e8;text-align:right">Σ nur +</td>
-        <td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right;font-size:11px;font-weight:700;color:#16a34a">${num2(gewinnSum.pos)}</td>
-        ${colSums.map(s=>`<td style="padding:4px 3px;border-right:1px solid #e8f0f9;text-align:right;font-size:11px;font-weight:700;color:#16a34a">${num2(s.pos)}</td>`).join("")}
-      </tr>
-    </tfoot>
-  </table></div>`;
+      loading = false;
+    });
+
+    div.appendChild(label);
+    div.appendChild(textDiv);
+    div.appendChild(transArea);
+    div.appendChild(transHint);
+    div._textDiv = textDiv;
+    div._transArea = transArea;
+    list.appendChild(div);
+  });
 }
 
-function render(){renderCards();renderEditPanel();}
-
-function refreshHistorie(id){
-  const el=document.getElementById("hist-"+id);
-  if(!el)return;
-  const pos=positions.find(p=>p.id===id);
-  if(!pos)return;
-  el.innerHTML=buildHistHtml(pos);
+function applyHistFontSize() {
+  var items = document.getElementById("history-list").querySelectorAll("div[data-hitem]");
+  // Re-build is simpler since we store refs
+  var list = document.getElementById("history-list");
+  Array.from(list.children).forEach(function(div) {
+    if (div._textDiv) {
+      div._textDiv.style.fontSize = histFontSize + "px";
+      if (div._transArea) div._transArea.style.fontSize = Math.max(10, histFontSize-2) + "px";
+    }
+  });
 }
 
-// Beim Start gespeicherte Slot-Daten in Buttons anzeigen
-restoreButtonDates();
-render();
+document.getElementById("history-btn").addEventListener("click", function() {
+  histFontSize = fontSize; // start with same size as main
+  buildHistoryList();
+  document.getElementById("history-overlay").classList.add("visible");
+});
+
+document.getElementById("hist-font-up").addEventListener("click", function() {
+  if (histFontSize < 26) { histFontSize += 2; applyHistFontSize(); }
+});
+document.getElementById("hist-font-down").addEventListener("click", function() {
+  if (histFontSize > 10) { histFontSize -= 2; applyHistFontSize(); }
+});
+
+document.getElementById("history-close").addEventListener("click", function() {
+  document.getElementById("history-overlay").classList.remove("visible");
+});
+
+// ── VOCAB LOOKUP ──
+async function doVocabLookup() {
+  var input = document.getElementById("vocab-lookup-input");
+  var result = document.getElementById("vocab-lookup-result");
+  var word = input.value.trim();
+  if (!word) return;
+  result.textContent = "⏳ Übersetze...";
+  result.style.color = "#5a8aaa";
+  try {
+    var lang = getLang();
+    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+    var prompt = "Übersetze das deutsche Wort/den deutschen Ausdruck \"" + word + "\" ins " + lang.target + ". " +
+      "Gib zurück: 1. Die Übersetzung, 2. Ein kurzes Beispielsatz auf " + lang.target + ". " +
+      "Format: Übersetzung: ...\nBeispiel: ...";
+    var resp = await fetch(url, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 200, temperature: 0.2, thinkingConfig: { thinkingBudget: 0 } } })
+    });
+    var data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    var text = data.candidates[0].content.parts[0].text.trim();
+    result.textContent = text;
+    result.style.color = "#90c090";
+  } catch(e) {
+    result.textContent = "Fehler: " + e.message;
+    result.style.color = "#e07060";
+  }
+}
+
+document.getElementById("vocab-lookup-btn").addEventListener("click", doVocabLookup);
+document.getElementById("vocab-lookup-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") doVocabLookup();
+});
+
+// ── MAIN PAGE VOCAB LOOKUP ──
+async function doMainVocabLookup() {
+  var input = document.getElementById("main-vocab-input");
+  var result = document.getElementById("main-vocab-result");
+  var word = input.value.trim();
+  if (!word) return;
+  result.textContent = "⏳ Übersetze...";
+  result.style.color = "#5a8aaa";
+  try {
+    var lang = getLang();
+    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+    var prompt = "Übersetze \"" + word + "\" ins " + lang.target + ". Gib nur zurück: die Übersetzung und ein kurzes Beispiel. Format: " + lang.target + ": ...\nBeispiel: ...";
+    var resp = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 150, temperature: 0.2, thinkingConfig: { thinkingBudget: 0 } } }) });
+    var data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    result.textContent = data.candidates[0].content.parts[0].text.trim();
+    result.style.color = "#90c090";
+  } catch(e) {
+    result.textContent = "Fehler: " + e.message;
+    result.style.color = "#e07060";
+  }
+}
+document.getElementById("main-vocab-btn").addEventListener("click", doMainVocabLookup);
+document.getElementById("main-vocab-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") doMainVocabLookup();
+});
+
+if (synth) { synth.getVoices(); }
 </script>
 </body>
 </html>

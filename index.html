@@ -138,7 +138,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
 <body>
 
 <div class="header">
-  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v5</span></div>
+  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v6</span></div>
 </div>
 
 <div class="wrap">
@@ -629,6 +629,101 @@ function doTx(id,type){
   render();autoSave();
 }
 
+// ---------- Bestehende Verkaufszuordnung ändern ----------
+function openEditVkLots(posId, entryIdx){
+  const pos=positions.find(p=>p.id===posId);
+  if(!pos)return;
+  const vkEntries=sold.filter(e=>e.wkn===pos.wkn);
+  const soldEntry=vkEntries[entryIdx];
+  if(!soldEntry)return;
+  const globalSoldIdx=sold.indexOf(soldEntry);
+
+  // Verfügbare Lots berechnen OHNE diesen einen Verkauf (temporär aus sold entfernen)
+  const soldBackup=sold;
+  sold=sold.filter((s,i)=>i!==globalSoldIdx);
+  const lots=getAvailableLots(pos);
+  sold=soldBackup; // zurücksetzen
+
+  window._vkEditLots=lots;
+  window._vkEditIdx=globalSoldIdx;
+  window._vkEditStuecke=soldEntry.stueckeVerkauft;
+
+  const modal=document.getElementById("vk-modal");
+  modal.style.display="";
+  modal.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeVkModal()">
+    <div class="modal-box">
+      <div class="modal-title">Zuordnung ändern — ${tsd(soldEntry.stueckeVerkauft)} Stk. zu ${cur(soldEntry.verkaufspreis)} vom ${fdate(soldEntry.verkaufDatum)}</div>
+      <div style="font-size:12px;color:#6b8fb5;padding:8px 0">Wie viele Stück sollen aus welchem Kauf verkauft werden?</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${lots.map((l,i)=>{
+          const existing=(soldEntry.manualLots||[]).find(ml=>ml.datum===l.datum&&ml.kurs===l.kurs);
+          const preval=existing?existing.stuecke:0;
+          return`<div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:6px;padding:6px 10px">
+            <div style="flex:1;font-size:12px;color:#1e3a5f">${fdate(l.datum)} · ${num2(l.kurs)} €<br><span style="color:#6b8fb5;font-size:10px">Verfügbar: ${tsd(l.stuecke)}</span></div>
+            <input type="text" id="vke-lot-${i}" value="${preval||""}" placeholder="0" oninput="updateVkEditSum()" style="width:70px;font-size:14px;padding:6px 8px;text-align:right"/>
+          </div>`;
+        }).join("")}
+      </div>
+      <div id="vke-sum-info" style="margin:10px 0;font-size:13px;color:#6b8fb5"></div>
+      <div class="modal-btns">
+        <button onclick="closeVkModal()" style="background:#e8f0f9;border:1px solid #bcd0e8;border-radius:6px;padding:10px;color:#6b8fb5;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
+        <button id="vke-confirm-btn" onclick="confirmVkEdit()" class="btn-sm-confirm" style="padding:10px">Speichern</button>
+      </div>
+    </div>
+  </div>`;
+  updateVkEditSum();
+}
+
+function updateVkEditSum(){
+  const lots=window._vkEditLots||[];
+  const st=window._vkEditStuecke||0;
+  let sum=0;
+  lots.forEach((l,i)=>{
+    const v=num(document.getElementById("vke-lot-"+i).value)||0;
+    sum+=v;
+  });
+  const info=document.getElementById("vke-sum-info");
+  const diff=st-sum;
+  if(Math.abs(diff)<0.001){
+    info.innerHTML=`<span style="color:#16a34a;font-weight:600">✓ ${tsd(sum)} von ${tsd(st)} zugeordnet</span>`;
+    document.getElementById("vke-confirm-btn").disabled=false;
+  } else {
+    info.innerHTML=`<span style="color:#dc2626;font-weight:600">${tsd(sum)} von ${tsd(st)} zugeordnet — ${diff>0?"noch "+tsd(diff)+" fehlen":tsd(-diff)+" zu viel"}</span>`;
+    document.getElementById("vke-confirm-btn").disabled=true;
+  }
+}
+
+function confirmVkEdit(){
+  const lots=window._vkEditLots||[];
+  const st=window._vkEditStuecke||0;
+  const idx=window._vkEditIdx;
+  const soldEntry=sold[idx];
+  if(!soldEntry)return;
+
+  let manualLots=[], sum=0;
+  lots.forEach((l,i)=>{
+    const v=num(document.getElementById("vke-lot-"+i).value)||0;
+    if(v>0){manualLots.push({datum:l.datum,kurs:l.kurs,stuecke:v});sum+=v;}
+  });
+  if(Math.abs(sum-st)>0.001){toast("⚠️ Zuordnung stimmt nicht überein",false);return;}
+
+  // Gewinn neu berechnen
+  let gewinn=0, kostenbasis=0;
+  const fifoDetails=manualLots.map(ml=>{
+    const g=(soldEntry.verkaufspreis-ml.kurs)*ml.stuecke;
+    gewinn+=g;
+    kostenbasis+=ml.kurs*ml.stuecke;
+    return{kaufKurs:ml.kurs,stuecke:ml.stuecke,gewinn:g,datum:ml.datum};
+  });
+  const gewinnPct=kostenbasis>0?(gewinn/kostenbasis)*100:0;
+
+  sold=sold.map((s,i)=>i===idx?{...s,manualLots,fifoDetails,gewinnJe:gewinn,gewinnPct}:s);
+
+  closeVkModal();
+  render();autoSave();
+  toast("✅ Zuordnung aktualisiert");
+}
+
 // ---------- Verkauf: manuelle Lot-Zuordnung ----------
 function openVerkaufLotDialog(id){
   const pos=positions.find(p=>p.id===id);
@@ -1085,6 +1180,7 @@ function openHistModal(posId, entryIdx, entryType){
       <div class="modal-btns">
         <button class="btn-red" style="padding:10px" onclick="deleteHistEntry(${posId},${entryIdx},'${entryType}')">🗑 Löschen</button>
         <button class="btn-sm-confirm blue" style="padding:10px" onclick="openEditHistEntry(${posId},${entryIdx},'${entryType}')">✏️ Ändern</button>
+        ${entryType==='vk'?`<button style="padding:10px;background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;color:#7c3aed;font-size:13px;cursor:pointer;font-weight:600" onclick="openEditVkLots(${posId},${entryIdx})">🔀 Zuordnung ändern</button>`:""}
         <button onclick="closeHistModal()" style="background:#e8f0f9;border:1px solid #bcd0e8;border-radius:6px;padding:10px;color:#6b8fb5;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
       </div>
     </div>

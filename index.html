@@ -138,7 +138,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
 <body>
 
 <div class="header">
-  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v8</span></div>
+  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v9</span></div>
 </div>
 
 <div class="wrap">
@@ -386,6 +386,9 @@ function normalizeDatum(d){
   if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);
   if(/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(d)){const p=d.split(".");return`${p[2]}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;}
   if(/^\d{1,2}\.\d{1,2}\.\d{2}$/.test(d)){const p=d.split(".");let y=parseInt(p[2]);y=y<50?2000+y:1900+y;return`${y}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;}
+  // Amerikanisches Format M/D/YYYY oder M/D/YY (z.B. Excel-Export)
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d)){const p=d.split("/");return`${p[2]}-${p[0].padStart(2,"0")}-${p[1].padStart(2,"0")}`;}
+  if(/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(d)){const p=d.split("/");let y=parseInt(p[2]);y=y<50?2000+y:1900+y;return`${y}-${p[0].padStart(2,"0")}-${p[1].padStart(2,"0")}`;}
   return d;
 }
 function normalizeAllDates(){
@@ -1319,27 +1322,7 @@ function buildHistHtml(pos){
     gewinnPct:v.gewinnPct,
     fifoDetails:v.fifoDetails||null
   }));
-  const normDate=d=>{
-    if(!d)return"0000-00-00";
-    d=String(d).trim();
-    // YYYY-MM-DD (ISO)
-    if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);
-    // DD.MM.YYYY
-    if(/^\d{2}\.\d{2}\.\d{4}$/.test(d)){const p=d.split(".");return`${p[2]}-${p[1]}-${p[0]}`;}
-    // DD.MM.YY
-    if(/^\d{2}\.\d{2}\.\d{2}$/.test(d)){const p=d.split(".");let y=parseInt(p[2]);y=y>=50?1900+y:2000+y;return`${y}-${p[1]}-${p[0]}`;}
-    // D.M.YYYY oder ähnlich
-    if(/^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(d)){
-      const p=d.split(".");
-      let y=parseInt(p[2]);if(y<100)y=y>=50?1900+y:2000+y;
-      return`${y}-${String(parseInt(p[1])).padStart(2,"0")}-${String(parseInt(p[0])).padStart(2,"0")}`;
-    }
-    // Fallback: versuche JS Date
-    const ms=new Date(d).getTime();
-    if(!isNaN(ms))return new Date(ms).toISOString().slice(0,10);
-    return"0000-00-00";
-  };
-  const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>normDate(a.datum).localeCompare(normDate(b.datum)));
+  const allHist=[...kaufEntries,...vkEntries].sort((a,b)=>normalizeDatum(a.datum).localeCompare(normalizeDatum(b.datum)));
 
   const fifoLots=[];
   let kaufIdx=0;
@@ -1348,13 +1331,13 @@ function buildHistHtml(pos){
     if(e.type==="kauf"){
       const lot={idx:kaufIdx++,stueckeGekauft:e.stuecke,stueckeNoch:e.stuecke,datum:e.datum,kurs:e.kurs};
       fifoLots.push(lot);
-      kaufLotByDate[normDate(e.datum)+"|"+e.kurs]=lot;
+      kaufLotByDate[normalizeDatum(e.datum)+"|"+e.kurs]=lot;
     } else {
       // Manuelle Zuordnung nutzen falls vorhanden, sonst FIFO
       const soldEntry=sold.find(s=>s.wkn===pos.wkn && s.verkaufDatum===e.datum && s.verkaufspreis===e.kurs && s.stueckeVerkauft===e.stuecke);
       if(soldEntry&&soldEntry.manualLots&&soldEntry.manualLots.length){
         for(const ml of soldEntry.manualLots){
-          const key=normDate(ml.datum)+"|"+ml.kurs;
+          const key=normalizeDatum(ml.datum)+"|"+ml.kurs;
           const lot=kaufLotByDate[key];
           if(lot)lot.stueckeNoch-=ml.stuecke;
         }

@@ -138,7 +138,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
 <body>
 
 <div class="header">
-  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v7</span></div>
+  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v8</span></div>
 </div>
 
 <div class="wrap">
@@ -536,12 +536,14 @@ function refreshGewinnDisplay(id){
 
 // ---------- Transaktion ----------
 // ---------- Verfügbare Kauf-Lots ermitteln (für manuelle Verkaufszuordnung) ----------
-function getAvailableLots(pos){
+function getAvailableLots(pos, cutoffDatum){
   const kaufLots=(pos.history||[])
     .filter(e=>e.type==="kauf")
     .map((e,idx)=>({...e,lotIdx:idx}));
+  const cutoffNorm=cutoffDatum?normalizeDatum(cutoffDatum):null;
   // Bereits verkaufte Stücke abziehen (nutzt manualLots falls vorhanden, sonst FIFO)
-  const soldOfPos=sold.filter(e=>e.wkn===pos.wkn);
+  // Nur Verkäufe bis (inkl.) cutoffDatum berücksichtigen, spätere ignorieren
+  const soldOfPos=sold.filter(e=>e.wkn===pos.wkn && (!cutoffNorm || normalizeDatum(e.verkaufDatum)<=cutoffNorm));
   for(const s of soldOfPos){
     if(s.manualLots&&s.manualLots.length){
       for(const ml of s.manualLots){
@@ -549,9 +551,12 @@ function getAvailableLots(pos){
         if(lot)lot.stuecke-=ml.stuecke;
       }
     } else {
-      // Alte FIFO-Verkäufe: älteste Lots zuerst abziehen
+      // Alte FIFO-Verkäufe: älteste Lots zuerst abziehen (nur Lots bis zum Verkaufsdatum selbst)
       let skip=s.stueckeVerkauft||0;
-      const sorted=[...kaufLots].sort((a,b)=>normalizeDatum(a.datum).localeCompare(normalizeDatum(b.datum)));
+      const vkDatumNorm=normalizeDatum(s.verkaufDatum);
+      const sorted=[...kaufLots]
+        .filter(l=>normalizeDatum(l.datum)<=vkDatumNorm)
+        .sort((a,b)=>normalizeDatum(a.datum).localeCompare(normalizeDatum(b.datum)));
       for(const lot of sorted){
         if(skip<=0)break;
         const abzug=Math.min(lot.stuecke,skip);
@@ -560,7 +565,9 @@ function getAvailableLots(pos){
       }
     }
   }
-  return kaufLots.filter(l=>l.stuecke>0).sort((a,b)=>normalizeDatum(a.datum).localeCompare(normalizeDatum(b.datum)));
+  let result=kaufLots.filter(l=>l.stuecke>0);
+  if(cutoffNorm) result=result.filter(l=>normalizeDatum(l.datum)<=cutoffNorm);
+  return result.sort((a,b)=>normalizeDatum(a.datum).localeCompare(normalizeDatum(b.datum)));
 }
 
 function doTx(id,type){
@@ -639,16 +646,11 @@ function openEditVkLots(posId, entryIdx){
   const globalSoldIdx=sold.indexOf(soldEntry);
 
   // Verfügbare Lots berechnen OHNE diesen einen Verkauf (temporär aus sold entfernen)
+  // und nur bis zum Datum dieses Verkaufs (spätere Verkäufe/Käufe ignorieren)
   const soldBackup=sold;
   sold=sold.filter((s,i)=>i!==globalSoldIdx);
-  let lots=getAvailableLots(pos);
+  let lots=getAvailableLots(pos, soldEntry.verkaufDatum);
   sold=soldBackup; // zurücksetzen
-
-  // Nur Käufe zeigen, die vor (oder am) Verkaufsdatum stattfanden
-  const vkDatumNorm=normalizeDatum(soldEntry.verkaufDatum);
-  lots=lots.filter(l=>normalizeDatum(l.datum)<=vkDatumNorm);
-  // Chronologisch aufsteigend (älteste zuerst)
-  lots.sort((a,b)=>normalizeDatum(a.datum).localeCompare(normalizeDatum(b.datum)));
 
   window._vkEditLots=lots;
   window._vkEditIdx=globalSoldIdx;

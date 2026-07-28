@@ -138,7 +138,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
 <body>
 
 <div class="header">
-  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v6</span></div>
+  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v7</span></div>
 </div>
 
 <div class="wrap">
@@ -641,8 +641,14 @@ function openEditVkLots(posId, entryIdx){
   // Verfügbare Lots berechnen OHNE diesen einen Verkauf (temporär aus sold entfernen)
   const soldBackup=sold;
   sold=sold.filter((s,i)=>i!==globalSoldIdx);
-  const lots=getAvailableLots(pos);
+  let lots=getAvailableLots(pos);
   sold=soldBackup; // zurücksetzen
+
+  // Nur Käufe zeigen, die vor (oder am) Verkaufsdatum stattfanden
+  const vkDatumNorm=normalizeDatum(soldEntry.verkaufDatum);
+  lots=lots.filter(l=>normalizeDatum(l.datum)<=vkDatumNorm);
+  // Chronologisch aufsteigend (älteste zuerst)
+  lots.sort((a,b)=>normalizeDatum(a.datum).localeCompare(normalizeDatum(b.datum)));
 
   window._vkEditLots=lots;
   window._vkEditIdx=globalSoldIdx;

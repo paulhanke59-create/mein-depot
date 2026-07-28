@@ -138,7 +138,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
 <body>
 
 <div class="header">
-  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v3</span></div>
+  <div class="title-row"><span style="font-size:24px">📈</span><h1>Aktienübersicht</h1><span style="font-size:11px;color:#93c5fd;margin-left:8px;align-self:flex-end;margin-bottom:3px">v5</span></div>
 </div>
 
 <div class="wrap">
@@ -163,6 +163,7 @@ h1{margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
 
 <div class="toast" id="toast"></div>
 <div id="hist-modal" style="display:none"></div>
+<div id="vk-modal" style="display:none"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -175,22 +176,9 @@ function tsd(v){return new Intl.NumberFormat("de-DE").format(v)}
 
 // Berechnet den FIFO-basierten Ø Kaufkurs der noch im Bestand befindlichen Lots
 function fifoAvgKurs(pos){
-  const normD=d=>{if(!d)return"0000-00-00";if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);const p=d.split(".");if(p.length===3){let y=p[2].trim();if(y.length===2)y=(parseInt(y)>=50?"19":"20")+y;return`${y}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;}return d;};
-  const allHist=[...(pos.history||[])].sort((a,b)=>normD(a.datum).localeCompare(normD(b.datum)));
-  const soldOfPos=sold.filter(e=>e.wkn===pos.wkn);
-  // FIFO-Lots aufbauen
-  const lots=[];
-  for(const e of allHist){
-    if(e.type==="kauf") lots.push({stuecke:e.stuecke,kurs:e.kurs,rest:e.stuecke});
-    else{
-      let r=e.stuecke;
-      for(const l of lots){if(r<=0)break;const a=Math.min(l.rest,r);l.rest-=a;r-=a;}
-    }
-  }
-  // Noch vorhandene Lots
-  const remaining=lots.filter(l=>l.rest>0);
-  const totalSt=remaining.reduce((s,l)=>s+l.rest,0);
-  const totalCost=remaining.reduce((s,l)=>s+l.rest*l.kurs,0);
+  const remaining=getAvailableLots(pos);
+  const totalSt=remaining.reduce((s,l)=>s+l.stuecke,0);
+  const totalCost=remaining.reduce((s,l)=>s+l.stuecke*l.kurs,0);
   return totalSt>0?totalCost/totalSt:pos.preis;
 }
 function cur(v){return new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(v)}
@@ -547,6 +535,34 @@ function refreshGewinnDisplay(id){
 }
 
 // ---------- Transaktion ----------
+// ---------- Verfügbare Kauf-Lots ermitteln (für manuelle Verkaufszuordnung) ----------
+function getAvailableLots(pos){
+  const kaufLots=(pos.history||[])
+    .filter(e=>e.type==="kauf")
+    .map((e,idx)=>({...e,lotIdx:idx}));
+  // Bereits verkaufte Stücke abziehen (nutzt manualLots falls vorhanden, sonst FIFO)
+  const soldOfPos=sold.filter(e=>e.wkn===pos.wkn);
+  for(const s of soldOfPos){
+    if(s.manualLots&&s.manualLots.length){
+      for(const ml of s.manualLots){
+        const lot=kaufLots.find(l=>l.datum===ml.datum&&l.kurs===ml.kurs);
+        if(lot)lot.stuecke-=ml.stuecke;
+      }
+    } else {
+      // Alte FIFO-Verkäufe: älteste Lots zuerst abziehen
+      let skip=s.stueckeVerkauft||0;
+      const sorted=[...kaufLots].sort((a,b)=>normalizeDatum(a.datum).localeCompare(normalizeDatum(b.datum)));
+      for(const lot of sorted){
+        if(skip<=0)break;
+        const abzug=Math.min(lot.stuecke,skip);
+        lot.stuecke-=abzug;
+        skip-=abzug;
+      }
+    }
+  }
+  return kaufLots.filter(l=>l.stuecke>0).sort((a,b)=>normalizeDatum(a.datum).localeCompare(normalizeDatum(b.datum)));
+}
+
 function doTx(id,type){
   const pos=positions.find(p=>p.id===id);
   const st=num(document.getElementById("tx-stuecke-"+id).value);
@@ -611,6 +627,153 @@ function doTx(id,type){
     toast("✅ Verkauf gebucht");
   }
   render();autoSave();
+}
+
+// ---------- Verkauf: manuelle Lot-Zuordnung ----------
+function openVerkaufLotDialog(id){
+  const pos=positions.find(p=>p.id===id);
+  if(!pos)return;
+  const st=num(document.getElementById("tx-stuecke-"+id).value);
+  const pr=num(document.getElementById("tx-preis-"+id).value);
+  const da=document.getElementById("tx-datum-"+id).value;
+  const stEl=document.getElementById("tx-stuecke-"+id);
+  const prEl=document.getElementById("tx-preis-"+id);
+  const daEl=document.getElementById("tx-datum-"+id);
+  let ok=true;
+  if(!st||st<=0||st>pos.stuecke){stEl.classList.add("error");ok=false;}else stEl.classList.remove("error");
+  if(!pr||pr<=0){prEl.classList.add("error");ok=false;}else prEl.classList.remove("error");
+  if(!da){daEl.classList.add("error");ok=false;}else daEl.classList.remove("error");
+  if(!ok)return;
+
+  const lots=getAvailableLots(pos);
+  const modal=document.getElementById("vk-modal");
+  modal.style.display="";
+  modal.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeVkModal()">
+    <div class="modal-box">
+      <div class="modal-title">Verkauf zuordnen — ${tsd(st)} Stk. zu ${cur(pr)}</div>
+      <div style="margin-bottom:10px;display:flex;gap:8px">
+        <button id="vk-mode-auto" onclick="setVkMode('auto',${id},${st},${pr},'${da}')" class="btn-sm-confirm blue" style="flex:1;padding:9px;font-size:12px">FIFO automatisch</button>
+        <button id="vk-mode-manual" onclick="setVkMode('manual',${id},${st},${pr},'${da}')" style="flex:1;padding:9px;font-size:12px;background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;color:#2563eb;font-weight:600;cursor:pointer">Manuell wählen</button>
+      </div>
+      <div id="vk-lot-list"></div>
+      <div id="vk-sum-info" style="margin:10px 0;font-size:13px;color:#6b8fb5"></div>
+      <div class="modal-btns">
+        <button onclick="closeVkModal()" style="background:#e8f0f9;border:1px solid #bcd0e8;border-radius:6px;padding:10px;color:#6b8fb5;font-size:13px;cursor:pointer;font-weight:600">Abbrechen</button>
+        <button id="vk-confirm-btn" onclick="confirmVkSale(${id},${st},${pr},'${da}')" class="btn-sm-confirm" style="padding:10px" disabled>Verkauf buchen</button>
+      </div>
+    </div>
+  </div>`;
+  window._vkLots=lots;
+  window._vkMode='auto';
+  renderVkLotList('auto',st);
+}
+
+function setVkMode(mode,id,st,pr,da){
+  window._vkMode=mode;
+  document.getElementById("vk-mode-auto").className=mode==='auto'?"btn-sm-confirm blue":"";
+  document.getElementById("vk-mode-auto").style.cssText=mode==='auto'?"flex:1;padding:9px;font-size:12px":"flex:1;padding:9px;font-size:12px;background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;color:#2563eb;font-weight:600;cursor:pointer";
+  document.getElementById("vk-mode-manual").style.cssText=mode==='manual'?"flex:1;padding:9px;font-size:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;border-radius:6px;color:#fff;font-weight:700;cursor:pointer":"flex:1;padding:9px;font-size:12px;background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;color:#2563eb;font-weight:600;cursor:pointer";
+  renderVkLotList(mode,st);
+}
+
+function renderVkLotList(mode,st){
+  const el=document.getElementById("vk-lot-list");
+  const lots=window._vkLots||[];
+  if(mode==='auto'){
+    el.innerHTML=`<div style="font-size:12px;color:#6b8fb5;padding:8px 0">Die ältesten Käufe werden automatisch zuerst verkauft (FIFO):</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${lots.map(l=>`<div style="display:flex;justify-content:space-between;font-size:12px;color:#1e3a5f;background:#f8fafc;border-radius:6px;padding:6px 10px">
+          <span>${fdate(l.datum)} · ${num2(l.kurs)} €</span><span>Bestand: ${tsd(l.stuecke)}</span>
+        </div>`).join("")}
+      </div>`;
+    document.getElementById("vk-sum-info").innerHTML="";
+    document.getElementById("vk-confirm-btn").disabled=false;
+  } else {
+    el.innerHTML=`<div style="font-size:12px;color:#6b8fb5;padding:8px 0">Wie viele Stück sollen aus welchem Kauf verkauft werden?</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${lots.map((l,i)=>`<div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:6px;padding:6px 10px">
+          <div style="flex:1;font-size:12px;color:#1e3a5f">${fdate(l.datum)} · ${num2(l.kurs)} €<br><span style="color:#6b8fb5;font-size:10px">Verfügbar: ${tsd(l.stuecke)}</span></div>
+          <input type="text" id="vk-lot-${i}" placeholder="0" oninput="updateVkSum(${st})" style="width:70px;font-size:14px;padding:6px 8px;text-align:right"/>
+        </div>`).join("")}
+      </div>`;
+    updateVkSum(st);
+  }
+}
+
+function updateVkSum(st){
+  const lots=window._vkLots||[];
+  let sum=0;
+  lots.forEach((l,i)=>{
+    const v=num(document.getElementById("vk-lot-"+i).value)||0;
+    sum+=v;
+  });
+  const info=document.getElementById("vk-sum-info");
+  const diff=st-sum;
+  if(Math.abs(diff)<0.001){
+    info.innerHTML=`<span style="color:#16a34a;font-weight:600">✓ ${tsd(sum)} von ${tsd(st)} zugeordnet</span>`;
+    document.getElementById("vk-confirm-btn").disabled=false;
+  } else {
+    info.innerHTML=`<span style="color:#dc2626;font-weight:600">${tsd(sum)} von ${tsd(st)} zugeordnet — ${diff>0?"noch "+tsd(diff)+" fehlen":tsd(-diff)+" zu viel"}</span>`;
+    document.getElementById("vk-confirm-btn").disabled=true;
+  }
+}
+
+function confirmVkSale(id,st,pr,da){
+  const pos=positions.find(p=>p.id===id);
+  if(!pos)return;
+  const lots=window._vkLots||[];
+  let manualLots=[];
+
+  if(window._vkMode==='manual'){
+    let sum=0;
+    lots.forEach((l,i)=>{
+      const v=num(document.getElementById("vk-lot-"+i).value)||0;
+      if(v>0){manualLots.push({datum:l.datum,kurs:l.kurs,stuecke:v});sum+=v;}
+    });
+    if(Math.abs(sum-st)>0.001){toast("⚠️ Zuordnung stimmt nicht überein",false);return;}
+  } else {
+    // FIFO automatisch aus verfügbaren Lots
+    let restVk=st;
+    for(const l of lots){
+      if(restVk<=0)break;
+      const v=Math.min(l.stuecke,restVk);
+      if(v>0){manualLots.push({datum:l.datum,kurs:l.kurs,stuecke:v});restVk-=v;}
+    }
+  }
+
+  // Gewinn berechnen
+  let gewinn=0, kostenbasis=0;
+  const fifoDetails=manualLots.map(ml=>{
+    const g=(pr-ml.kurs)*ml.stuecke;
+    gewinn+=g;
+    kostenbasis+=ml.kurs*ml.stuecke;
+    return{kaufKurs:ml.kurs,stuecke:ml.stuecke,gewinn:g,datum:ml.datum};
+  });
+  const gewinnPct=kostenbasis>0?(gewinn/kostenbasis)*100:0;
+
+  sold.push({
+    ...pos,
+    stueckeVerkauft:st,
+    verkaufspreis:pr,
+    verkaufDatum:da,
+    gewinnJe:gewinn,
+    gewinnPct:gewinnPct,
+    fifoDetails,
+    manualLots
+  });
+  if(st>=pos.stuecke){positions=positions.filter(p=>p.id!==id);expandedId=null;}
+  else positions=positions.map(p=>p.id===id?{...p,stuecke:p.stuecke-st}:p);
+
+  closeVkModal();
+  render();autoSave();
+  toast("✅ Verkauf gebucht");
+}
+
+function closeVkModal(){
+  const m=document.getElementById("vk-modal");
+  m.style.display="none";
+  m.innerHTML="";
+  window._vkLots=null;
 }
 
 // ---------- Position entfernen ----------
@@ -880,7 +1043,7 @@ function renderEditPanel(){
             <input type="date" id="tx-datum-${pos.id}" value="${today}" style="width:100%;font-size:16px;padding:10px 12px"/></div>
           <div style="display:flex;gap:8px">
             <button class="btn-sm-confirm blue" onclick="doTx(${pos.id},'kauf')" style="flex:1;padding:12px">➕ Zukauf</button>
-            <button class="btn-sm-confirm" onclick="doTx(${pos.id},'vk')" style="flex:1;padding:12px">📤 Verkauf</button>
+            <button class="btn-sm-confirm" onclick="openVerkaufLotDialog(${pos.id})" style="flex:1;padding:12px">📤 Verkauf</button>
           </div>
           <div style="font-size:11px;color:#6b8fb5">max. ${pos.stuecke} Stück bei Verkauf</div>
         </div>`)}
@@ -1076,9 +1239,26 @@ function buildHistHtml(pos){
 
   const fifoLots=[];
   let kaufIdx=0;
+  const kaufLotByDate={}; // Datum+Kurs -> lot-Objekt, für manuelle Zuordnung
   for(const e of allHist){
-    if(e.type==="kauf"){fifoLots.push({idx:kaufIdx++,stueckeGekauft:e.stuecke,stueckeNoch:e.stuecke});}
-    else{let r=e.stuecke;for(const l of fifoLots){if(r<=0)break;const a=Math.min(l.stueckeNoch,r);l.stueckeNoch-=a;r-=a;}}
+    if(e.type==="kauf"){
+      const lot={idx:kaufIdx++,stueckeGekauft:e.stuecke,stueckeNoch:e.stuecke,datum:e.datum,kurs:e.kurs};
+      fifoLots.push(lot);
+      kaufLotByDate[normDate(e.datum)+"|"+e.kurs]=lot;
+    } else {
+      // Manuelle Zuordnung nutzen falls vorhanden, sonst FIFO
+      const soldEntry=sold.find(s=>s.wkn===pos.wkn && s.verkaufDatum===e.datum && s.verkaufspreis===e.kurs && s.stueckeVerkauft===e.stuecke);
+      if(soldEntry&&soldEntry.manualLots&&soldEntry.manualLots.length){
+        for(const ml of soldEntry.manualLots){
+          const key=normDate(ml.datum)+"|"+ml.kurs;
+          const lot=kaufLotByDate[key];
+          if(lot)lot.stueckeNoch-=ml.stuecke;
+        }
+      } else {
+        let r=e.stuecke;
+        for(const l of fifoLots){if(r<=0)break;const a=Math.min(l.stueckeNoch,r);l.stueckeNoch-=a;r-=a;}
+      }
+    }
   }
 
   const v1='font-size:13px;color:#1e3a5f;font-weight:700';
